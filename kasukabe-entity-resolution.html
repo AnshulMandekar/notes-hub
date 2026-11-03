@@ -1,0 +1,661 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kasukabe Entity Resolution</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#16202A; --muted:#5B6773; --rule:#D2D9E0; --chip:#E9EDF1;
+  --s1:#3346B8; --s2:#A8620C; --s3:#0B7A6C;
+  --accent:#3346B8; --accent-soft:#DDE2F8; --on-accent:#FFFFFF;
+  --warn:#A8620C; --warn-soft:#F6E7D2;
+  --good:#1D7336; --bad:#B42318;
+  --fold-es:#C9D1D9;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --display:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0D1217; --surface:#141B22; --ink:#E2E8EE; --muted:#93A0AD; --rule:#2A3541; --chip:#1C252F;
+    --s1:#8F9CFF; --s2:#E4A54B; --s3:#3CC2AE;
+    --accent:#8F9CFF; --accent-soft:#252E5A; --on-accent:#0D1217;
+    --warn:#E4A54B; --warn-soft:#3A2A12;
+    --good:#63CF85; --bad:#FF8B7E; --fold-es:#35414D;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1217; --surface:#141B22; --ink:#E2E8EE; --muted:#93A0AD; --rule:#2A3541; --chip:#1C252F;
+  --s1:#8F9CFF; --s2:#E4A54B; --s3:#3CC2AE;
+  --accent:#8F9CFF; --accent-soft:#252E5A; --on-accent:#0D1217;
+  --warn:#E4A54B; --warn-soft:#3A2A12;
+  --good:#63CF85; --bad:#FF8B7E; --fold-es:#35414D;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.6;margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:40px 64px;display:grid;gap:56px}
+h1,h2,h3{font-family:var(--display);font-stretch:88%;text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,4.6vw,46px);font-weight:750;letter-spacing:-.01em;max-width:22ch}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:700}
+h3{font-size:17px;font-weight:650}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:17.5px;color:var(--ink);max-width:62ch}
+.stack{display:grid;gap:16px}
+.stack-lg{display:grid;gap:24px}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.muted{color:var(--muted)}
+
+/* header stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.stat{background:var(--surface);padding:16px 18px;display:grid;gap:2px}
+.stat b{font-family:var(--mono);font-weight:500;font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat span{color:var(--muted);font-size:13.5px}
+
+/* data facts */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.fact{border-top:2px solid var(--ink);padding-top:10px;display:grid;gap:4px}
+.fact h3{font-size:15px}
+.fact p{font-size:14.5px;color:var(--muted)}
+.fact .mono{color:var(--ink)}
+
+/* record examples */
+.examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr));gap:20px}
+.rec{background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.rec-head{padding:14px 16px;border-bottom:1px solid var(--rule);display:grid;gap:4px}
+.rec-row{padding:10px 16px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;border-bottom:1px solid var(--rule)}
+.rec-row:last-child{border-bottom:0}
+.rec-row .body{display:grid;gap:2px;min-width:0}
+.rec .name{font-weight:600;overflow-wrap:anywhere}
+.rec .addr{font-size:13.5px;color:var(--muted);overflow-wrap:anywhere}
+.rec .noise{font-size:12.5px;color:var(--ink);background:var(--chip);border-radius:4px;padding:1px 7px;justify-self:start}
+.badge{font-family:var(--mono);font-size:11.5px;font-weight:500;border-radius:4px;padding:2px 6px;align-self:start;border:1.5px solid currentColor;white-space:nowrap}
+.b1{color:var(--s1)} .b2{color:var(--s2)} .b3{color:var(--s3)}
+.idline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.idline .mono{font-size:12.5px;color:var(--muted)}
+
+.callout{border-left:3px solid var(--accent);padding:4px 0 4px 16px;max-width:72ch;display:grid;gap:6px}
+
+/* figures */
+figure{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:20px;display:grid;gap:14px}
+figcaption{font-size:14px;color:var(--muted);max-width:80ch}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll svg{display:block;width:100%;height:auto}
+.min-main{min-width:780px} .min-mid{min-width:680px} .min-sm{min-width:560px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;gap:8px;align-items:center}
+.sw{width:26px;height:14px;border-radius:3px;display:inline-block}
+.sw-solid{border:1.5px solid var(--rule);background:var(--surface)}
+.sw-model{border:1.8px solid var(--accent);background:var(--surface)}
+.sw-dash{border:1.5px dashed var(--muted)}
+
+/* svg drawing */
+.d text{font-family:var(--sans);font-size:13px;fill:var(--ink)}
+.d .t{font-weight:600;font-size:14px}
+.d .t2{font-weight:600;font-size:12.5px}
+.d .s{font-size:11.5px;fill:var(--muted)}
+.d .m{font-family:var(--mono);font-size:11.5px}
+.d .big{font-family:var(--mono);font-size:13px;font-weight:500}
+.d .val{font-family:var(--mono);font-size:20px;font-weight:500}
+.d .c1{fill:var(--s1)} .d .c2{fill:var(--s2)} .d .c3{fill:var(--s3)}
+.d .acc{fill:var(--accent)} .d .warn{fill:var(--warn)} .d .good{fill:var(--good)} .d .bad{fill:var(--bad)}
+.d .onacc{fill:var(--on-accent)}
+.d .box{fill:var(--surface);stroke:var(--rule);stroke-width:1.2}
+.d .model{stroke:var(--accent);stroke-width:1.8}
+.d .src1{stroke:var(--s1);stroke-width:1.8} .d .src2{stroke:var(--s2);stroke-width:1.8} .d .src3{stroke:var(--s3);stroke-width:1.8}
+.d .chip{fill:var(--chip)}
+.d .union{fill:var(--accent-soft)}
+.d .pill{fill:var(--surface);stroke:var(--rule);stroke-width:1}
+.d .pillwarn{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.4}
+.d .bucket{fill:var(--chip);stroke:var(--rule);stroke-width:1}
+.d .bucketwarn{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.4}
+.d .trainbox{fill:none;stroke:var(--muted);stroke-width:1.3;stroke-dasharray:5 4}
+.d .edge{stroke:var(--ink);stroke-width:1.4;fill:none}
+.d .edge-t{stroke:var(--muted);stroke-width:1.3;fill:none;stroke-dasharray:5 4}
+.d .ah{fill:var(--ink)} .d .ahm{fill:var(--muted)}
+.d .grid{stroke:var(--rule);stroke-width:1}
+.d .f-es{fill:var(--fold-es)} .d .f-val{fill:var(--warn)} .d .f-tr{fill:var(--accent)} .d .f-tr2{fill:var(--accent-soft)}
+.d .l-val{stroke:var(--accent);stroke-width:2.4;fill:none} .d .l-lb{stroke:var(--warn);stroke-width:2.4;fill:none}
+.d .p-val{fill:var(--accent)} .d .p-lb{fill:var(--warn)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.best td{background:var(--accent-soft)}
+
+/* engineering */
+.eng{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px 28px}
+.eng div{display:grid;gap:4px}
+.eng h3{font-size:15px}
+.eng p{font-size:14.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{font-family:var(--mono);font-size:12.5px;border:1px solid var(--rule);background:var(--surface);border-radius:5px;padding:3px 9px}
+
+/* bullets */
+.bullets{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bullets li{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+.bullets .bullet{max-width:none}
+button{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);background:var(--chip);border:1px solid var(--rule);border-radius:6px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+
+.points{margin:0;padding:0;list-style:none;display:grid;gap:18px;counter-reset:pt}
+.points li{display:grid;gap:4px;max-width:78ch}
+.points p{color:var(--muted);font-size:15px}
+
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--rule);padding-top:16px}
+@media (max-width:560px){
+  .bullets li{grid-template-columns:1fr}
+  .bullets li button{justify-self:start}
+  figure{padding:14px}
+}
+</style>
+
+<main class="wrap">
+
+<header class="stack-lg">
+  <div class="eyebrow">Amazon ML Challenge 2026 · Team Kasukabe · 4 members</div>
+  <h1>Matching 10 million messy business records to the businesses they describe</h1>
+  <p class="lede">Three data sources describe the same businesses with typos, missing fields, Indian scripts and look-alike decoys, and share no common ID. For every clean Source&nbsp;1 business, this pipeline finds each Source&nbsp;2 and Source&nbsp;3 record that refers to it, using only the provided data.</p>
+  <div class="stats">
+    <div class="stat"><b>11.7M</b><span>test records to link</span></div>
+    <div class="stat"><b>144M</b><span>candidate pairs, down from 17.3 trillion</span></div>
+    <div class="stat"><b>0.9875</b><span>macro F0.5 on held-out businesses</span></div>
+    <div class="stat"><b>0.9737</b><span>macro F0.5 on the public leaderboard</span></div>
+  </div>
+</header>
+
+<section class="stack-lg" id="task">
+  <div class="stack">
+    <h2>The task</h2>
+    <p>Source 1 is a deduplicated list of businesses. Sources 2 and 3 are noisy copies of it. Each Source 2/3 record belongs to at most one Source 1 business, and about a quarter of them belong to none: they are decoys, near-copies of a real business with one word or one number changed. The test set adds France, which never appears in the training data.</p>
+  </div>
+  <div class="facts">
+    <div class="fact"><h3>Training data</h3><p><span class="mono">2.21M</span> Source 1 · <span class="mono">10.3M</span> Source 2/3 · <span class="mono">7.64M</span> labelled matches · US and India</p></div>
+    <div class="fact"><h3>Test data</h3><p><span class="mono">1.73M</span> Source 1 · <span class="mono">9.97M</span> Source 2/3 · no labels · US, India and France (15%)</p></div>
+    <div class="fact"><h3>Metric</h3><p>F0.5 per Source 1 business, averaged. Precision counts twice as much as recall. A business with no match scores 1.0 only if nothing is predicted for it.</p></div>
+  </div>
+
+  <div class="examples">
+    <div class="rec">
+      <div class="rec-head">
+        <div class="idline"><span class="badge b1">S1</span><span class="mono">S1-102811957 · US</span></div>
+        <div class="name">Payne Enterprises</div>
+        <div class="addr">3315 Fremont Street, Peoria, IL</div>
+      </div>
+      <div class="rec-row"><span class="badge b2">S2</span><div class="body"><span class="name">PAYNE-ENRTPRMISES</span><span class="addr">3315 FREMONT SAINT, PEORIA, IL</span><span class="noise">typo, hyphen, “St” written as “Saint”</span></div></div>
+      <div class="rec-row"><span class="badge b2">S2</span><div class="body"><span class="name">Payne Enterpires</span><span class="addr">3315 FREMONT ST, PEORIA, IL</span><span class="noise">typo</span></div></div>
+      <div class="rec-row"><span class="badge b3">S3</span><div class="body"><span class="name">Payne Enterprises LLC</span><span class="addr">Fremont St, Peoria, Illinois</span><span class="noise">legal form added, house number missing</span></div></div>
+      <div class="rec-row"><span class="badge b3">S3</span><div class="body"><span class="name">Payne Etrepndiels</span><span class="addr">3315 Fremont St, Peoria, Illinois</span><span class="noise">heavy typo</span></div></div>
+      <div class="rec-row"><span class="badge b3">S3</span><div class="body"><span class="name">Payne Énterprises</span><span class="addr">3315 Fremont Street, Peoria, Illinois</span><span class="noise">accent, state spelled out</span></div></div>
+    </div>
+    <div class="rec">
+      <div class="rec-head">
+        <div class="idline"><span class="badge b1">S1</span><span class="mono">S1-55344266 · India</span></div>
+        <div class="name">Raj Investments LLP</div>
+        <div class="addr">6(29), C.I.T. Colony, 2Nd Main Road Mylapore, Chennai, Tamil Nadu</div>
+      </div>
+      <div class="rec-row"><span class="badge b2">S2</span><div class="body"><span class="name">Raj Investments LLP</span><span class="addr">6(29), C.I.T. COLONY, 2ND MAIN ROAD MYLAPORE, CHENNAI, Tamil Nadu</span><span class="noise">upper-case address</span></div></div>
+      <div class="rec-row"><span class="badge b2">S2</span><div class="body"><span class="name">ராஜ் இன்வெஸ்ட்மெண்ட்ஸ் எல்எல்பி</span><span class="addr">6(29), C.I.T. COLONY, 2ND MAIN ROAD MYLAPORE, CHENNAI, Tamil Nadu</span><span class="noise">name written in Tamil script</span></div></div>
+      <div class="rec-row"><span class="badge b3">S3</span><div class="body"><span class="name">ராஜ் இன்வெஸ்ட்மெண்ட்ஸ் எல்எல்பி</span><span class="addr">6(29), C.i.t. Colony, 2Nd Main Road Mylapore, Chennai, தமிழ்நாடு</span><span class="noise">name and state in Tamil</span></div></div>
+      <div class="rec-row"><span class="badge b3">S3</span><div class="body"><span class="name">Raj Investments எல்எல்பி</span><span class="addr">6(29), C.i.t. Colony, 2Nd Main Road Mylapore, Chennai, TN</span><span class="noise">mixed scripts, state code</span></div></div>
+    </div>
+  </div>
+  <p class="muted" style="font-size:14px">Two real businesses from the training data with every record the ground truth links to them. The model has to accept all of these and reject the decoys that differ by a single word or house number.</p>
+</section>
+
+<section class="stack-lg" id="pipeline">
+  <div class="stack">
+    <h2>How the pipeline works</h2>
+    <p>One command trains on the full training data and a second one predicts the test set. Both run the same cleaning, blocking and feature code, so the model sees test pairs exactly as it saw training pairs. The numbers on the left track how much data exists at each step.</p>
+  </div>
+  <figure>
+    <div class="legend">
+      <span><i class="sw sw-solid"></i>runs in training and prediction</span>
+      <span><i class="sw sw-model"></i>trained model</span>
+      <span><i class="sw sw-dash"></i>learned from training data, frozen for the test run</span>
+    </div>
+    <div class="scroll">
+      <svg class="d min-main" viewBox="0 0 1000 1232" role="img" aria-label="Pipeline: three source files are normalised, noise words are dropped, five candidate searches per country produce 144 million pairs, 80 features are computed per pair, a stage-1 LightGBM scores every pair, each record keeps its best entity, a stage-2 LightGBM re-scores it with context, and a threshold with a house-number guard writes the final matches.">
+        <defs>
+          <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="ahmA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ahm" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- 1. sources -->
+        <text class="s" x="170" y="45" text-anchor="end">test-set input</text>
+        <text class="big" x="170" y="64" text-anchor="end">11.7M records</text>
+        <rect class="box src1" x="190" y="20" width="176" height="60" rx="8"/>
+        <text class="t c1" x="206" y="45">Source 1</text>
+        <text class="s" x="206" y="66">clean reference · 1.73M</text>
+        <rect class="box src2" x="382" y="20" width="176" height="60" rx="8"/>
+        <text class="t c2" x="398" y="45">Source 2</text>
+        <text class="s" x="398" y="66">noisy · 4.89M</text>
+        <rect class="box src3" x="574" y="20" width="176" height="60" rx="8"/>
+        <text class="t c3" x="590" y="45">Source 3</text>
+        <text class="s" x="590" y="66">noisy · 5.08M</text>
+        <rect class="trainbox" x="780" y="20" width="210" height="60" rx="8"/>
+        <text class="t" x="796" y="45">Ground truth</text>
+        <text class="s" x="796" y="66">train only · 7.64M pairs</text>
+        <path class="edge" d="M278 80 V118" marker-end="url(#ahA)"/>
+        <path class="edge" d="M470 80 V118" marker-end="url(#ahA)"/>
+        <path class="edge" d="M662 80 V118" marker-end="url(#ahA)"/>
+        <path class="edge-t" d="M885 80 V148" marker-end="url(#ahmA)"/>
+
+        <!-- 2. normalise -->
+        <text class="s" x="170" y="182" text-anchor="end">Parquet cache,</text>
+        <text class="s" x="170" y="198" text-anchor="end">rebuilt when the</text>
+        <text class="s" x="170" y="214" text-anchor="end">cleaning code changes</text>
+        <rect class="box" x="190" y="120" width="560" height="150" rx="8"/>
+        <text class="t" x="206" y="144">Normalise names and addresses</text>
+        <text class="m" x="734" y="144" text-anchor="end" style="fill:var(--muted)">normalize.py · indic.py · translit.py</text>
+        <rect class="chip" x="206" y="156" width="168" height="46" rx="6"/>
+        <text class="m" x="216" y="175">ராஜ் → raj</text>
+        <text class="s" x="216" y="193">9 Indian scripts</text>
+        <rect class="chip" x="386" y="156" width="168" height="46" rx="6"/>
+        <text class="m" x="396" y="175">sarvisej → services</text>
+        <text class="s" x="396" y="193">learned, 521 words</text>
+        <rect class="chip" x="566" y="156" width="168" height="46" rx="6"/>
+        <text class="m" x="576" y="175">Pvt Ltd · LLC · SARL</text>
+        <text class="s" x="576" y="193">legal forms set aside</text>
+        <rect class="chip" x="206" y="210" width="168" height="46" rx="6"/>
+        <text class="m" x="216" y="229">israe1 → israel</text>
+        <text class="s" x="216" y="247">OCR digit repair</text>
+        <rect class="chip" x="386" y="210" width="168" height="46" rx="6"/>
+        <text class="m" x="396" y="229">SAINT · ST. → st</text>
+        <text class="s" x="396" y="247">street types</text>
+        <rect class="chip" x="566" y="210" width="168" height="46" rx="6"/>
+        <text class="m" x="576" y="229">Nord → Hauts-de-France</text>
+        <text class="s" x="576" y="247">département → region</text>
+        <rect class="trainbox" x="780" y="150" width="210" height="64" rx="8"/>
+        <text class="t" x="796" y="175">Learned dictionary</text>
+        <text class="s" x="796" y="195">from Indic-script matches</text>
+        <path class="edge-t" d="M780 182 H752" marker-end="url(#ahmA)"/>
+        <path class="edge" d="M470 270 V298" marker-end="url(#ahA)"/>
+
+        <!-- 3. noise words -->
+        <rect class="box" x="190" y="300" width="560" height="52" rx="8"/>
+        <text class="t" x="206" y="322">Drop noise words</text>
+        <text class="m" x="734" y="322" text-anchor="end" style="fill:var(--muted)">noise.py</text>
+        <text class="s" x="206" y="341">words ≥20× more common in Sources 2/3 than in Source 1 (midtown, CDP)</text>
+        <rect class="trainbox" x="780" y="300" width="210" height="52" rx="8"/>
+        <text class="t" x="796" y="322">Training's word list</text>
+        <text class="s" x="796" y="341">reused at prediction</text>
+        <path class="edge-t" d="M780 326 H752" marker-end="url(#ahmA)"/>
+        <path class="edge" d="M470 352 V378" marker-end="url(#ahA)"/>
+
+        <!-- 4. blocking -->
+        <text class="s" x="170" y="420" text-anchor="end">all possible pairs</text>
+        <text class="big" x="170" y="438" text-anchor="end">17.3 trillion</text>
+        <text class="s" x="170" y="540" text-anchor="end">after blocking</text>
+        <text class="big acc" x="170" y="558" text-anchor="end">144M pairs</text>
+        <text class="s" x="170" y="575" text-anchor="end">14.4 per record</text>
+        <text class="s" x="170" y="592" text-anchor="end">recall 98.71%</text>
+        <rect class="box" x="190" y="380" width="560" height="230" rx="8"/>
+        <text class="t" x="206" y="404">Blocking: candidate search inside each country</text>
+        <text class="m" x="734" y="404" text-anchor="end" style="fill:var(--muted)">blocking.py</text>
+        <text class="s" x="206" y="424">indexed tokens: words, phonetic skeletons, word pairs, skip-pairs, state+name</text>
+        <rect class="chip" x="206" y="438" width="96" height="66" rx="6"/>
+        <text class="t2" x="254" y="458" text-anchor="middle">Name+address</text>
+        <text class="s" x="254" y="475" text-anchor="middle">IDF cosine</text>
+        <text class="m acc" x="254" y="493" text-anchor="middle">top 10</text>
+        <rect class="chip" x="314" y="438" width="96" height="66" rx="6"/>
+        <text class="t2" x="362" y="458" text-anchor="middle">Name</text>
+        <text class="s" x="362" y="475" text-anchor="middle">IDF cosine</text>
+        <text class="m acc" x="362" y="493" text-anchor="middle">top 5</text>
+        <rect class="chip" x="422" y="438" width="96" height="66" rx="6"/>
+        <text class="t2" x="470" y="458" text-anchor="middle">Address</text>
+        <text class="s" x="470" y="475" text-anchor="middle">IDF cosine</text>
+        <text class="m acc" x="470" y="493" text-anchor="middle">top 5</text>
+        <rect class="chip" x="530" y="438" width="96" height="66" rx="6"/>
+        <text class="t2" x="578" y="458" text-anchor="middle">Char 3-grams</text>
+        <text class="s" x="578" y="475" text-anchor="middle">misspelt names</text>
+        <text class="m acc" x="578" y="493" text-anchor="middle">top 1</text>
+        <rect class="chip" x="638" y="438" width="96" height="66" rx="6"/>
+        <text class="t2" x="686" y="458" text-anchor="middle">Look-alikes</text>
+        <text class="s" x="686" y="475" text-anchor="middle">borrowed</text>
+        <text class="m acc" x="686" y="493" text-anchor="middle">top 3</text>
+        <path class="edge" d="M254 504 V528" marker-end="url(#ahA)"/>
+        <path class="edge" d="M362 504 V528" marker-end="url(#ahA)"/>
+        <path class="edge" d="M470 504 V528" marker-end="url(#ahA)"/>
+        <path class="edge" d="M578 504 V528" marker-end="url(#ahA)"/>
+        <path class="edge" d="M686 504 V528" marker-end="url(#ahA)"/>
+        <rect class="union" x="206" y="530" width="528" height="34" rx="6"/>
+        <text class="t2" x="470" y="552" text-anchor="middle">Union: every pair keeps the score and rank from each search</text>
+        <text class="s" x="206" y="592">tokens in more than 0.2% of Source 1 are not indexed · sparse top-K matrix products</text>
+        <path class="edge" d="M470 610 V638" marker-end="url(#ahA)"/>
+
+        <!-- 5. features -->
+        <text class="s" x="170" y="690" text-anchor="end">training features</text>
+        <text class="big" x="170" y="708" text-anchor="end">≈46 GB</text>
+        <text class="s" x="170" y="725" text-anchor="end">on-disk memmap,</text>
+        <text class="s" x="170" y="741" text-anchor="end">1M-pair chunks</text>
+        <rect class="box" x="190" y="640" width="560" height="116" rx="8"/>
+        <text class="t" x="206" y="664">80 pair features, computed per country</text>
+        <text class="m" x="734" y="664" text-anchor="end" style="fill:var(--muted)">features.py</text>
+        <rect class="chip" x="206" y="678" width="96" height="62" rx="6"/>
+        <text class="t2" x="254" y="698" text-anchor="middle">Name</text>
+        <text class="s" x="254" y="715" text-anchor="middle">fuzzy ratios,</text>
+        <text class="s" x="254" y="731" text-anchor="middle">Jaro-Winkler</text>
+        <rect class="chip" x="314" y="678" width="96" height="62" rx="6"/>
+        <text class="t2" x="362" y="698" text-anchor="middle">Address</text>
+        <text class="s" x="362" y="715" text-anchor="middle">house-no. gap,</text>
+        <text class="s" x="362" y="731" text-anchor="middle">number overlap</text>
+        <rect class="chip" x="422" y="678" width="96" height="62" rx="6"/>
+        <text class="t2" x="470" y="698" text-anchor="middle">Alignment</text>
+        <text class="s" x="470" y="715" text-anchor="middle">unmatched words</text>
+        <text class="s" x="470" y="731" text-anchor="middle">and their IDF</text>
+        <rect class="chip" x="530" y="678" width="96" height="62" rx="6"/>
+        <text class="t2" x="578" y="698" text-anchor="middle">Frequency</text>
+        <text class="s" x="578" y="715" text-anchor="middle">chain names,</text>
+        <text class="s" x="578" y="731" text-anchor="middle">per million</text>
+        <rect class="chip" x="638" y="678" width="96" height="62" rx="6"/>
+        <text class="t2" x="686" y="698" text-anchor="middle">Context</text>
+        <text class="s" x="686" y="715" text-anchor="middle">search ranks,</text>
+        <text class="s" x="686" y="731" text-anchor="middle">margins</text>
+        <path class="edge" d="M470 756 V784" marker-end="url(#ahA)"/>
+
+        <!-- 6. stage 1 -->
+        <rect class="box model" x="190" y="786" width="560" height="60" rx="8"/>
+        <text class="t" x="206" y="810">Stage 1: LightGBM scores every pair</text>
+        <text class="m" x="734" y="810" text-anchor="end" style="fill:var(--muted)">model.py</text>
+        <text class="s" x="206" y="830">P(same business) · 255 leaves · learning rate 0.1 · early stop after 50 rounds</text>
+        <rect class="trainbox" x="780" y="786" width="210" height="60" rx="8"/>
+        <text class="t" x="796" y="810">Ground-truth labels</text>
+        <text class="s" x="796" y="830">train 40% · early stop 5%</text>
+        <path class="edge-t" d="M780 816 H752" marker-end="url(#ahmA)"/>
+        <path class="edge" d="M470 846 V874" marker-end="url(#ahA)"/>
+
+        <!-- 7. one-to-one -->
+        <text class="big" x="170" y="899" text-anchor="end">9.97M rows</text>
+        <text class="s" x="170" y="916" text-anchor="end">one per record</text>
+        <rect class="box" x="190" y="876" width="560" height="52" rx="8"/>
+        <text class="t" x="206" y="898">Keep each record's best Source 1 business</text>
+        <text class="s" x="206" y="917">a Source 2/3 record belongs to at most one business, so only its top candidate can win</text>
+        <path class="edge" d="M470 928 V956" marker-end="url(#ahA)"/>
+
+        <!-- 8. stage 2 -->
+        <text class="s" x="170" y="985" text-anchor="end">held-out F0.5</text>
+        <text class="big acc" x="170" y="1003" text-anchor="end">0.9831 → 0.9871</text>
+        <text class="s" x="170" y="1020" text-anchor="end">stage 1 → stage 2</text>
+        <rect class="box model" x="190" y="958" width="560" height="82" rx="8"/>
+        <text class="t" x="206" y="982">Stage 2: LightGBM re-scores the best candidate</text>
+        <text class="m" x="734" y="982" text-anchor="end" style="fill:var(--muted)">stage2.py</text>
+        <text class="s" x="206" y="1002">105 features: the 80 pair features plus the runner-up margin, other records</text>
+        <text class="s" x="206" y="1019">competing for the same business, and sibling agreement on house number and words</text>
+        <rect class="trainbox" x="780" y="958" width="210" height="82" rx="8"/>
+        <text class="t" x="796" y="982">Other 40% of businesses</text>
+        <text class="s" x="796" y="1002">not used by stage 1,</text>
+        <text class="s" x="796" y="1019">so its inputs look like test</text>
+        <path class="edge-t" d="M780 999 H752" marker-end="url(#ahmA)"/>
+        <path class="edge" d="M470 1040 V1068" marker-end="url(#ahA)"/>
+
+        <!-- 9. decision -->
+        <text class="big" x="170" y="1100" text-anchor="end">≈5.9M matches</text>
+        <text class="s" x="170" y="1117" text-anchor="end">3.4 per business (v16)</text>
+        <rect class="box" x="190" y="1070" width="560" height="72" rx="8"/>
+        <text class="t" x="206" y="1094">Decide: accept if p ≥ 0.85</text>
+        <text class="m" x="734" y="1094" text-anchor="end" style="fill:var(--muted)">run.py threshold</text>
+        <text class="s" x="206" y="1113">a house number off by 1–10 (a next-door decoy) needs p ≥ 0.999 in the US</text>
+        <text class="s" x="206" y="1130">and p ≥ 0.98 in India and France</text>
+        <rect class="trainbox" x="780" y="1070" width="210" height="72" rx="8"/>
+        <text class="t" x="796" y="1094">Threshold choice</text>
+        <text class="s" x="796" y="1113">15% held-out businesses</text>
+        <text class="s" x="796" y="1130">plus leaderboard checks</text>
+        <path class="edge-t" d="M780 1106 H752" marker-end="url(#ahmA)"/>
+        <path class="edge" d="M326 1142 V1168" marker-end="url(#ahA)"/>
+
+        <!-- 10. outputs -->
+        <text class="s" x="170" y="1192" text-anchor="end">official validator</text>
+        <text class="big good" x="170" y="1210" text-anchor="end">PASS</text>
+        <rect class="box" x="190" y="1170" width="272" height="52" rx="8"/>
+        <text class="m" x="206" y="1192" style="font-weight:500">matching_results.tsv</text>
+        <text class="s" x="206" y="1211">scored on the leaderboard</text>
+        <rect class="box" x="478" y="1170" width="272" height="52" rx="8"/>
+        <text class="m" x="494" y="1192" style="font-weight:500">candidate_pairs.tsv</text>
+        <text class="s" x="494" y="1211">the 144M blocking pairs, for audit</text>
+      </svg>
+    </div>
+    <figcaption>The full run on 8 vCPUs and 64 GB of RAM: about 3 hours to train and 1.6 hours to predict. Blocking and every feature are computed within one country at a time, because no business ever matches across countries. Test-set sizes are shown except where marked; the stage-2 gain and match count come from the v16 run.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <h3>Why two models instead of one</h3>
+    <p>Stage 1 judges each pair in isolation, so it cannot tell that five other records already claim the same business with a slightly different house number. Stage 2 sees one row per record and adds that context: how clear the winner was, how many records compete for the same business, and whether the confident siblings agree with this record or with the Source 1 version on the details that differ. Stage 2 is kept only when it beats stage 1 on held-out businesses.</p>
+  </div>
+</section>
+
+<section class="stack-lg" id="split">
+  <div class="stack">
+    <h2>How the training data is split</h2>
+    <p>The split is by business, not by record, so a held-out business is never seen in any form during training. Every Source 2/3 record stays in the candidate pool, so held-out businesses face the same competition from decoys as test businesses do.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+      <svg class="d min-sm" viewBox="0 0 1000 112" role="img" aria-label="Source 1 businesses split by hash: 5% early stopping, 15% validation, 40% stage-1 training, 40% stage-2 training.">
+        <text class="s" x="0" y="16">early stop 5%</text>
+        <rect class="f-es" x="0" y="28" width="49" height="42"/>
+        <rect class="f-val" x="51" y="28" width="148" height="42"/>
+        <rect class="f-tr" x="201" y="28" width="398" height="42"/>
+        <rect class="f-tr2" x="601" y="28" width="399" height="42"/>
+        <text class="t2 onacc" x="61" y="54">validation 15%</text>
+        <text class="t2 onacc" x="213" y="54">stage-1 training 40%</text>
+        <text class="t2" x="613" y="54">stage-2 training 40%</text>
+        <text class="s" x="61" y="92">threshold, scores</text>
+        <text class="s" x="213" y="92">every candidate pair of these businesses</text>
+        <text class="s" x="613" y="92">best candidate of each record</text>
+      </svg>
+    </div>
+    <figcaption>Each Source 1 business lands in one fold through a salted CRC32 hash of its ID, drawn here to scale. The transliteration dictionary is learned outside the validation fold, so the validation score stays honest.</figcaption>
+  </figure>
+</section>
+
+<section class="stack-lg" id="finding">
+  <div class="stack">
+    <h2>The bug validation could not show</h2>
+    <p>For a while the leaderboard sat about 1.3 points below validation. A train-versus-test report of feature values and LightGBM per-feature contributions found the model rejecting obvious test matches such as “SOTECH LLC SERVICE” against “Sotech LLC” at the same address. The cause was word rarity (IDF). It was computed over the whole file, and the test file has a different country mix, so every English word's rarity moved. For “service” the shift was enough to cross the model's split points.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+      <svg class="d min-mid" viewBox="0 0 1000 330" role="img" aria-label="Before the fix, one IDF table covers the whole file, so adding France to the test file moves the IDF of 'service' from 5.583 to 5.684 and the match is accepted only 3.5% of the time on the test. After the fix, IDF is computed per country, US values agree between train and test, and the match is accepted 99.4% of the time.">
+        <defs>
+          <marker id="ahB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <text class="t" x="0" y="20">Before: one IDF table for the whole file</text>
+        <text class="t" x="530" y="20">After: one IDF table per country</text>
+
+        <text class="s" x="0" y="84">train</text>
+        <rect class="bucket" x="54" y="52" width="250" height="56" rx="8"/>
+        <rect class="pill" x="68" y="66" width="56" height="28" rx="14"/>
+        <text class="t2" x="96" y="84" text-anchor="middle">US</text>
+        <rect class="pill" x="134" y="66" width="70" height="28" rx="14"/>
+        <text class="t2" x="169" y="84" text-anchor="middle">India</text>
+        <text class="s" x="322" y="72">IDF of “service”</text>
+        <text class="val" x="322" y="98">5.583</text>
+
+        <text class="s" x="0" y="162">test</text>
+        <rect class="bucket" x="54" y="130" width="250" height="56" rx="8"/>
+        <rect class="pill" x="68" y="144" width="56" height="28" rx="14"/>
+        <text class="t2" x="96" y="162" text-anchor="middle">US</text>
+        <rect class="pill" x="134" y="144" width="70" height="28" rx="14"/>
+        <text class="t2" x="169" y="162" text-anchor="middle">India</text>
+        <rect class="pillwarn" x="214" y="144" width="76" height="28" rx="14"/>
+        <text class="t2 warn" x="252" y="162" text-anchor="middle">France</text>
+        <text class="s" x="322" y="150">IDF of “service”</text>
+        <text class="val warn" x="322" y="176">5.684</text>
+
+        <path class="edge" d="M179 186 V218" marker-end="url(#ahB)"/>
+        <rect class="box" x="0" y="222" width="470" height="100" rx="8"/>
+        <text class="t2" x="16" y="248">“SOTECH LLC SERVICE” vs “Sotech LLC”, same address</text>
+        <text class="s" x="16" y="270">the extra word looks rarer on the test: −2.5 log-odds</text>
+        <text class="t2" x="16" y="302">accepted: 99.8% on validation, <tspan class="bad">3.5% on test</tspan></text>
+
+        <text class="s" x="530" y="84">train</text>
+        <rect class="bucket" x="584" y="52" width="120" height="56" rx="8"/>
+        <text class="t2" x="598" y="74">US</text>
+        <text class="big" x="598" y="98">5.509</text>
+        <rect class="bucket" x="714" y="52" width="120" height="56" rx="8"/>
+        <text class="t2" x="728" y="74">India</text>
+        <text class="big" x="728" y="98">5.705</text>
+
+        <text class="s" x="530" y="162">test</text>
+        <rect class="bucket" x="584" y="130" width="120" height="56" rx="8"/>
+        <text class="t2" x="598" y="152">US</text>
+        <text class="big" x="598" y="176">5.496</text>
+        <rect class="bucket" x="714" y="130" width="120" height="56" rx="8"/>
+        <text class="t2" x="728" y="152">India</text>
+        <text class="big" x="728" y="176">5.751</text>
+        <rect class="bucketwarn" x="844" y="130" width="126" height="56" rx="8"/>
+        <text class="t2 warn" x="858" y="152">France</text>
+        <text class="s" x="858" y="176">its own table</text>
+
+        <path class="edge" d="M777 186 V218" marker-end="url(#ahB)"/>
+        <rect class="box" x="530" y="222" width="470" height="100" rx="8"/>
+        <text class="t2" x="546" y="248">The same pair after the fix</text>
+        <text class="s" x="546" y="270">a word's rarity now means the same thing in train and test</text>
+        <text class="t2" x="546" y="302">accepted on test: <tspan class="good">99.4%</tspan></text>
+      </svg>
+    </div>
+    <figcaption>IDF values for “service” come from the run logs. The same shift hit other words too (“partners” in India went from 52% to 99% accepted). Name and address frequency counts were rescaled to “per million Source 1 records” for the same reason: the test file has half as many US businesses.</figcaption>
+  </figure>
+  <p>A second test-only pattern was the next-door decoy. Records whose house number differs by 1 to 10 were accepted 2.4 to 2.6 times more often per business on the test than on validation in the US, while every other group matched. The decision step now makes those records clear a much higher bar (0.999 in the US, 0.98 elsewhere).</p>
+</section>
+
+<section class="stack-lg" id="results">
+  <div class="stack">
+    <h2>Results over time</h2>
+    <p>More than 20 versions were trained on the full data over the final two days. These four mark the main steps.</p>
+  </div>
+  <figure>
+    <div class="scroll">
+      <svg class="d min-sm" viewBox="0 0 1000 330" role="img" aria-label="Held-out F0.5 rose from 0.9678 to 0.9875 and the public leaderboard from 0.956 to 0.9737 across versions v1, v2, v3 and v24.">
+        <line class="grid" x1="70" y1="290" x2="990" y2="290"/>
+        <line class="grid" x1="70" y1="225" x2="990" y2="225"/>
+        <line class="grid" x1="70" y1="160" x2="990" y2="160"/>
+        <line class="grid" x1="70" y1="95" x2="990" y2="95"/>
+        <line class="grid" x1="70" y1="30" x2="990" y2="30"/>
+        <text class="m" x="60" y="294" text-anchor="end" style="fill:var(--muted)">0.95</text>
+        <text class="m" x="60" y="229" text-anchor="end" style="fill:var(--muted)">0.96</text>
+        <text class="m" x="60" y="164" text-anchor="end" style="fill:var(--muted)">0.97</text>
+        <text class="m" x="60" y="99" text-anchor="end" style="fill:var(--muted)">0.98</text>
+        <text class="m" x="60" y="34" text-anchor="end" style="fill:var(--muted)">0.99</text>
+
+        <polyline class="l-val" points="170,174.3 425,83.3 680,63.2 935,46.3"/>
+        <polyline class="l-lb" points="170,251 425,182.7 680,161 935,135.9"/>
+        <circle class="p-val" cx="170" cy="174.3" r="5"/>
+        <circle class="p-val" cx="425" cy="83.3" r="5"/>
+        <circle class="p-val" cx="680" cy="63.2" r="5"/>
+        <circle class="p-val" cx="935" cy="46.3" r="6"/>
+        <circle class="p-lb" cx="170" cy="251" r="5"/>
+        <circle class="p-lb" cx="425" cy="182.7" r="5"/>
+        <circle class="p-lb" cx="680" cy="161" r="5"/>
+        <circle class="p-lb" cx="935" cy="135.9" r="6"/>
+
+        <text class="t2 acc" x="156" y="178" text-anchor="end">validation</text>
+        <text class="t2 warn" x="156" y="255" text-anchor="end">leaderboard</text>
+
+        <text class="m" x="170" y="163" text-anchor="middle">0.9678</text>
+        <text class="m" x="425" y="72" text-anchor="middle">0.9818</text>
+        <text class="m" x="680" y="52" text-anchor="middle">0.9849</text>
+        <text class="m" x="935" y="34" text-anchor="middle" style="font-weight:500">0.9875</text>
+        <text class="m" x="170" y="271" text-anchor="middle">0.956</text>
+        <text class="m" x="425" y="203" text-anchor="middle">0.9665</text>
+        <text class="m" x="680" y="181" text-anchor="middle">0.9699</text>
+        <text class="m" x="935" y="157" text-anchor="middle" style="font-weight:500">0.9737</text>
+
+        <text class="t2" x="170" y="318" text-anchor="middle">v1</text>
+        <text class="t2" x="425" y="318" text-anchor="middle">v2</text>
+        <text class="t2" x="680" y="318" text-anchor="middle">v3</text>
+        <text class="t2" x="935" y="318" text-anchor="middle">v24</text>
+      </svg>
+    </div>
+    <figcaption>Macro F0.5 on 15% held-out training businesses and on the public leaderboard. Model gains carried over almost 1:1 (v2 to v3: +0.0031 on validation, +0.0034 on the leaderboard). The remaining gap comes from the test set having about one extra decoy per business and from France, which a probe upload put at about 0.965.</figcaption>
+  </figure>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Version</th><th>What changed</th><th class="num">Blocking recall</th><th class="num">Held-out F0.5</th><th class="num">Leaderboard</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">v1</td><td>One IDF search (top 10), 40 features, single LightGBM</td><td class="num">96.75%</td><td class="num">0.9678</td><td class="num">0.956</td></tr>
+        <tr><td class="mono">v2</td><td>Three searches with word-pair tokens; word-alignment, house-number and margin features; stage-2 re-scorer; threshold 0.85</td><td class="num">97.52%</td><td class="num">0.9818</td><td class="num">0.9665</td></tr>
+        <tr><td class="mono">v3</td><td>State tokens, sibling-consistency features, decoy-weighted stage 2</td><td class="num">≈98.1%</td><td class="num">0.9849</td><td class="num">0.9699</td></tr>
+        <tr class="best"><td class="mono">v24</td><td>Transliteration dictionary, French regions, character 3-gram and look-alike candidates, per-country statistics</td><td class="num">98.71%</td><td class="num">0.9875</td><td class="num">0.9737</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="stack-lg" id="engineering">
+  <h2>Engineering</h2>
+  <div class="eng">
+    <div><h3>Scale</h3><p>143M training pairs × 80 features form a 46 GB float32 matrix kept on disk as a memmap and processed in 1M-pair chunks. Candidate search uses sparse matrix products (<span class="mono">sparse_dot_topn</span>) with multi-threaded string scoring (<span class="mono">RapidFuzz</span>).</p></div>
+    <div><h3>Compute</h3><p>Up to 7 AWS EC2 instances (8 vCPU, 64 GB) in Mumbai, N. Virginia and Singapore ran queued experiments overnight. A cron job powers each machine off after 30 idle minutes.</p></div>
+    <div><h3>Reproducibility</h3><p>Fixed seeds and sorted tokens make blocking identical across runs; before this fix, Python's hash seed moved scores by ±0.0002. Dependencies are pinned. The cleaning cache is stamped with a hash of the code and inputs, and prediction refuses a model trained with different features.</p></div>
+    <div><h3>Testing and review</h3><p>145 pytest tests, including the challenge metric reproducing the problem statement's worked example (0.714). Two written code reviews, each open bug pinned by an expected-failure test.</p></div>
+    <div><h3>Diagnostics</h3><p>A train-versus-test report compares feature distributions and LightGBM per-feature contributions. This report is how the IDF shift was found.</p></div>
+    <div><h3>Rules</h3><p>No external data, APIs or pretrained models. Every library is MIT, BSD, Apache or ISC licensed; the final model is LightGBM (MIT), far below the 8B-parameter cap.</p></div>
+  </div>
+  <div class="chips" aria-label="Tech stack">
+    <span>Python</span><span>pandas</span><span>NumPy</span><span>SciPy sparse</span><span>sparse_dot_topn</span><span>RapidFuzz</span><span>LightGBM</span><span>scikit-learn</span><span>PyArrow / Parquet</span><span>pytest</span><span>AWS EC2</span><span>Bash</span>
+  </div>
+</section>
+
+<section class="stack-lg" id="resume">
+  <div class="row">
+    <h2>Resume bullets</h2>
+    <button type="button" id="copy-all">Copy all</button>
+  </div>
+  <ul class="bullets" id="bullets">
+    <li><p class="bullet">Built a large-scale entity-resolution pipeline (Amazon ML Challenge 2026, team of 4) linking 10M+ noisy business records to 1.7M reference businesses across the US, India and an unseen country (France); reached 0.9875 macro F0.5 on held-out data and 0.9737 on the public leaderboard.</p><button type="button" class="copy">Copy</button></li>
+    <li><p class="bullet">Designed multi-pass blocking with IDF-weighted sparse cosine search over word, phonetic-skeleton and character 3-gram tokens plus look-alike candidate borrowing, cutting 17.3 trillion possible pairs to 144M candidates at 98.7% recall.</p><button type="button" class="copy">Copy</button></li>
+    <li><p class="bullet">Engineered 80 pairwise features (fuzzy string similarity, IDF-weighted word alignment, house-number distance, competitor margins) and a two-stage LightGBM matcher with a sibling-aware re-scorer, improving held-out F0.5 from 0.968 to 0.988 over 20+ tracked experiments.</p><button type="button" class="copy">Copy</button></li>
+    <li><p class="bullet">Built script-aware text normalisation: a phonetic transliterator for 9 Indian scripts and a 521-word dictionary learned from labelled pairs (e.g. “sarvisej” → “services”) to match non-Latin business names.</p><button type="button" class="copy">Copy</button></li>
+    <li><p class="bullet">Traced a validation-to-leaderboard gap to word-rarity statistics that shifted between train and test; computing them per country raised test acceptance of a common true-match pattern from 3.5% to 99.4%.</p><button type="button" class="copy">Copy</button></li>
+    <li><p class="bullet">Ran parallel experiments on up to 7 AWS EC2 instances with a deterministic, cached, chunked pipeline (46 GB on-disk feature matrix) backed by a 145-test pytest suite.</p><button type="button" class="copy">Copy</button></li>
+  </ul>
+</section>
+
+<section class="stack-lg" id="talking-points">
+  <h2>Talking points for interviews</h2>
+  <ol class="points">
+    <li><h3>The metric shaped the design</h3><p>F0.5 counts precision twice, and a business with no match scores zero if anything is predicted for it. That led to the one-record-one-business rule and a strict threshold. Threshold 0.69 scored best on validation, but 0.85 scored higher on the leaderboard (0.9665 vs 0.965).</p></li>
+    <li><h3>Blocking sets the ceiling</h3><p>A true pair that blocking misses can never be recovered. At 98.71% recall the best possible F0.5 is 0.9959, so recall work (transliteration, character 3-grams, look-alike borrowing) paid off directly.</p></li>
+    <li><h3>Context beats pairwise scoring</h3><p>The stage-2 re-scorer sees competing records and siblings, which a pairwise model cannot. It lifted held-out F0.5 from 0.9831 to 0.9871.</p></li>
+    <li><h3>Debugging distribution shift</h3><p>Comparing feature contributions between train and test pointed to one IDF feature. Per-country statistics fixed it without touching the model.</p></li>
+    <li><h3>What did not work</h3><p>“Test-aware” strict thresholds lost 0.0033 on the leaderboard. Ensembles of four models did not beat the best single model. Look-alike vote features were dropped because decoy clusters exist only in the test set. Doubling blocking K to 20 bought 0.5 points of recall for 1.6× the pairs.</p></li>
+  </ol>
+</section>
+
+<footer>Built from the project repository (README, HANDOFF, EXPERIMENTS, SUBMISSIONS, <span class="mono">src/er/*.py</span>), the challenge problem statement and the training data. All scores come from full runs on the complete data.</footer>
+</main>
+
+<script>
+(function(){
+  function selectText(el){
+    try{var r=document.createRange();r.selectNodeContents(el);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}
+  }
+  function flash(btn,label){var old=btn.dataset.label||btn.textContent;btn.dataset.label=old;btn.textContent=label;setTimeout(function(){btn.textContent=old;},1600);}
+  function copy(text,btn,el){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){flash(btn,"Copied");},function(){selectText(el);flash(btn,"Selected");});
+    }else{selectText(el);flash(btn,"Selected");}
+  }
+  document.querySelectorAll(".bullets .copy").forEach(function(btn){
+    btn.addEventListener("click",function(){var p=btn.parentElement.querySelector(".bullet");copy(p.textContent.trim(),btn,p);});
+  });
+  var all=document.getElementById("copy-all");
+  all.addEventListener("click",function(){
+    var list=document.getElementById("bullets");
+    var text=Array.prototype.map.call(list.querySelectorAll(".bullet"),function(p){return "• "+p.textContent.trim();}).join("\n");
+    copy(text,all,list);
+  });
+})();
+</script>
+
+</body></html>

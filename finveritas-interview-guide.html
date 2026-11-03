@@ -1,0 +1,2375 @@
+<title>FinVeritas Interview Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: sticky contents rail on the left, one reading column on the right; stacks to one column on phones. */
+:root {
+  --bg: #F3F6F4;
+  --surface: #FFFFFF;
+  --fg: #15201C;
+  --muted: #56635E;
+  --line: #D6DEDA;
+  --line-strong: #8F9E97;
+  --accent: #0B6B5C;
+  --accent-soft: #DCEFEA;
+  --amber: #8F5200;
+  --amber-soft: #FBEBD3;
+  --bad: #B3261E;
+  --bad-soft: #F8DFDC;
+  --code-bg: #EBF0ED;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D1A; --fg: #E2EAE6; --muted: #9AA9A3;
+    --line: #25312D; --line-strong: #56675F; --accent: #4CC3AD; --accent-soft: #12352F;
+    --amber: #F0B45A; --amber-soft: #36270F; --bad: #F2867D; --bad-soft: #3B1917;
+    --code-bg: #111916; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D1A; --fg: #E2EAE6; --muted: #9AA9A3;
+  --line: #25312D; --line-strong: #56675F; --accent: #4CC3AD; --accent-soft: #12352F;
+  --amber: #F0B45A; --amber-soft: #36270F; --bad: #F2867D; --bad-soft: #3B1917;
+  --code-bg: #111916; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 16px/1.65 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap {
+  max-width: 1120px; margin: 0 auto; padding-block: 40px 80px;
+  display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px;
+}
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+
+/* contents rail */
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 13.5px; }
+nav.toc .lbl { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: s; }
+nav.toc li { counter-increment: s; }
+nav.toc a { display: flex; gap: 8px; padding: 4px 8px; border-radius: 4px; color: var(--fg); text-decoration: none; }
+nav.toc a::before { content: counter(s, decimal-leading-zero); font: 12px/1.9 var(--mono); color: var(--muted); }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc .tools { margin-top: 18px; display: grid; gap: 8px; }
+@media (max-width: 900px) {
+  nav.toc { position: static; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 14px; }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+}
+
+button.toggle {
+  font: 500 13px var(--sans); color: var(--accent); background: transparent;
+  border: 1px solid var(--accent); border-radius: 6px; padding: 7px 10px; cursor: pointer; text-align: left;
+}
+button.toggle:hover { background: var(--accent-soft); }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* reading column */
+main { min-width: 0; }
+main > section { padding-block: 28px 8px; border-top: 1px solid var(--line); }
+main > section:first-of-type { border-top: 0; padding-top: 0; }
+.prose { max-width: 70ch; }
+header.hero { margin-bottom: 36px; max-width: 72ch; }
+.eyebrow { font: 600 11.5px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(34px, 5vw, 48px)/1.1 var(--display); margin: 12px 0 14px; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 700 28px/1.2 var(--display); margin: 6px 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.3 var(--sans); margin: 28px 0 8px; }
+.secnum { font: 500 12px var(--mono); color: var(--muted); }
+p { margin: 0 0 14px; }
+.lede { font-size: 18.5px; color: var(--fg); }
+.meta { font-size: 14px; color: var(--muted); }
+code { font: 0.88em var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+a { color: var(--accent); }
+ul.plain { padding-left: 20px; margin: 0 0 14px; }
+ul.plain li { margin-bottom: 6px; }
+
+.thesis {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 18px 20px; font-size: 17px; margin: 18px 0;
+}
+.thesis strong { color: var(--accent); }
+
+/* code blocks */
+figure.code { margin: 16px 0 20px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--code-bg); }
+figure.code figcaption {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font: 12px var(--mono); color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+figure.code pre { margin: 0; padding: 14px; overflow-x: auto; font: 13px/1.6 var(--mono); }
+figure.code pre code { background: none; padding: 0; font-size: inherit; }
+.cm { color: var(--muted); font-style: italic; }
+.kw { color: var(--accent); font-weight: 500; }
+.st { color: var(--amber); }
+
+/* diagrams */
+figure.dia { margin: 20px 0 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 14px 12px; }
+figure.dia .scroll { overflow-x: auto; }
+figure.dia svg { display: block; width: 100%; min-width: 680px; height: auto; color: var(--fg); }
+figure.dia figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; max-width: 72ch; }
+svg text { font-family: var(--sans); font-size: 13.5px; fill: currentColor; }
+svg .t-strong { font-weight: 600; }
+svg .t-small { font-size: 11.5px; fill: var(--muted); }
+svg .t-acc { fill: var(--accent); font-weight: 600; }
+svg .t-bad { fill: var(--bad); font-weight: 600; font-size: 11.5px; }
+svg .box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
+svg .box-acc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+svg .box-llm { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.4; }
+svg .box-ext { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg .edge { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+svg .edge-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+svg .edge-bad { stroke: var(--bad); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+svg .group { fill: none; stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 6 4; }
+svg .m-def { fill: var(--line-strong); }
+svg .m-acc { fill: var(--accent); }
+svg .m-bad { fill: var(--bad); }
+
+/* tables */
+.tbl { overflow-x: auto; margin: 14px 0 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; }
+.pill { display: inline-block; font: 600 11px/1 var(--sans); letter-spacing: .05em; padding: 4px 7px; border-radius: 999px; }
+.pill.pass { background: var(--accent-soft); color: var(--accent); }
+.pill.warn { background: var(--amber-soft); color: var(--amber); }
+.pill.fail { background: var(--bad-soft); color: var(--bad); }
+.pill.skip { background: var(--code-bg); color: var(--muted); }
+
+/* worked example */
+.example { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 16px 0 20px; }
+.example .lbl { font: 600 11px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.example p:last-child { margin-bottom: 0; }
+
+/* interview questions */
+details.qa { background: var(--amber-soft); border-radius: 8px; margin: 10px 0; }
+details.qa summary {
+  cursor: pointer; list-style: none; padding: 11px 14px 11px 46px; position: relative; font-weight: 500;
+}
+details.qa summary::-webkit-details-marker { display: none; }
+details.qa summary::before {
+  content: "Q"; position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font: 700 12px var(--mono); background: var(--amber); color: var(--surface);
+}
+details.qa summary::after { content: "Show answer"; float: right; font-size: 12px; color: var(--amber); font-weight: 600; margin-left: 12px; }
+details.qa[open] summary::after { content: "Hide"; }
+details.qa .ans { padding: 0 16px 14px 46px; }
+details.qa .ans p:last-child { margin-bottom: 0; }
+
+.flag { border: 1px solid var(--bad); background: var(--bad-soft); border-radius: 8px; padding: 12px 14px; margin: 14px 0; font-size: 15px; }
+.flag strong { color: var(--bad); }
+
+.agent-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; margin-top: 34px; }
+.agent-head h3 { margin: 0; font: 700 22px/1.25 var(--display); }
+.agent-head .file { font: 12.5px var(--mono); color: var(--muted); }
+.asks { font-size: 15px; color: var(--muted); margin: 4px 0 12px; }
+.asks strong { color: var(--fg); }
+
+svg .t-mono { font-family: var(--mono); font-size: 12px; }
+svg .box-bad { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 1.4; }
+h3.sub { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font: 700 20px/1.3 var(--display); margin-top: 32px; }
+h3.sub .file { font: 12.5px var(--mono); color: var(--muted); font-weight: 400; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-def"/></marker>
+    <marker id="arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-acc"/></marker>
+    <marker id="arr-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-bad"/></marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#idea">The big idea</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#ingest">Getting the data in</a></li>
+    <li><a href="#cred">Credibility score</a></li>
+    <li><a href="#pattern">How every agent works</a></li>
+    <li><a href="#revenue">Revenue agent</a></li>
+    <li><a href="#balance">Balance sheet agent</a></li>
+    <li><a href="#liquidity">Liquidity agent</a></li>
+    <li><a href="#sentiment">Sentiment agent</a></li>
+    <li><a href="#cross">Cross-reference agent</a></li>
+    <li><a href="#prompts">Prompting the LLM</a></li>
+    <li><a href="#pipeline">Running the pipeline</a></li>
+    <li><a href="#auth">Login and security</a></li>
+    <li><a href="#weak">Weak spots and fixes</a></li>
+    <li><a href="#general">General questions</a></li>
+  </ol>
+  <div class="tools">
+    <button class="toggle" id="toggle-answers" type="button">Show all answers</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">Interview preparation · BTech PBL project</div>
+  <h1>FinVeritas Interview Guide</h1>
+  <p class="lede">A plain-language walkthrough of how FinVeritas works: the architecture, each of the five agents, the credibility score and the login system. Every section has the real code and the questions an interviewer is likely to ask.</p>
+  <p class="meta">Based on the code at commit <code>3d8626da</code> (11 Apr 2026), app folder <code>mayankPbl/ocr/</code>. Click any question to reveal a model answer, or use <em>Show all answers</em> to revise.</p>
+</header>
+
+<!-- 1 -->
+<section id="idea">
+  <div class="secnum">01</div>
+  <h2>The big idea</h2>
+  <div class="prose">
+    <p>FinVeritas reads a company's financial statements and explains how healthy the company is. The interesting part is <em>who does what</em>.</p>
+    <div class="thesis"><strong>Python does all the maths. The LLM only explains the answers.</strong> The AI never sees the raw numbers and is told it may not create new ones.</div>
+    <p>Why? Language models are bad at arithmetic, can invent figures, and may answer differently each time. In finance, every number must be traceable and give the same result every time. So pandas and numpy calculate everything, and the LLM is handed a small dictionary of finished results to put into words.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 760 215" role="img" aria-label="Raw statements go to Python, which produces a metrics dictionary. Only that dictionary goes to the LLM, which writes the explanation. Raw data never reaches the LLM.">
+      <path d="M76 110 C76 40, 532 40, 532 106" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <circle cx="304" cy="57.5" r="10" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.4"/>
+      <line x1="299" y1="52.5" x2="309" y2="62.5" stroke="var(--bad)" stroke-width="1.8"/>
+      <line x1="309" y1="52.5" x2="299" y2="62.5" stroke="var(--bad)" stroke-width="1.8"/>
+      <text x="304" y="28" text-anchor="middle" class="t-bad">Raw data is never sent to the LLM</text>
+
+      <rect x="20" y="110" width="112" height="64" rx="6" class="box"/>
+      <text x="76" y="137" text-anchor="middle" class="t-strong">Raw statements</text>
+      <text x="76" y="155" text-anchor="middle" class="t-small">revenue, assets…</text>
+
+      <rect x="172" y="110" width="112" height="64" rx="6" class="box-acc"/>
+      <text x="228" y="137" text-anchor="middle" class="t-strong">Python</text>
+      <text x="228" y="155" text-anchor="middle" class="t-small">pandas · numpy</text>
+
+      <rect x="324" y="110" width="112" height="64" rx="6" class="box-acc"/>
+      <text x="380" y="137" text-anchor="middle" class="t-strong">Metrics dict</text>
+      <text x="380" y="155" text-anchor="middle" class="t-small">cagr, leverage…</text>
+
+      <rect x="476" y="110" width="112" height="64" rx="6" class="box-llm"/>
+      <text x="532" y="137" text-anchor="middle" class="t-strong">LLM, temp 0</text>
+      <text x="532" y="155" text-anchor="middle" class="t-small">strict rules</text>
+
+      <rect x="628" y="110" width="112" height="64" rx="6" class="box"/>
+      <text x="684" y="137" text-anchor="middle" class="t-strong">Explanation</text>
+      <text x="684" y="155" text-anchor="middle" class="t-small">4–8 sentences</text>
+
+      <line x1="132" y1="142" x2="170" y2="142" class="edge" marker-end="url(#arr)"/>
+      <line x1="284" y1="142" x2="322" y2="142" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <line x1="436" y1="142" x2="474" y2="142" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <line x1="588" y1="142" x2="626" y2="142" class="edge" marker-end="url(#arr)"/>
+
+      <text x="304" y="200" text-anchor="middle" class="t-acc">Numbers are made here</text>
+      <text x="608" y="200" text-anchor="middle" style="fill:var(--amber);font-weight:600">Words are made here</text>
+    </svg>
+    </div>
+    <figcaption>The split at the heart of the project. The dashed red path is the one that is deliberately missing: the LLM only ever receives the finished metrics.</figcaption>
+  </figure>
+
+  <p class="prose">You can see this rule in every agent. The revenue agent even removes one metric before calling the LLM, because small models tend to turn <code>0.875</code> into "87.5%", which is a new number.</p>
+
+  <figure class="code">
+    <figcaption><span>src/revenue_agent.py · build_prompt()</span><span>what the LLM is allowed to see</span></figcaption>
+<pre><code>metrics_for_llm = {
+    <span class="st">"avg_growth"</span>: metrics.get(<span class="st">"avg_growth"</span>),
+    <span class="st">"cagr"</span>: metrics.get(<span class="st">"cagr"</span>),
+    <span class="st">"volatility"</span>: metrics.get(<span class="st">"volatility"</span>),
+    <span class="st">"trend_direction"</span>: metrics.get(<span class="st">"trend_direction"</span>),
+}   <span class="cm"># positive_growth_ratio is left out on purpose</span>
+
+system = (
+    <span class="st">"You are a financial analytics assistant ... "</span>
+    <span class="st">"Hard rules: (1) Do NOT calculate, estimate, or infer any new numbers. "</span>
+    <span class="st">"(2) Use ONLY the provided metrics ... "</span>
+    <span class="st">"(3) Do NOT give credit, lending, or investment recommendations. "</span>
+    <span class="st">"(4) Keep a constrained, professional tone and be concise (4-8 sentences)."</span>
+)
+llm = ChatOpenAI(model=model, temperature=<span class="kw">0</span>, base_url=base_url, api_key=api_key)</code></pre>
+  </figure>
+
+  <details class="qa"><summary>Why not just ask the LLM to analyse the financial statements?</summary>
+    <div class="ans"><p>LLMs make arithmetic mistakes, can make up figures, and are not fully repeatable. A bank or auditor needs every number to be traceable to a formula. So the maths is done in Python, which is deterministic (same input, same output every time), and the LLM only turns finished numbers into readable text, at temperature 0.</p></div>
+  </details>
+  <details class="qa"><summary>What does temperature 0 do? Does it guarantee the same answer?</summary>
+    <div class="ans"><p>Temperature controls randomness. At 0 the model always picks its most likely next word, so the wording is as stable as possible. It does not fully guarantee identical output (servers can still differ slightly), which is exactly why no numbers are left to the model.</p></div>
+  </details>
+</section>
+
+<!-- 2 -->
+<section id="arch">
+  <div class="secnum">02</div>
+  <h2>Architecture</h2>
+  <div class="prose">
+    <p>Think of it as a factory line. Data comes in from one of three sources, gets converted into one standard format, is checked for trustworthiness, then five agents analyse it. The results go to the dashboard. A login wall sits in front of everything.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 760 578" role="img" aria-label="Layered architecture: browser, auth gate, three ingestion sources, common JSON schema, credibility engine and readiness check, five agents, dashboard. MongoDB, FMP and the LLM sit on the side.">
+      <!-- Row A -->
+      <rect x="220" y="14" width="200" height="40" rx="6" class="box"/>
+      <text x="320" y="39" text-anchor="middle" class="t-strong">Browser · Streamlit UI</text>
+      <line x1="320" y1="54" x2="320" y2="93" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row B -->
+      <rect x="40" y="95" width="560" height="48" rx="6" class="box"/>
+      <text x="320" y="116" text-anchor="middle" class="t-strong">Auth gate</text>
+      <text x="320" y="133" text-anchor="middle" class="t-small">bcrypt login → JWT token → 15-minute idle lock</text>
+      <rect x="630" y="95" width="120" height="48" rx="6" class="box-ext"/>
+      <text x="690" y="116" text-anchor="middle" class="t-strong">MongoDB</text>
+      <text x="690" y="133" text-anchor="middle" class="t-small">users</text>
+      <line x1="600" y1="119" x2="628" y2="119" class="edge" marker-end="url(#arr)"/>
+
+      <!-- bus to sources -->
+      <path d="M320 143 V162 M128 162 H512 M128 162 V178 M320 162 V178 M512 162 V178" class="edge"/>
+      <line x1="128" y1="170" x2="128" y2="178" class="edge" marker-end="url(#arr)"/>
+      <line x1="320" y1="170" x2="320" y2="178" class="edge" marker-end="url(#arr)"/>
+      <line x1="512" y1="170" x2="512" y2="178" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row C -->
+      <rect x="40" y="180" width="176" height="60" rx="6" class="box"/>
+      <text x="128" y="205" text-anchor="middle" class="t-strong">Bloomberg PDF</text>
+      <text x="128" y="223" text-anchor="middle" class="t-small">pdfplumber</text>
+      <rect x="232" y="180" width="176" height="60" rx="6" class="box"/>
+      <text x="320" y="205" text-anchor="middle" class="t-strong">Stock ticker</text>
+      <text x="320" y="223" text-anchor="middle" class="t-small">yfinance</text>
+      <rect x="424" y="180" width="176" height="60" rx="6" class="box"/>
+      <text x="512" y="205" text-anchor="middle" class="t-strong">CSV / Excel</text>
+      <text x="512" y="223" text-anchor="middle" class="t-small">pandas</text>
+
+      <line x1="128" y1="240" x2="128" y2="273" class="edge" marker-end="url(#arr)"/>
+      <line x1="320" y1="240" x2="320" y2="273" class="edge" marker-end="url(#arr)"/>
+      <line x1="512" y1="240" x2="512" y2="273" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row D -->
+      <rect x="40" y="275" width="560" height="42" rx="6" class="box-acc"/>
+      <text x="320" y="301" text-anchor="middle" class="t-strong">One common JSON format: { entity, time_series }</text>
+      <line x1="175" y1="317" x2="175" y2="348" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row E -->
+      <rect x="40" y="350" width="270" height="44" rx="6" class="box"/>
+      <text x="175" y="370" text-anchor="middle" class="t-strong">Credibility engine</text>
+      <text x="175" y="386" text-anchor="middle" class="t-small">score 0–100 · HIGH / MEDIUM / LOW</text>
+      <line x1="310" y1="372" x2="328" y2="372" class="edge" marker-end="url(#arr)"/>
+      <rect x="330" y="350" width="270" height="44" rx="6" class="box"/>
+      <text x="465" y="370" text-anchor="middle" class="t-strong">Readiness check</text>
+      <text x="465" y="386" text-anchor="middle" class="t-small">missing fields? proceed or fill</text>
+      <rect x="630" y="350" width="120" height="44" rx="6" class="box-ext"/>
+      <text x="690" y="370" text-anchor="middle" class="t-strong">FMP / AV</text>
+      <text x="690" y="386" text-anchor="middle" class="t-small">fill missing data</text>
+      <line x1="630" y1="372" x2="602" y2="372" class="edge" marker-end="url(#arr)"/>
+
+      <!-- bus to agents -->
+      <path d="M465 394 V408 M92 408 H548" class="edge"/>
+      <line x1="92" y1="408" x2="92" y2="423" class="edge" marker-end="url(#arr)"/>
+      <line x1="206" y1="408" x2="206" y2="423" class="edge" marker-end="url(#arr)"/>
+      <line x1="320" y1="408" x2="320" y2="423" class="edge" marker-end="url(#arr)"/>
+      <line x1="434" y1="408" x2="434" y2="423" class="edge" marker-end="url(#arr)"/>
+      <line x1="548" y1="408" x2="548" y2="423" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row F agents -->
+      <rect x="40" y="425" width="104" height="60" rx="6" class="box-acc"/>
+      <text x="92" y="459" text-anchor="middle" class="t-strong">Revenue</text>
+      <rect x="154" y="425" width="104" height="60" rx="6" class="box-acc"/>
+      <text x="206" y="459" text-anchor="middle" class="t-strong">Liquidity</text>
+      <rect x="268" y="425" width="104" height="60" rx="6" class="box-acc"/>
+      <text x="320" y="451" text-anchor="middle" class="t-strong">Balance</text>
+      <text x="320" y="467" text-anchor="middle" class="t-strong">sheet</text>
+      <rect x="382" y="425" width="104" height="60" rx="6" class="box-acc"/>
+      <text x="434" y="459" text-anchor="middle" class="t-strong">Sentiment</text>
+      <rect x="496" y="425" width="104" height="60" rx="6" class="box-acc"/>
+      <text x="548" y="451" text-anchor="middle" class="t-strong">Cross-</text>
+      <text x="548" y="467" text-anchor="middle" class="t-strong">reference</text>
+      <rect x="630" y="425" width="120" height="60" rx="6" class="box-llm"/>
+      <text x="690" y="451" text-anchor="middle" class="t-strong">LLM API</text>
+      <text x="690" y="468" text-anchor="middle" class="t-small">gets metrics only</text>
+      <line x1="600" y1="455" x2="628" y2="455" class="edge" marker-end="url(#arr)"/>
+
+      <line x1="320" y1="485" x2="320" y2="518" class="edge" marker-end="url(#arr)"/>
+
+      <!-- Row G -->
+      <rect x="40" y="520" width="560" height="44" rx="6" class="box"/>
+      <text x="320" y="540" text-anchor="middle" class="t-strong">Dashboard + JSON audit trail</text>
+      <text x="320" y="556" text-anchor="middle" class="t-small">Upload · Agent Workflow · Financial Analysis · Basel III · My File History</text>
+      <rect x="630" y="520" width="120" height="44" rx="6" class="box-ext"/>
+      <text x="690" y="540" text-anchor="middle" class="t-strong">MongoDB</text>
+      <text x="690" y="556" text-anchor="middle" class="t-small">file_history</text>
+      <line x1="600" y1="542" x2="628" y2="542" class="edge" marker-end="url(#arr)"/>
+    </svg>
+    </div>
+    <figcaption>Top to bottom is the order data travels. Dashed boxes on the right are outside services. The green row in the middle is the key trick: three very different sources become one format, so the agents never care where data came from.</figcaption>
+  </figure>
+
+  <h3>Where each part lives</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Files</th><th>In one line</th></tr></thead>
+    <tbody>
+      <tr><td>UI and routing</td><td><code>app.py</code>, <code>ui/</code></td><td>Streamlit pages, sidebar, theme, runs the pipeline</td></tr>
+      <tr><td>Login</td><td><code>auth/</code></td><td>Register, log in, forgot-password OTP, MongoDB connection</td></tr>
+      <tr><td>Ingestion</td><td><code>src/extractor.py</code>, <code>parser.py</code>, <code>mapper.py</code>, <code>builder.py</code>, <code>yfinance_ingestion.py</code>, <code>private_company_ingestion.py</code></td><td>Turn PDFs, tickers and CSVs into the common JSON</td></tr>
+      <tr><td>Trust checks</td><td><code>src/data_verifier.py</code></td><td>Credibility score</td></tr>
+      <tr><td>Gap filling</td><td><code>src/supplemental_fetchers.py</code></td><td>Fetch missing fields from FMP or Alpha Vantage</td></tr>
+      <tr><td>Agents</td><td><code>src/*_agent.py</code> (logic), <code>agents/*.py</code> (thin wrappers)</td><td>The five analysts</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The common format</h3>
+  <p class="prose">Every source ends up as this shape. Each financial field is a list of <code>{period, value}</code> pairs, and periods are always written <code>YYYY-FY</code> (a full year) or <code>YYYY-Q1</code> to <code>Q4</code>.</p>
+  <figure class="code">
+    <figcaption><span>output/Infosys_Ltd.json (shape)</span><span>the contract every agent reads</span></figcaption>
+<pre><code>{
+  <span class="st">"entity"</span>: {
+    <span class="st">"entity_id"</span>: <span class="st">"Infosys Ltd"</span>,
+    <span class="st">"source"</span>: <span class="st">"bloomberg_pdf"</span>,
+    <span class="st">"currency"</span>: <span class="st">"INR"</span>,
+    <span class="st">"source_files"</span>: [<span class="st">"infosys_is.pdf"</span>, <span class="st">"infosys_bs.pdf"</span>]
+  },
+  <span class="st">"time_series"</span>: {
+    <span class="st">"revenue"</span>:      [{<span class="st">"period"</span>: <span class="st">"2022-FY"</span>, <span class="st">"value"</span>: 121641}, ...],
+    <span class="st">"total_assets"</span>: [{<span class="st">"period"</span>: <span class="st">"2022-FY"</span>, <span class="st">"value"</span>: 89400}, ...],
+    <span class="st">"total_liabilities"</span>: [...], <span class="st">"equity"</span>: [...],
+    <span class="st">"current_assets"</span>: [...],    <span class="st">"current_liabilities"</span>: [...]
+  }
+}</code></pre>
+  </figure>
+
+  <details class="qa"><summary>How would you add a new data source, such as XBRL filings?</summary>
+    <div class="ans"><p>Write one converter that outputs the common JSON format above. Nothing else changes: the credibility checks and all five agents already read that format. That is the benefit of having one shared contract between ingestion and analysis.</p></div>
+  </details>
+  <details class="qa"><summary>Why Streamlit instead of React with a backend API?</summary>
+    <div class="ans"><p>It is a data-heavy prototype written by a Python team. Streamlit gives tables, charts, file upload and widgets in pure Python, so we could iterate fast. The cost is weaker control over routing and sessions, which is why the login wall and page guarding had to be built by hand.</p></div>
+  </details>
+</section>
+
+<!-- 3 -->
+<section id="ingest">
+  <div class="secnum">03</div>
+  <h2>Getting the data in</h2>
+  <div class="prose">
+    <p>Ingestion has one job: <strong>whatever the user gives us, turn it into the common JSON format and save it to disk</strong>, so the rest of the app never has to care where the data came from. There are three ways in, and all three end in the same place.</p>
+  </div>
+
+  <h3>The big picture: three doors, one room</h3>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 372" role="img" aria-label="Three ingestion paths. PDF goes through parse_pdf_to_json, ticker through fetch_by_ticker, CSV through load_private_company_data. All write the same four JSON files to output, then the payload is cached in session state for the credibility and readiness checks.">
+      <text x="75" y="18" text-anchor="middle" class="t-small">User input</text>
+      <text x="270" y="18" text-anchor="middle" class="t-small">Converts to common JSON</text>
+      <text x="485" y="18" text-anchor="middle" class="t-small">Writes files</text>
+      <text x="685" y="18" text-anchor="middle" class="t-small">On disk</text>
+
+      <rect x="10" y="30" width="130" height="60" rx="6" class="box"/>
+      <text x="75" y="55" text-anchor="middle" class="t-strong">Bloomberg PDF(s)</text>
+      <text x="75" y="73" text-anchor="middle" class="t-small">file uploader</text>
+      <rect x="170" y="30" width="200" height="60" rx="6" class="box-acc"/>
+      <text x="270" y="55" text-anchor="middle" class="t-strong">parse_pdf_to_json()</text>
+      <text x="270" y="73" text-anchor="middle" class="t-small">extract → parse → build</text>
+      <rect x="400" y="30" width="170" height="60" rx="6" class="box"/>
+      <text x="485" y="55" text-anchor="middle" class="t-strong">writes 4 files itself</text>
+      <text x="485" y="73" text-anchor="middle" class="t-small">full + 3 agent files</text>
+
+      <rect x="10" y="120" width="130" height="60" rx="6" class="box"/>
+      <text x="75" y="145" text-anchor="middle" class="t-strong">Ticker symbol</text>
+      <text x="75" y="163" text-anchor="middle" class="t-small">e.g. INFY.NS</text>
+      <rect x="170" y="120" width="200" height="60" rx="6" class="box-acc"/>
+      <text x="270" y="145" text-anchor="middle" class="t-strong">fetch_by_ticker()</text>
+      <text x="270" y="163" text-anchor="middle" class="t-small">yfinance → label maps</text>
+      <rect x="400" y="120" width="170" height="60" rx="6" class="box"/>
+      <text x="485" y="145" text-anchor="middle" class="t-strong">payload_to_agent_files()</text>
+      <text x="485" y="163" text-anchor="middle" class="t-small">same 4 files</text>
+
+      <rect x="10" y="210" width="130" height="60" rx="6" class="box"/>
+      <text x="75" y="235" text-anchor="middle" class="t-strong">CSV / Excel</text>
+      <text x="75" y="253" text-anchor="middle" class="t-small">+ company name</text>
+      <rect x="170" y="210" width="200" height="60" rx="6" class="box-acc"/>
+      <text x="270" y="235" text-anchor="middle" class="t-strong">load_private_company_data()</text>
+      <text x="270" y="253" text-anchor="middle" class="t-small">validate → time_series</text>
+      <rect x="400" y="210" width="170" height="60" rx="6" class="box"/>
+      <text x="485" y="235" text-anchor="middle" class="t-strong">payload_to_agent_files()</text>
+      <text x="485" y="253" text-anchor="middle" class="t-small">same 4 files</text>
+
+      <line x1="140" y1="60" x2="168" y2="60" class="edge" marker-end="url(#arr)"/>
+      <line x1="370" y1="60" x2="398" y2="60" class="edge" marker-end="url(#arr)"/>
+      <line x1="140" y1="150" x2="168" y2="150" class="edge" marker-end="url(#arr)"/>
+      <line x1="370" y1="150" x2="398" y2="150" class="edge" marker-end="url(#arr)"/>
+      <line x1="140" y1="240" x2="168" y2="240" class="edge" marker-end="url(#arr)"/>
+      <line x1="370" y1="240" x2="398" y2="240" class="edge" marker-end="url(#arr)"/>
+      <line x1="570" y1="60" x2="598" y2="60" class="edge" marker-end="url(#arr)"/>
+      <line x1="570" y1="150" x2="598" y2="150" class="edge" marker-end="url(#arr)"/>
+      <line x1="570" y1="240" x2="598" y2="240" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="600" y="30" width="170" height="240" rx="6" class="box-acc"/>
+      <text x="685" y="56" text-anchor="middle" class="t-strong">output/</text>
+      <text x="685" y="96" text-anchor="middle">Company.json</text>
+      <text x="685" y="113" text-anchor="middle" class="t-small">everything</text>
+      <text x="685" y="146" text-anchor="middle">…_revenue.json</text>
+      <text x="685" y="180" text-anchor="middle">…_balance_sheet.json</text>
+      <text x="685" y="214" text-anchor="middle">…_liquidity.json</text>
+      <text x="685" y="248" text-anchor="middle" class="t-small">one file per agent</text>
+
+      <line x1="685" y1="270" x2="685" y2="306" class="edge" marker-end="url(#arr)"/>
+      <rect x="300" y="308" width="470" height="50" rx="6" class="box"/>
+      <text x="535" y="329" text-anchor="middle" class="t-strong">st.session_state["ocr_cache"]</text>
+      <text x="535" y="347" text-anchor="middle" class="t-small">→ key metrics · credibility score · readiness check · Run Analysis</text>
+    </svg>
+    </div>
+    <figcaption>Each tab on the Upload page calls a different converter, but every path produces the same four files and the same cached payload. From the credibility check onwards, nothing knows which door the data came through.</figcaption>
+  </figure>
+
+  <p class="prose">This is the Upload page code for the PDF tab. The ticker and CSV tabs follow exactly the same shape with a different converter.</p>
+  <figure class="code">
+    <figcaption><span>app.py · page_upload(), Bloomberg PDF tab</span></figcaption>
+<pre><code>uploaded_files = st.file_uploader(<span class="st">"Drop Bloomberg PDF(s) here"</span>, type=[<span class="st">"pdf"</span>], accept_multiple_files=True)
+
+cache_key = (<span class="st">"pdf"</span>,) + tuple(sorted(f.name <span class="kw">for</span> f <span class="kw">in</span> uploaded_files))
+cached_pdf = st.session_state.get(<span class="st">"cache_pdf"</span>, {})
+<span class="kw">if</span> cached_pdf.get(<span class="st">"cache_key"</span>) != cache_key:          <span class="cm"># only parse new files</span>
+    uploads = [(f.getvalue(), f.name) <span class="kw">for</span> f <span class="kw">in</span> uploaded_files]
+    payload, written_path, agent_paths = parse_pdf_to_json(uploads=uploads, output_dir=<span class="st">"output"</span>)
+    st.session_state[<span class="st">"cache_pdf"</span>] = {
+        <span class="st">"cache_key"</span>: cache_key, <span class="st">"payload"</span>: payload,
+        <span class="st">"written_path"</span>: written_path, <span class="st">"agent_paths"</span>: agent_paths,
+        <span class="st">"source_label"</span>: <span class="st">f"{len(uploads)} Bloomberg PDF(s)"</span>,
+    }
+    st.session_state[<span class="st">"ocr_cache"</span>] = st.session_state[<span class="st">"cache_pdf"</span>]
+    st.session_state.pop(<span class="st">"agent_outputs"</span>, None)           <span class="cm"># old results no longer valid</span>
+
+<span class="cm"># ticker tab:  payload = fetch_by_ticker(ticker)
+#              _, written_path, agent_paths = payload_to_agent_files(payload, output_dir="output")
+# CSV tab:     payload = load_private_company_data(file_bytes, filename, company_name, currency)
+#              _, written_path, agent_paths = payload_to_agent_files(payload, output_dir="output")</span></code></pre>
+  </figure>
+
+  <details class="qa"><summary>Streamlit re-runs the whole script on every click. How do you avoid re-parsing the PDF each time?</summary>
+    <div class="ans"><p>With a cache key. For PDFs it is the sorted list of file names; for a ticker it is the symbol. The parsed payload is stored in <code>st.session_state</code> with that key, and parsing only runs again if the key changes. Switching tabs clears all caches so data from one source never mixes with another.</p></div>
+  </details>
+
+  <!-- PDF path -->
+  <h3>Path 1 · Bloomberg PDF, step by step</h3>
+  <div class="prose">
+    <p>This is the most complex path, and the one interviewers will dig into. It runs four stages, and each stage hands a specific object to the next one.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 300" role="img" aria-label="PDF pipeline: temp file, extract_pdf gives PDFContent, parse_statement gives ParsedStatement, build_company_json gives the payload, then split files are written. Inside parse_statement: header parsing, table parser first, text parser as fallback, all using normalise_period, resolve_field and _parse_number.">
+      <rect x="10" y="20" width="140" height="56" rx="6" class="box"/>
+      <text x="80" y="44" text-anchor="middle" class="t-strong">Save to temp file</text>
+      <text x="80" y="62" text-anchor="middle" class="t-small">pdfplumber needs a path</text>
+      <rect x="165" y="20" width="140" height="56" rx="6" class="box-acc"/>
+      <text x="235" y="44" text-anchor="middle" class="t-strong">extract_pdf()</text>
+      <text x="235" y="62" text-anchor="middle" class="t-small">→ PDFContent</text>
+      <rect x="320" y="20" width="140" height="56" rx="6" class="box-acc"/>
+      <text x="390" y="44" text-anchor="middle" class="t-strong">parse_statement()</text>
+      <text x="390" y="62" text-anchor="middle" class="t-small">→ ParsedStatement</text>
+      <rect x="475" y="20" width="140" height="56" rx="6" class="box-acc"/>
+      <text x="545" y="44" text-anchor="middle" class="t-strong">build_company_json()</text>
+      <text x="545" y="62" text-anchor="middle" class="t-small">→ payload dict</text>
+      <rect x="630" y="20" width="140" height="56" rx="6" class="box"/>
+      <text x="700" y="44" text-anchor="middle" class="t-strong">_sub_payload()</text>
+      <text x="700" y="62" text-anchor="middle" class="t-small">→ 4 JSON files</text>
+      <line x1="150" y1="48" x2="163" y2="48" class="edge" marker-end="url(#arr)"/>
+      <line x1="305" y1="48" x2="318" y2="48" class="edge" marker-end="url(#arr)"/>
+      <line x1="460" y1="48" x2="473" y2="48" class="edge" marker-end="url(#arr)"/>
+      <line x1="615" y1="48" x2="628" y2="48" class="edge" marker-end="url(#arr)"/>
+      <text x="235" y="96" text-anchor="middle" class="t-small">one per uploaded PDF</text>
+      <text x="545" y="96" text-anchor="middle" class="t-small">merges IS + BS</text>
+
+      <line x1="390" y1="76" x2="390" y2="128" class="edge" stroke-dasharray="3 3"/>
+      <rect x="10" y="130" width="760" height="160" rx="10" class="group"/>
+      <text x="24" y="150" class="t-small">inside parse_statement()</text>
+
+      <rect x="30" y="162" width="190" height="52" rx="6" class="box"/>
+      <text x="125" y="184" text-anchor="middle" class="t-strong">_parse_header()</text>
+      <text x="125" y="201" text-anchor="middle" class="t-small">company · currency · IS/BS</text>
+      <rect x="260" y="162" width="210" height="52" rx="6" class="box-acc"/>
+      <text x="365" y="184" text-anchor="middle" class="t-strong">_parse_from_tables()</text>
+      <text x="365" y="201" text-anchor="middle" class="t-small">tried first</text>
+      <rect x="540" y="162" width="210" height="52" rx="6" class="box"/>
+      <text x="645" y="184" text-anchor="middle" class="t-strong">_parse_from_text()</text>
+      <text x="645" y="201" text-anchor="middle" class="t-small">fallback, line by line</text>
+      <line x1="220" y1="188" x2="258" y2="188" class="edge" marker-end="url(#arr)"/>
+      <line x1="470" y1="188" x2="538" y2="188" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="504" y="180" text-anchor="middle" class="t-bad">no data</text>
+
+      <text x="30" y="254" class="t-small">every cell goes through:</text>
+      <rect x="190" y="236" width="170" height="34" rx="6" class="box"/>
+      <text x="275" y="258" text-anchor="middle">normalise_period()</text>
+      <rect x="380" y="236" width="170" height="34" rx="6" class="box"/>
+      <text x="465" y="258" text-anchor="middle">resolve_field()</text>
+      <rect x="570" y="236" width="170" height="34" rx="6" class="box"/>
+      <text x="655" y="258" text-anchor="middle">_parse_number()</text>
+    </svg>
+    </div>
+    <figcaption>Top row: the four stages and the object each one returns. Bottom: what happens inside the parser. The table reader is tried first; only if it finds no data does the text reader run. Both use the same three helpers for periods, labels and numbers.</figcaption>
+  </figure>
+
+  <h3>Stage 0 · The entry point</h3>
+  <p class="prose"><code>parse_pdf_to_json()</code> runs the whole PDF path. pdfplumber needs a real file, so each upload is written into a temporary folder that is deleted automatically afterwards. The user's PDF is never kept on disk.</p>
+  <figure class="code">
+    <figcaption><span>ocr/pdf_parser.py · parse_pdf_to_json()</span></figcaption>
+<pre><code>parsed_statements = []
+<span class="kw">with</span> tempfile.TemporaryDirectory() <span class="kw">as</span> td:                 <span class="cm"># auto-deleted afterwards</span>
+    <span class="kw">for</span> idx, (pdf_bytes, filename) <span class="kw">in</span> enumerate(uploads):
+        pdf_path = Path(td) / <span class="st">f"upload_{idx}.pdf"</span>
+        pdf_path.write_bytes(pdf_bytes)
+
+        content = extract_pdf(pdf_path)                     <span class="cm"># stage 1</span>
+        parsed = parse_statement(content)                   <span class="cm"># stage 2</span>
+        parsed.source_file = filename
+        <span class="kw">if</span> parsed.data:
+            parsed_statements.append(parsed)
+
+    <span class="kw">if not</span> parsed_statements:
+        <span class="kw">raise</span> ValueError(<span class="st">"No recognised financial data extracted from any uploaded PDF"</span>)
+
+    payload = build_company_json(parsed_statements)         <span class="cm"># stage 3</span>
+    full_path = _write(<span class="st">f"{safe}.json"</span>, payload)               <span class="cm"># stage 4</span>
+    agent_paths = {
+        <span class="st">"revenue"</span>:       _write(<span class="st">f"{safe}_revenue.json"</span>,       _sub_payload(payload, _REVENUE_FIELDS)),
+        <span class="st">"balance_sheet"</span>: _write(<span class="st">f"{safe}_balance_sheet.json"</span>, _sub_payload(payload, _BALANCE_SHEET_FIELDS)),
+        <span class="st">"liquidity"</span>:     _write(<span class="st">f"{safe}_liquidity.json"</span>,     _sub_payload(payload, _LIQUIDITY_FIELDS)),
+    }</code></pre>
+  </figure>
+
+  <h3>Stage 1 · extract_pdf(): read the raw page content</h3>
+  <p class="prose">For every page it saves two things: the plain text, and any tables pdfplumber can find. Bloomberg PDFs are inconsistent: some draw lines around cells, others only line text up with spaces. So it tries a strict line-based reading first and falls back to a spacing-based one. The result is a <code>PDFContent</code> object: a list of pages, each with <code>text</code> and <code>tables</code>.</p>
+  <figure class="code">
+    <figcaption><span>src/extractor.py · extract_pdf()</span></figcaption>
+<pre><code>_TABLE_SETTINGS          = {<span class="st">"vertical_strategy"</span>: <span class="st">"lines"</span>, <span class="st">"horizontal_strategy"</span>: <span class="st">"lines"</span>, ...}
+_TABLE_SETTINGS_FALLBACK = {<span class="st">"vertical_strategy"</span>: <span class="st">"text"</span>,  <span class="st">"horizontal_strategy"</span>: <span class="st">"text"</span>, ...}
+
+<span class="kw">with</span> pdfplumber.open(path) <span class="kw">as</span> pdf:
+    <span class="kw">for</span> idx, page <span class="kw">in</span> enumerate(pdf.pages):
+        page_data = PageData(page_number=idx + 1)
+        page_data.text = page.extract_text() <span class="kw">or</span> <span class="st">""</span>
+        <span class="kw">if not</span> page_data.text.strip():
+            logger.warning(<span class="st">"... PDF may be scanned/image-based."</span>)
+
+        tables = page.extract_tables(table_settings=_TABLE_SETTINGS)
+        <span class="kw">if not</span> tables:
+            tables = page.extract_tables(table_settings=_TABLE_SETTINGS_FALLBACK)
+        page_data.tables = tables <span class="kw">or</span> []
+        content.pages.append(page_data)</code></pre>
+  </figure>
+
+  <h3>Stage 2 · parse_statement(): turn text and tables into data</h3>
+  <p class="prose">First it reads the header, then it tries the tables, and only falls back to reading text line by line if the tables gave nothing.</p>
+  <figure class="code">
+    <figcaption><span>src/parser.py · parse_statement()</span></figcaption>
+<pre><code><span class="kw">def</span> parse_statement(content: PDFContent) -> ParsedStatement:
+    full_text = content.full_text
+    company, currency, stmt_type = _parse_header(full_text)
+    result = ParsedStatement(source_file=content.path.name, company=company,
+                             currency=currency, statement_type=stmt_type)
+
+    tables = content.all_tables
+    <span class="kw">if</span> tables:
+        periods, data = _parse_from_tables(tables, stmt_type)
+        <span class="kw">if</span> data:                                   <span class="cm"># tables worked: done</span>
+            result.periods, result.data = periods, data
+            <span class="kw">return</span> result
+
+    periods, data = _parse_from_text(full_text, stmt_type)   <span class="cm"># fallback</span>
+    result.periods, result.data = periods, data
+    <span class="kw">return</span> result</code></pre>
+  </figure>
+
+  <p class="prose"><strong>2a · Reading the header.</strong> It looks only at the first 15 non-empty lines. The statement type comes from regex patterns (“income statement”, “profit and loss”, “balance sheet”), the currency from a list of codes (defaulting to INR), and the company name from a <code>Company:</code> field or the first line.</p>
+  <figure class="code">
+    <figcaption><span>src/parser.py · _parse_header() and src/mapper.py</span></figcaption>
+<pre><code>header_block = <span class="st">"\n"</span>.join(lines[:15])
+stmt = detect_statement_type(header_block)            <span class="cm"># "IS" or "BS"</span>
+
+cur_match = _CURRENCY_RE.search(header_block)         <span class="cm"># INR|USD|EUR|GBP|JPY|...</span>
+currency = cur_match.group(1).upper() <span class="kw">if</span> cur_match <span class="kw">else</span> <span class="st">"INR"</span>
+
+m = re.search(<span class="st">r"\bCompany\s*:\s*(?P&lt;name&gt;[^\n]+)"</span>, header_block, flags=re.IGNORECASE)
+company = m.group(<span class="st">"name"</span>).strip() <span class="kw">if</span> m <span class="kw">else</span> lines[0]
+
+<span class="cm"># mapper.py</span>
+IS_PATTERNS = [re.compile(<span class="st">r"income\s+statement"</span>, re.I), re.compile(<span class="st">r"profit\s*(?:&amp;|and)\s*loss"</span>, re.I), ...]
+BS_PATTERNS = [re.compile(<span class="st">r"balance\s+sheet"</span>, re.I), ...]</code></pre>
+  </figure>
+
+  <p class="prose"><strong>2b · Reading a table.</strong> The first row is the header with the periods. The first column is the label. For every other row: map the label to a key, then read each number under its period. Rows with labels the mapper does not know are skipped.</p>
+  <div class="example">
+    <div class="lbl">Worked example · what one table becomes</div>
+    <div class="tbl" style="margin-top:6px"><table>
+      <thead><tr><th>Row in the PDF</th><th>FY 2023</th><th>FY 2024</th><th>What the parser does</th></tr></thead>
+      <tbody>
+        <tr><td>(header row)</td><td>FY 2023</td><td>FY 2024</td><td>periods → <code>2023-FY</code>, <code>2024-FY</code></td></tr>
+        <tr><td>Revenue from Operations</td><td class="num">1,53,670</td><td class="num">1,62,990</td><td>→ <code>revenue</code>: 153670, 162990</td></tr>
+        <tr><td>Finance Cost</td><td class="num">(284)</td><td class="num">(470)</td><td>→ <code>interest_expense</code>: −284, −470</td></tr>
+        <tr><td>EBITDA Margin %</td><td class="num">24.5</td><td class="num">24.1</td><td>no pattern matches → skipped</td></tr>
+        <tr><td>Net Income</td><td class="num">24,108</td><td class="num">—</td><td>→ <code>net_income</code>: 24108 only (the dash is "no value")</td></tr>
+      </tbody>
+    </table></div>
+    <p>Note the brackets: in accounting, <code>(284)</code> means −284.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/parser.py · _parse_from_tables()</span></figcaption>
+<pre><code><span class="kw">for</span> table <span class="kw">in</span> tables:
+    header_row = table[0]
+    col_periods = [None]                                  <span class="cm"># column 0 = labels</span>
+    <span class="kw">for</span> cell <span class="kw">in</span> header_row[1:]:
+        raw = (cell <span class="kw">or</span> <span class="st">""</span>).strip()
+        col_periods.append(normalise_period(raw) <span class="kw">if</span> raw <span class="kw">else</span> None)
+
+    <span class="kw">for</span> row <span class="kw">in</span> table[1:]:
+        label = (row[0] <span class="kw">or</span> <span class="st">""</span>).strip()
+        canonical = resolve_field(label)                  <span class="cm"># "Revenue from Operations" → "revenue"</span>
+        <span class="kw">if</span> canonical <span class="kw">is</span> None:
+            <span class="kw">continue</span>                                      <span class="cm"># unknown label: skip</span>
+        <span class="kw">for</span> col_idx <span class="kw">in</span> range(1, min(len(row), len(col_periods))):
+            val = _parse_number(row[col_idx])
+            <span class="kw">if</span> val <span class="kw">is not</span> None:
+                data.setdefault(canonical, []).append(PeriodValue(period=col_periods[col_idx], value=val))</code></pre>
+  </figure>
+
+  <p class="prose"><strong>2c · The text fallback.</strong> When no table is found, it reads lines of text. It finds the first line with two or more period labels (the header), then for each line after it, it walks <em>backwards from the end</em> collecting numbers. Whatever is left at the front is the label. Reading from the right works because Bloomberg labels can contain spaces, but the numbers are always at the end.</p>
+  <div class="example">
+    <div class="lbl">Worked example</div>
+    <p>Line: <code>Total Current Assets 6,71,850 7,08,810 8,94,320</code> → numbers taken from the right: 894320, 708810, 671850 → reversed to left-to-right order → label left over: "Total Current Assets" → key <code>current_assets</code>. If a line has fewer numbers than there are periods, they are matched to the <em>latest</em> periods.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/parser.py · _parse_from_text()</span></figcaption>
+<pre><code>tokens = line.strip().split()
+values_raw = []
+idx = len(tokens) - 1
+<span class="kw">while</span> idx >= 0:                                         <span class="cm"># walk from the right</span>
+    tok = _strip_trailing_footnote(tokens[idx])
+    <span class="kw">if</span> _parse_number(tok) <span class="kw">is</span> None:
+        <span class="kw">break</span>                                             <span class="cm"># hit the label</span>
+    values_raw.append(tok)
+    idx -= 1
+
+label = <span class="st">" "</span>.join(tokens[: idx + 1]).strip()
+canonical = resolve_field(label)
+values_raw.reverse()
+
+<span class="kw">if</span> len(values_raw) &lt; len(periods):
+    aligned_periods = periods[-len(values_raw):]             <span class="cm"># match to the latest periods</span></code></pre>
+  </figure>
+
+  <h3>The three helpers every value passes through</h3>
+  <p class="prose"><strong>normalise_period()</strong> turns any period style into <code>YYYY-FY</code> or <code>YYYY-QN</code> using one big regular expression.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>In the PDF</th><th>Becomes</th><th>Rule</th></tr></thead>
+    <tbody>
+      <tr><td><code>FY2024</code>, <code>FY24</code></td><td><code>2024-FY</code></td><td>2-digit years: below 80 → 20xx</td></tr>
+      <tr><td><code>Q1 2024</code>, <code>1Q2024</code>, <code>1QFY24</code></td><td><code>2024-Q1</code></td><td>quarter number + year</td></tr>
+      <tr><td><code>3M 2024</code> / <code>6M</code> / <code>9M</code></td><td><code>2024-Q1</code> / <code>Q2</code> / <code>Q3</code></td><td>months elapsed</td></tr>
+      <tr><td><code>12M 2023</code></td><td><code>2023-FY</code></td><td>12 months = full year</td></tr>
+      <tr><td><code>Mar-24</code></td><td><code>2024-Q4</code></td><td>Indian financial year: Jan–Mar is Q4</td></tr>
+      <tr><td><code>2023</code></td><td><code>2023-FY</code></td><td>plain year</td></tr>
+    </tbody>
+  </table></div>
+  <figure class="code">
+    <figcaption><span>src/parser.py · month → quarter (Indian FY)</span></figcaption>
+<pre><code>_MONTH_TO_Q = {
+    <span class="st">"jan"</span>: 4, <span class="st">"feb"</span>: 4, <span class="st">"mar"</span>: 4,   <span class="cm"># Indian FY: Q4 = Jan-Mar</span>
+    <span class="st">"apr"</span>: 1, <span class="st">"may"</span>: 1, <span class="st">"jun"</span>: 1,   <span class="cm"># Q1 = Apr-Jun</span>
+    <span class="st">"jul"</span>: 2, <span class="st">"aug"</span>: 2, <span class="st">"sep"</span>: 2,
+    <span class="st">"oct"</span>: 3, <span class="st">"nov"</span>: 3, <span class="st">"dec"</span>: 3,
+}
+
+<span class="kw">def</span> _expand_year(y):
+    <span class="kw">if</span> len(y) == 2:
+        <span class="kw">return</span> <span class="st">f"20{y}"</span> <span class="kw">if</span> int(y) &lt; 80 <span class="kw">else</span> <span class="st">f"19{y}"</span>
+    <span class="kw">return</span> y</code></pre>
+  </figure>
+
+  <p class="prose"><strong>resolve_field()</strong> maps a row label to a key. Each key has a list of regex patterns; the dictionary is checked top to bottom and the first match wins. That makes the <em>order</em> of the dictionary important.</p>
+  <figure class="code">
+    <figcaption><span>src/mapper.py · _FIELD_MAP and resolve_field()</span></figcaption>
+<pre><code>_FIELD_MAP = {
+    <span class="st">"revenue"</span>: [
+        re.compile(<span class="st">r"^(?:total\s+)?revenue"</span>, re.I),        <span class="cm"># Revenue, Total Revenue</span>
+        re.compile(<span class="st">r"^net\s+revenue"</span>, re.I),
+        re.compile(<span class="st">r"^sales"</span>, re.I),
+        re.compile(<span class="st">r"^turnover"</span>, re.I),
+    ],
+    <span class="st">"interest_expense"</span>: [re.compile(<span class="st">r"^interest\s+expense"</span>, re.I), re.compile(<span class="st">r"^finance\s+cost"</span>, re.I)],
+    <span class="st">"total_assets"</span>:      [re.compile(<span class="st">r"^total\s+assets"</span>, re.I)],
+    <span class="st">"current_assets"</span>:    [re.compile(<span class="st">r"^(?:total\s+)?current\s+assets"</span>, re.I)],
+    <span class="st">"total_liabilities"</span>: [re.compile(<span class="st">r"^total\s+liabilities"</span>, re.I)],
+    <span class="st">"equity"</span>: [re.compile(<span class="st">r"^total\s+(?:shareholders?['’]?s?\s+)?equity"</span>, re.I),
+               re.compile(<span class="st">r"^net\s+worth"</span>, re.I), ...],
+    ...                                                      <span class="cm"># about 25 keys in total</span>
+}
+
+<span class="kw">def</span> resolve_field(label):
+    <span class="kw">for</span> canonical, patterns <span class="kw">in</span> _FIELD_MAP.items():
+        <span class="kw">for</span> pat <span class="kw">in</span> patterns:
+            <span class="kw">if</span> pat.search(label.strip()):
+                <span class="kw">return</span> canonical
+    <span class="kw">return</span> None</code></pre>
+  </figure>
+
+  <p class="prose"><strong>_parse_number()</strong> turns a cell into a float: it strips commas, treats <code>(1,234)</code> as −1234, treats dashes and “N/A” as “no value”, and returns <code>None</code> for anything that does not look like a number.</p>
+  <figure class="code">
+    <figcaption><span>src/parser.py · _parse_number()</span></figcaption>
+<pre><code><span class="kw">if not</span> raw <span class="kw">or</span> raw <span class="kw">in</span> (<span class="st">"—"</span>, <span class="st">"-"</span>, <span class="st">"–"</span>, <span class="st">"N/A"</span>, <span class="st">"n/a"</span>, <span class="st">"NA"</span>):
+    <span class="kw">return</span> None
+<span class="kw">if not</span> _NUM_RE.match(raw):                               <span class="cm"># doesn't look numeric</span>
+    <span class="kw">return</span> None
+negative = <span class="st">"("</span> <span class="kw">in</span> raw <span class="kw">and</span> <span class="st">")"</span> <span class="kw">in</span> raw                     <span class="cm"># accounting brackets</span>
+cleaned = raw.replace(<span class="st">","</span>, <span class="st">""</span>).replace(<span class="st">"("</span>, <span class="st">""</span>).replace(<span class="st">")"</span>, <span class="st">""</span>).replace(<span class="st">" "</span>, <span class="st">""</span>)
+cleaned = cleaned.replace(<span class="st">"−"</span>, <span class="st">"-"</span>).replace(<span class="st">"–"</span>, <span class="st">"-"</span>)    <span class="cm"># unicode minus signs</span>
+val = float(cleaned)
+<span class="kw">return</span> -abs(val) <span class="kw">if</span> negative <span class="kw">else</span> val</code></pre>
+  </figure>
+
+  <h3>Stage 3 · build_company_json(): merge the statements</h3>
+  <p class="prose">You usually upload two PDFs: the income statement and the balance sheet. Each becomes its own <code>ParsedStatement</code>. The builder pours all their values into one dictionary, removes duplicate periods (the <strong>last</strong> value seen wins), sorts them, and makes sure a few key fields always exist, even as an empty list, so the agents never hit a missing key.</p>
+  <figure class="code">
+    <figcaption><span>src/builder.py · build_company_json()</span></figcaption>
+<pre><code>_REQUIRED_FIELDS = [<span class="st">"revenue"</span>, <span class="st">"net_income"</span>, <span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>, <span class="st">"total_debt"</span>, <span class="st">"equity"</span>]
+
+merged = defaultdict(list)
+<span class="kw">for</span> stmt <span class="kw">in</span> statements:                                  <span class="cm"># IS + BS</span>
+    source_files.append(stmt.source_file)
+    <span class="kw">for</span> field_key, pv_list <span class="kw">in</span> stmt.data.items():
+        <span class="kw">for</span> pv <span class="kw">in</span> pv_list:
+            merged[field_key].append({<span class="st">"period"</span>: pv.period, <span class="st">"value"</span>: pv.value})
+
+<span class="kw">def</span> _dedup_series(series):
+    seen = {}
+    <span class="kw">for</span> entry <span class="kw">in</span> series:
+        seen[entry[<span class="st">"period"</span>]] = entry                       <span class="cm"># later value overwrites earlier</span>
+    <span class="kw">return</span> sorted(seen.values(), key=<span class="kw">lambda</span> e: e[<span class="st">"period"</span>])
+
+<span class="kw">for</span> key <span class="kw">in</span> sorted(set(merged) | set(_REQUIRED_FIELDS)):
+    time_series[key] = _dedup_series(merged.get(key, []))</code></pre>
+  </figure>
+
+  <h3>Stage 4 · split one file per agent</h3>
+  <p class="prose">Besides the full JSON, three smaller files are written, each holding only the fields one agent needs. Each agent is then run with a file path, which is also how you run it alone from the command line.</p>
+  <figure class="code">
+    <figcaption><span>ocr/pdf_parser.py · field sets and _sub_payload()</span></figcaption>
+<pre><code>_REVENUE_FIELDS = {<span class="st">"revenue"</span>, <span class="st">"cost_of_revenue"</span>, <span class="st">"gross_profit"</span>, <span class="st">"operating_income"</span>, <span class="st">"ebitda"</span>, <span class="st">"net_income"</span>, ...}
+_BALANCE_SHEET_FIELDS = {<span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>, <span class="st">"equity"</span>, <span class="st">"total_debt"</span>, ...}
+_LIQUIDITY_FIELDS = {<span class="st">"current_assets"</span>, <span class="st">"current_liabilities"</span>, <span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>, <span class="st">"equity"</span>}
+
+<span class="kw">def</span> _sub_payload(payload, fields):
+    ts = payload.get(<span class="st">"time_series"</span>) <span class="kw">or</span> {}
+    <span class="kw">return</span> {<span class="st">"entity"</span>: payload.get(<span class="st">"entity"</span>, {}),
+            <span class="st">"time_series"</span>: {k: v <span class="kw">for</span> k, v <span class="kw">in</span> ts.items() <span class="kw">if</span> k <span class="kw">in</span> fields}}</code></pre>
+  </figure>
+
+  <div class="flag"><strong>Real bug, visible in the project's own output.</strong> The pattern <code>^total\s+liabilities</code> also matches the row <em>“Total Liabilities &amp; Equity”</em>, which on every balance sheet equals total assets. That row comes later in the table, and the builder keeps the last value, so it overwrites the real liabilities. In <code>output/Infosys_Ltd.json</code>, <code>total_liabilities</code> is identical to <code>total_assets</code> for all ten years (e.g. 2025: 14,89,030 both). Everything downstream then breaks: the leverage ratio and the accounting identity check (the latter does at least flag the mismatch). Fix: anchor the pattern so it rejects “&amp; equity”, e.g. <code>^total\s+liabilities\s*$</code>, or check the more specific labels first.</div>
+  <div class="flag"><strong>Second issue in the same file:</strong> Infosys revenue includes <code>2026-FY</code> and <code>2027-FY</code>. Those are Bloomberg <em>analyst estimates</em>, read as if they were actual results, and 2019 is about 4× smaller than 2020, which suggests a different row or unit. The yearly-jump check only flags changes above 500%, so this 338% jump passes. Fix: drop columns later than the latest reported year, and tighten the jump threshold.</div>
+
+  <!-- Ticker path -->
+  <h3>Path 2 · Stock ticker</h3>
+  <div class="prose">
+    <p>Much simpler, because Yahoo Finance already gives structured tables. <code>fetch_by_ticker()</code> gets the company name and currency from <code>t.info</code>, the yearly income statement from <code>t.financials</code> and the balance sheet from <code>t.balance_sheet</code>. Each is a pandas table where rows are labels like “Total Revenue” and columns are dates. Two lookup tables map the labels to our keys and the dates become <code>YYYY-FY</code>.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/yfinance_ingestion.py · fetch_by_ticker()</span></figcaption>
+<pre><code>t = yf.Ticker(ticker)
+info = t.info <span class="kw">or</span> {}
+company_name = info.get(<span class="st">"longName"</span>) <span class="kw">or</span> info.get(<span class="st">"shortName"</span>) <span class="kw">or</span> ticker.upper()
+currency = info.get(<span class="st">"currency"</span>) <span class="kw">or</span> <span class="st">"USD"</span>
+
+financials = t.financials      <span class="cm"># income statement: rows = labels, columns = dates</span>
+balance    = t.balance_sheet
+<span class="kw">if</span> (financials <span class="kw">is</span> None <span class="kw">or</span> financials.empty) <span class="kw">and</span> (balance <span class="kw">is</span> None <span class="kw">or</span> balance.empty):
+    <span class="kw">raise</span> ValueError(<span class="st">f"No financial data returned by yfinance for ticker '{ticker}'."</span>)
+
+time_series = {}
+time_series.update(_df_to_series(financials, _INCOME_MAP))
+<span class="kw">for</span> k, v <span class="kw">in</span> _df_to_series(balance, _BALANCE_MAP).items():
+    <span class="kw">if</span> k <span class="kw">not in</span> time_series:
+        time_series[k] = v
+
+<span class="kw">for</span> field <span class="kw">in</span> (<span class="st">"revenue"</span>, <span class="st">"net_income"</span>, <span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>, <span class="st">"total_debt"</span>, <span class="st">"equity"</span>):
+    time_series.setdefault(field, [])                        <span class="cm"># always present</span>
+
+<span class="kw">return</span> {<span class="st">"entity"</span>: {<span class="st">"entity_id"</span>: company_name, <span class="st">"source"</span>: <span class="st">"yfinance"</span>,
+                   <span class="st">"currency"</span>: currency, <span class="st">"source_files"</span>: [ticker]},
+        <span class="st">"time_series"</span>: time_series}
+
+<span class="cm"># inside _df_to_series(): a date column becomes "YYYY-FY"</span>
+<span class="kw">def</span> _to_period(ts):
+    <span class="kw">return</span> <span class="st">f"{pd.Timestamp(ts).year}-FY"</span></code></pre>
+  </figure>
+  <p class="prose">The project's own <code>output/Apple_Inc_.json</code> came from this path: four years (2022–2025), and liabilities plus equity add up to assets exactly, which shows why structured data is more reliable than reading PDFs.</p>
+
+  <!-- CSV path -->
+  <h3>Path 3 · CSV or Excel for private companies</h3>
+  <div class="prose">
+    <p>The user types the company name, picks a currency and uploads a sheet. <code>load_private_company_data()</code> is mostly validation, and every error message tells the user exactly what to fix.</p>
+    <ul class="plain">
+      <li>Read <code>.xlsx</code>/<code>.xls</code> with openpyxl, <code>.csv</code> with pandas.</li>
+      <li>Lower-case and trim the column names, so “Revenue ” works.</li>
+      <li>A <code>period</code> column must exist; empty periods are dropped.</li>
+      <li>Every period must match <code>YYYY-FY</code> or <code>YYYY-QN</code>.</li>
+      <li>No period may appear twice.</li>
+      <li>At least one known financial column must be present.</li>
+      <li>Blank or non-numeric cells are skipped.</li>
+    </ul>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/private_company_ingestion.py · load_private_company_data()</span></figcaption>
+<pre><code><span class="kw">if</span> ext <span class="kw">in</span> (<span class="st">"xlsx"</span>, <span class="st">"xls"</span>):
+    df = pd.read_excel(io.BytesIO(file_bytes), engine=<span class="st">"openpyxl"</span>)
+<span class="kw">else</span>:
+    df = pd.read_csv(io.BytesIO(file_bytes))
+
+df.columns = [str(c).strip().lower() <span class="kw">for</span> c <span class="kw">in</span> df.columns]
+
+<span class="kw">if</span> <span class="st">"period"</span> <span class="kw">not in</span> df.columns:
+    <span class="kw">raise</span> ValueError(<span class="st">"Missing required column 'period'. ..."</span>)
+df = df.dropna(subset=[<span class="st">"period"</span>])
+df[<span class="st">"period"</span>] = df[<span class="st">"period"</span>].apply(_validate_period)       <span class="cm"># must be YYYY-FY / YYYY-QN</span>
+
+<span class="kw">if</span> df[<span class="st">"period"</span>].duplicated().any():
+    <span class="kw">raise</span> ValueError(<span class="st">"Duplicate period values found: ..."</span>)
+<span class="kw">if not</span> (_CANONICAL_FIELDS &amp; set(df.columns)):
+    <span class="kw">raise</span> ValueError(<span class="st">"No recognised financial columns found. ..."</span>)
+
+time_series = _df_to_time_series(df)                         <span class="cm"># skips blank / non-numeric cells</span>
+<span class="kw">return</span> {<span class="st">"entity"</span>: {<span class="st">"entity_id"</span>: company_name, <span class="st">"source"</span>: <span class="st">"private_upload"</span>,
+                   <span class="st">"currency"</span>: currency, <span class="st">"source_files"</span>: [filename]},
+        <span class="st">"time_series"</span>: time_series}</code></pre>
+  </figure>
+  <div class="example">
+    <div class="lbl">Worked example · a valid upload</div>
+<pre style="margin:0 0 10px;font:13px/1.6 var(--mono);overflow-x:auto">period,revenue,total_assets,total_liabilities,current_assets,current_liabilities,equity
+2021-FY,820,1500,900,640,410,600
+2022-FY,905,1620,950,700,430,670
+2023-FY,990,1710,980,730,445,730
+2024-FY,1080,1840,1030,790,470,810</pre>
+    <p>Four years, all seven fields present, and assets = liabilities + equity in every row, so every agent can run. Writing <code>FY2023</code> instead of <code>2023-FY</code> is rejected with a message showing the expected format.</p>
+  </div>
+
+  <!-- Gap filling -->
+  <h3>After ingestion · filling missing fields</h3>
+  <div class="prose">
+    <p>Once the payload is cached, the Upload page checks it against what the Liquidity and Balance Sheet agents need. If anything is missing, the user chooses <strong>Proceed anyway</strong> (those agents are skipped) or <strong>Fix missing data</strong>.</p>
+    <ul class="plain">
+      <li><strong>Auto-fetch</strong> (ticker source only): <code>auto_fetch_missing_fields()</code> tries FMP first, then Alpha Vantage for anything still missing, and only fills fields that are actually missing.</li>
+      <li><strong>Manual entry:</strong> the user types values per period; <code>_patch_payload_field()</code> merges them in, and the four files are rewritten.</li>
+    </ul>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/supplemental_fetchers.py · auto_fetch_missing_fields()</span></figcaption>
+<pre><code>resolved, errors = {}, []
+
+<span class="kw">if</span> fmp_api_key <span class="kw">and</span> fmp_api_key.strip():                    <span class="cm"># 1. FMP first</span>
+    <span class="kw">try</span>:
+        fmp_data = fetch_missing_from_fmp(ticker, fmp_api_key.strip())
+        <span class="kw">for</span> field, series <span class="kw">in</span> fmp_data.items():
+            <span class="kw">if</span> field <span class="kw">in</span> missing_fields <span class="kw">and</span> field <span class="kw">not in</span> resolved:
+                resolved[field] = series
+    <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+        errors.append(<span class="st">f"FMP: {exc}"</span>)
+
+still_missing = missing_fields - set(resolved)              <span class="cm"># 2. Alpha Vantage for the rest</span>
+<span class="kw">if</span> still_missing <span class="kw">and</span> av_api_key <span class="kw">and</span> av_api_key.strip():
+    ...
+
+<span class="cm"># app.py: manual values are merged in, user values win</span>
+existing = {e[<span class="st">"period"</span>]: e[<span class="st">"value"</span>] <span class="kw">for</span> e <span class="kw">in</span> ts.get(field, [])}
+existing.update(period_values)</code></pre>
+  </figure>
+  <div class="flag"><strong>Worth knowing:</strong> in <code>app.py</code> the sidebar sets <code>av_api_key = ""</code>, so the Alpha Vantage fallback can never actually run. Only FMP works. If asked, say that Alpha Vantage is implemented but not wired to a key yet.</div>
+
+  <h3>Questions on ingestion</h3>
+  <details class="qa"><summary>The folder is called "ocr". Is this really OCR?</summary>
+    <div class="ans"><p>No. pdfplumber reads the text that is already stored inside a digital PDF. It cannot read a scanned image, and the code warns when a page has no text: "PDF may be scanned/image-based". To support scans you would add an OCR step such as Tesseract before parsing.</p></div>
+  </details>
+  <details class="qa"><summary>Why try tables first and text second?</summary>
+    <div class="ans"><p>Tables keep columns aligned, so each number is reliably tied to its period. Text reading has to guess which number belongs to which column. So the more reliable method goes first, and the fallback only runs when it finds nothing.</p></div>
+  </details>
+  <details class="qa"><summary>Why does the text parser read numbers from the end of the line?</summary>
+    <div class="ans"><p>Labels can contain spaces and even digits, like "Total Current Assets", so splitting from the left is unreliable. Numbers are always the last tokens, so walking backwards until something is not a number cleanly separates the values from the label.</p></div>
+  </details>
+  <details class="qa"><summary>What happens to a row whose label the mapper doesn't recognise?</summary>
+    <div class="ans"><p>It is silently skipped. That keeps the output clean, but you cannot see what was missed. A good improvement would be to log every unmapped label so new patterns can be added to <code>mapper.py</code>.</p></div>
+  </details>
+  <details class="qa"><summary>Why does "Mar-24" become Q4 and not Q1?</summary>
+    <div class="ans"><p>The mapping follows the Indian financial year, which runs April to March, so January to March is Q4. That is correct for Indian companies but wrong for companies whose year follows the calendar, like most US firms. A better design would read the fiscal year end from the company's metadata.</p></div>
+  </details>
+  <details class="qa"><summary>Why write a separate JSON file for each agent?</summary>
+    <div class="ans"><p>Each agent gets only the fields it needs, and agents take a file path, which means they can also be run alone from the command line on any saved file. The files on disk also act as an audit trail of exactly what each agent saw.</p></div>
+  </details>
+  <details class="qa"><summary>Why save the upload to a temporary folder?</summary>
+    <div class="ans"><p>pdfplumber opens files by path, not raw bytes. <code>TemporaryDirectory</code> is deleted automatically when the block ends, so the user's PDF is never left on the server.</p></div>
+  </details>
+  <details class="qa"><summary>Did you find any bugs in your ingestion?</summary>
+    <div class="ans"><p>Yes, and saying so is a strong answer. "Total Liabilities &amp; Equity" matches the total-liabilities pattern and overwrites the real value, which shows up in the Infosys sample output, where liabilities equal assets. Bloomberg's estimate columns (2026–2027) were also read as actual revenue. Both have simple fixes: a stricter regex, and dropping columns after the latest reported year.</p></div>
+  </details>
+  <details class="qa"><summary>Why is ticker data more reliable than PDF data?</summary>
+    <div class="ans"><p>Yahoo already returns labelled, structured tables, so there is no layout guessing. In the project's own outputs, the Apple file from yfinance balances perfectly, while the Infosys file from a PDF has the liabilities mapping problem. The trade-off is that yfinance only gives about four years and is an unofficial source.</p></div>
+  </details>
+</section>
+
+<!-- 4 -->
+<section id="cred">
+  <div class="secnum">04</div>
+  <h2>Credibility score</h2>
+
+  <h3>Why we do it</h3>
+  <div class="prose">
+    <p>Every agent trusts its input completely. If the data is wrong, the agents calculate wrong ratios with perfect precision, and then the LLM explains those wrong ratios in confident, professional English. <strong>Bad data does not look bad by the time it reaches the dashboard.</strong></p>
+    <p>And bad data is likely here. PDFs are read by pattern matching, Yahoo is an unofficial source, and CSVs are typed by hand. So before any analysis runs, <code>src/data_verifier.py</code> inspects the data and gives it a score from 0 to 100, with a list of every check and its result. A bank does the same thing: it checks that the documents are genuine and add up before it reads what they say.</p>
+    <p>The checks answer four plain questions:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Checks</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Is the source genuine?</strong></td><td>Bloomberg signature (PDF), active listing and dual-source cross-check (ticker), source type (CSV)</td></tr>
+      <tr><td><strong>Is there enough data?</strong></td><td>Field completeness, temporal coverage</td></tr>
+      <tr><td><strong>Does the data agree with itself?</strong></td><td>Accounting identity, internal consistency, year-on-year plausibility</td></tr>
+      <tr><td><strong>Is it current?</strong></td><td>Data freshness</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Where it runs</h3>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 250" role="img" aria-label="After ingestion the payload goes to run_verification, which runs source-specific checks then six universal checks, producing a CredibilityReport. Its score and confidence are shown on the Upload page. It runs again after the pipeline to save the score in MongoDB history.">
+      <rect x="10" y="40" width="130" height="58" rx="6" class="box"/>
+      <text x="75" y="65" text-anchor="middle" class="t-strong">Cached payload</text>
+      <text x="75" y="82" text-anchor="middle" class="t-small">after ingestion</text>
+      <line x1="140" y1="69" x2="168" y2="69" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="170" y="20" width="250" height="100" rx="8" class="box-acc"/>
+      <text x="295" y="42" text-anchor="middle" class="t-strong">run_verification(source, …)</text>
+      <rect x="186" y="54" width="218" height="26" rx="4" class="box"/>
+      <text x="295" y="72" text-anchor="middle" class="t-small">1. checks for this source type</text>
+      <rect x="186" y="86" width="218" height="26" rx="4" class="box"/>
+      <text x="295" y="104" text-anchor="middle" class="t-small">2. six checks for every source</text>
+      <line x1="420" y1="69" x2="448" y2="69" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="450" y="40" width="150" height="58" rx="6" class="box"/>
+      <text x="525" y="65" text-anchor="middle" class="t-strong">CredibilityReport</text>
+      <text x="525" y="82" text-anchor="middle" class="t-small">list of checks</text>
+      <line x1="600" y1="69" x2="628" y2="69" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="630" y="40" width="140" height="58" rx="6" class="box"/>
+      <text x="700" y="65" text-anchor="middle" class="t-strong">Upload page</text>
+      <text x="700" y="82" text-anchor="middle" class="t-small">score card + details</text>
+
+      <path d="M525 98 V170 H700 V198" class="edge" marker-end="url(#arr)"/>
+      <text x="612" y="162" text-anchor="middle" class="t-small">.score  .confidence</text>
+      <rect x="630" y="200" width="140" height="40" rx="6" class="box-ext"/>
+      <text x="700" y="225" text-anchor="middle" class="t-small">MongoDB file_history</text>
+
+      <rect x="10" y="190" width="440" height="50" rx="6" class="box"/>
+      <text x="230" y="211" text-anchor="middle" class="t-strong">Readiness check → Run Analysis</text>
+      <text x="230" y="228" text-anchor="middle" class="t-small">the score is shown, but does not stop anything from running</text>
+      <line x1="75" y1="98" x2="75" y2="188" class="edge" marker-end="url(#arr)"/>
+    </svg>
+    </div>
+    <figcaption>The report is built once when data is loaded and shown on the Upload page. It is built again after the agents run, only to save the score to the user's history. The score informs the user but never blocks the analysis.</figcaption>
+  </figure>
+
+  <h3>Step 1 · The two data structures</h3>
+  <p class="prose">Each check produces one <code>CredibilityCheck</code>: a name, a status, a sentence explaining the result, and a <strong>weight</strong> (how many points it is worth). A <code>CredibilityReport</code> is just the list of checks plus the company and source.</p>
+  <figure class="code">
+    <figcaption><span>src/data_verifier.py · data structures</span></figcaption>
+<pre><code>STATUS_PASS = <span class="st">"pass"</span>
+STATUS_WARN = <span class="st">"warn"</span>
+STATUS_FAIL = <span class="st">"fail"</span>
+STATUS_SKIP = <span class="st">"skip"</span>
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> CredibilityCheck:
+    name: str
+    status: str          <span class="cm"># pass / warn / fail / skip</span>
+    detail: str          <span class="cm"># human-readable reason, shown in the UI</span>
+    weight: int = 10     <span class="cm"># max points this check can contribute</span>
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> CredibilityReport:
+    source: str          <span class="cm"># bloomberg_pdf / ticker / csv</span>
+    entity: str
+    checks: list[CredibilityCheck] = field(default_factory=list)</code></pre>
+  </figure>
+
+  <h3>Step 2 · Choosing which checks to run</h3>
+  <p class="prose"><code>run_verification()</code> first adds the checks that only make sense for this source, then the six that apply to everything.</p>
+  <figure class="code">
+    <figcaption><span>src/data_verifier.py · run_verification()</span></figcaption>
+<pre><code><span class="kw">def</span> run_verification(source, payload, extracted_text=<span class="st">""</span>, ticker=None, fmp_api_key=None):
+    report = CredibilityReport(source=source, entity=...)
+
+    <span class="cm"># ── checks for this source only ──</span>
+    <span class="kw">if</span> source == <span class="st">"bloomberg_pdf"</span>:
+        <span class="kw">if</span> extracted_text:
+            report.checks.append(_check_bloomberg_signature(extracted_text))
+        <span class="kw">else</span>:
+            report.checks.append(CredibilityCheck(<span class="st">"Bloomberg Signature"</span>, STATUS_SKIP, <span class="st">"No extracted text provided ..."</span>, weight=25))
+    <span class="kw">elif</span> source == <span class="st">"ticker"</span>:
+        <span class="kw">if</span> ticker:
+            report.checks.append(_check_ticker_listing_status(ticker))
+        <span class="kw">if</span> ticker <span class="kw">and</span> fmp_api_key:
+            report.checks.append(_check_ticker_dual_source(payload, ticker, fmp_api_key))
+        <span class="kw">else</span>:
+            report.checks.append(CredibilityCheck(<span class="st">"Dual-Source Cross-Check"</span>, STATUS_SKIP, <span class="st">"Add FMP key ..."</span>, weight=20))
+    <span class="kw">elif</span> source == <span class="st">"csv"</span>:
+        report.checks.append(CredibilityCheck(<span class="st">"Source Type"</span>, STATUS_WARN, <span class="st">"Private/manual upload ..."</span>, weight=5))
+
+    <span class="cm"># ── checks for every source ──</span>
+    report.checks.append(_check_completeness(payload))
+    report.checks.append(_check_temporal_coverage(payload))
+    report.checks.append(_check_accounting_identity(payload))
+    report.checks.append(_check_freshness(payload))
+    report.checks.append(_check_yoy_plausibility(payload))
+    report.checks.append(_check_internal_consistency(payload))
+    <span class="kw">return</span> report</code></pre>
+  </figure>
+
+  <h3>Step 3 · Turning checks into a score</h3>
+  <div class="prose">
+    <ul class="plain">
+      <li><span class="pill pass">PASS</span> earns its full weight.</li>
+      <li><span class="pill warn">WARN</span> earns half its weight, rounded down (<code>15 // 2 = 7</code>).</li>
+      <li><span class="pill fail">FAIL</span> earns nothing.</li>
+      <li><span class="pill skip">SKIP</span> is removed from the total. If a check could not run (for example, no FMP key), the data is not punished for it.</li>
+    </ul>
+    <p><strong>Score = points earned ÷ points possible × 100.</strong> 80 or more is HIGH, 55 or more is MEDIUM, below 55 is LOW. If every check was skipped, the score is a neutral 50.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/data_verifier.py · CredibilityReport properties</span></figcaption>
+<pre><code><span class="kw">@property</span>
+<span class="kw">def</span> score(self) -> int:
+    total_weight = sum(c.weight <span class="kw">for</span> c <span class="kw">in</span> self.checks <span class="kw">if</span> c.status != STATUS_SKIP)
+    earned = sum(
+        c.weight      <span class="kw">if</span> c.status == STATUS_PASS <span class="kw">else</span>
+        c.weight // 2 <span class="kw">if</span> c.status == STATUS_WARN <span class="kw">else</span> 0
+        <span class="kw">for</span> c <span class="kw">in</span> self.checks
+    )
+    <span class="kw">if</span> total_weight == 0:
+        <span class="kw">return</span> 50
+    <span class="kw">return</span> round(earned / total_weight * 100)
+
+<span class="kw">@property</span>
+<span class="kw">def</span> confidence(self) -> str:
+    s = self.score
+    <span class="kw">if</span> s >= 80: <span class="kw">return</span> <span class="st">"HIGH"</span>
+    <span class="kw">if</span> s >= 55: <span class="kw">return</span> <span class="st">"MEDIUM"</span>
+    <span class="kw">return</span> <span class="st">"LOW"</span></code></pre>
+  </figure>
+  <p class="prose">The score is a <code>@property</code>, so it is recalculated from the checks every time it is read. There is no stored number that could fall out of step with the checks.</p>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 286" role="img" aria-label="Bar chart of the Acme CSV example. Each check's bar length is its weight; the filled part is points earned. Source type 2 of 5, completeness 7 of 15, coverage 10 of 10, identity 20 of 20, freshness 5 of 10, plausibility 10 of 10, consistency 15 of 15. Total 69 of 85, score 81, HIGH.">
+      <text x="10" y="18" class="t-small">Check</text>
+      <text x="200" y="18" class="t-small">1 unit = 20 px · grey = possible, green = earned</text>
+      <text x="770" y="18" text-anchor="end" class="t-small">earned / possible</text>
+
+      <text x="10" y="45">Source type</text>
+      <rect x="200" y="32" width="100" height="18" rx="3" fill="var(--code-bg)" stroke="var(--line)"/>
+      <rect x="200" y="32" width="40" height="18" rx="3" fill="var(--amber)"/>
+      <text x="770" y="45" text-anchor="end">2 / 5  <tspan class="t-small">WARN</tspan></text>
+
+      <text x="10" y="77">Field completeness</text>
+      <rect x="200" y="64" width="300" height="18" rx="3" fill="var(--code-bg)" stroke="var(--line)"/>
+      <rect x="200" y="64" width="140" height="18" rx="3" fill="var(--amber)"/>
+      <text x="770" y="77" text-anchor="end">7 / 15  <tspan class="t-small">WARN</tspan></text>
+
+      <text x="10" y="109">Temporal coverage</text>
+      <rect x="200" y="96" width="200" height="18" rx="3" fill="var(--accent)"/>
+      <text x="770" y="109" text-anchor="end">10 / 10  <tspan class="t-small">PASS</tspan></text>
+
+      <text x="10" y="141">Accounting identity</text>
+      <rect x="200" y="128" width="400" height="18" rx="3" fill="var(--accent)"/>
+      <text x="770" y="141" text-anchor="end">20 / 20  <tspan class="t-small">PASS</tspan></text>
+
+      <text x="10" y="173">Data freshness</text>
+      <rect x="200" y="160" width="200" height="18" rx="3" fill="var(--code-bg)" stroke="var(--line)"/>
+      <rect x="200" y="160" width="100" height="18" rx="3" fill="var(--amber)"/>
+      <text x="770" y="173" text-anchor="end">5 / 10  <tspan class="t-small">WARN</tspan></text>
+
+      <text x="10" y="205">YoY plausibility</text>
+      <rect x="200" y="192" width="200" height="18" rx="3" fill="var(--accent)"/>
+      <text x="770" y="205" text-anchor="end">10 / 10  <tspan class="t-small">PASS</tspan></text>
+
+      <text x="10" y="237">Internal consistency</text>
+      <rect x="200" y="224" width="300" height="18" rx="3" fill="var(--accent)"/>
+      <text x="770" y="237" text-anchor="end">15 / 15  <tspan class="t-small">PASS</tspan></text>
+
+      <line x1="10" y1="254" x2="770" y2="254" stroke="var(--line)"/>
+      <text x="10" y="276" class="t-strong">Total</text>
+      <text x="770" y="276" text-anchor="end" class="t-strong">69 / 85 → 81 · HIGH</text>
+    </svg>
+    </div>
+    <figcaption>The worked example below, drawn to scale: each bar's length is the check's weight, and the coloured part is what it earned (amber = half credit for a warning). The accounting identity has the longest bar because it carries the most weight.</figcaption>
+  </figure>
+
+  <div class="example">
+    <div class="lbl">Worked example · the Acme CSV from section 03 (real output of the code)</div>
+    <p>Source type <span class="pill warn">WARN</span> 2/5 · completeness <span class="pill warn">WARN</span> 7/15 (6 of 10 key fields) · coverage <span class="pill pass">PASS</span> 10/10 · identity <span class="pill pass">PASS</span> 20/20 · freshness <span class="pill warn">WARN</span> 5/10 (2024 is two years old) · plausibility <span class="pill pass">PASS</span> 10/10 · consistency <span class="pill pass">PASS</span> 15/15.</p>
+    <p>69 ÷ 85 × 100 = 81.2 → <strong>81, HIGH</strong>.</p>
+  </div>
+
+  <h3>Step 4 · Each check, how and why</h3>
+
+  <p class="prose"><strong>Accounting identity (20 points), the most important check.</strong> In every balance sheet, assets = liabilities + equity. This is a rule of double-entry bookkeeping, not an estimate. If it fails, the extraction or the label mapping almost certainly went wrong. A 5% tolerance allows for rounding and items like minority interest. Fewer than half the periods off is a warning; more than half is a failure.</p>
+  <figure class="code">
+    <figcaption><span>_check_accounting_identity()</span></figcaption>
+<pre><code>common = set(assets) &amp; set(liabs) &amp; set(equity)               <span class="cm"># periods with all three</span>
+<span class="kw">if not</span> common:
+    <span class="kw">return</span> CredibilityCheck(<span class="st">"Accounting Identity"</span>, STATUS_SKIP, ..., weight=20)
+
+mismatches = []
+<span class="kw">for</span> p <span class="kw">in</span> sorted(common):
+    a, l, e = assets[p], liabs[p], equity[p]
+    rel = abs(a - (l + e)) / abs(a)                             <span class="cm"># how far off, as a fraction</span>
+    <span class="kw">if</span> rel > 0.05:
+        mismatches.append(<span class="st">f"{p}: {rel*100:.1f}% off"</span>)
+
+<span class="kw">if not</span> mismatches:                         → PASS
+<span class="kw">elif</span> len(mismatches) &lt;= len(common) // 2: → WARN  <span class="cm"># "may indicate rounding"</span>
+<span class="kw">else</span>:                                     → FAIL  <span class="cm"># "check data source"</span></code></pre>
+  </figure>
+
+  <p class="prose"><strong>Internal consistency (15 points).</strong> Some numbers must always be smaller than others: gross profit cannot exceed revenue, current assets cannot exceed total assets, current liabilities cannot exceed total liabilities. If they do, two labels were probably swapped. A 5% margin allows for rounding. Any problem at all is a failure.</p>
+  <figure class="code">
+    <figcaption><span>_check_internal_consistency()</span></figcaption>
+<pre><code><span class="kw">for</span> p <span class="kw">in</span> set(rev) &amp; set(gp):
+    <span class="kw">if</span> abs(rev[p]) > 0 <span class="kw">and</span> gp[p] > rev[p] * 1.05:
+        issues.append(<span class="st">f"gross_profit > revenue in {p}"</span>)
+<span class="kw">for</span> p <span class="kw">in</span> set(ca) &amp; set(ta):
+    <span class="kw">if</span> ta[p] > 0 <span class="kw">and</span> ca[p] > ta[p] * 1.05:
+        issues.append(<span class="st">f"current_assets > total_assets in {p}"</span>)
+<span class="kw">for</span> p <span class="kw">in</span> set(cl) &amp; set(tl):
+    <span class="kw">if</span> tl[p] > 0 <span class="kw">and</span> cl[p] > tl[p] * 1.05:
+        issues.append(<span class="st">f"current_liabilities > total_liabilities in {p}"</span>)</code></pre>
+  </figure>
+
+  <p class="prose"><strong>Year-on-year plausibility (10 points).</strong> It walks every field in date order and flags any jump of more than 500%. Real companies rarely grow five-fold in a year, but a value in thousands next to one in millions looks exactly like that. This is a warning, never a failure, because big swings can be real.</p>
+  <figure class="code">
+    <figcaption><span>_check_yoy_plausibility()</span></figcaption>
+<pre><code><span class="kw">for</span> fname, entries <span class="kw">in</span> ts.items():
+    vals = [e[<span class="st">"value"</span>] <span class="kw">for</span> e <span class="kw">in</span> sorted(entries, key=<span class="kw">lambda</span> x: x.get(<span class="st">"period"</span>, <span class="st">""</span>))]
+    <span class="kw">for</span> i <span class="kw">in</span> range(1, len(vals)):
+        prev, curr = vals[i-1], vals[i]
+        <span class="kw">if</span> abs(prev) &lt; 1:
+            <span class="kw">continue</span>                              <span class="cm"># avoid dividing by ~0</span>
+        <span class="kw">if</span> abs((curr - prev) / prev) > 5.0:      <span class="cm"># more than 500%</span>
+            flagged.append(<span class="st">f"{fname}: {change*100:.0f}% jump"</span>)
+            <span class="kw">break</span>                                 <span class="cm"># one flag per field is enough</span></code></pre>
+  </figure>
+
+  <p class="prose"><strong>Field completeness (15 points).</strong> Counts how many of ten key fields have data: revenue, gross profit, net income, operating income, EBITDA, total assets, total liabilities, equity, current assets, current liabilities. 80% or more passes, 50% or more warns, less fails. Fewer fields means fewer agents can run.</p>
+  <p class="prose"><strong>Temporal coverage (10 points).</strong> Counts the periods of revenue (or total assets if there is no revenue). 4 or more passes, 2–3 warns, 1 fails. The agents need at least 4 periods to calculate a trend.</p>
+  <p class="prose"><strong>Data freshness (10 points).</strong> Takes the newest period across all fields and compares its year with today's. At most 1 year old passes, 2 years warns, older fails. Analysing a company on five-year-old figures is misleading.</p>
+  <figure class="code">
+    <figcaption><span>_check_completeness() and _check_freshness()</span></figcaption>
+<pre><code>key_fields = {<span class="st">"revenue"</span>, <span class="st">"gross_profit"</span>, <span class="st">"net_income"</span>, <span class="st">"operating_income"</span>, <span class="st">"total_assets"</span>,
+              <span class="st">"total_liabilities"</span>, <span class="st">"equity"</span>, <span class="st">"current_assets"</span>, <span class="st">"current_liabilities"</span>, <span class="st">"ebitda"</span>}
+pct = len(key_fields &amp; _available_fields(payload)) / len(key_fields) * 100
+<span class="cm"># pct >= 80 → PASS,  pct >= 50 → WARN,  else FAIL</span>
+
+latest = _latest_period(payload)                         <span class="cm"># e.g. "2025-FY"</span>
+age = datetime.now(timezone.utc).year - _period_to_year(latest)
+<span class="cm"># age <= 1 → PASS,  age == 2 → WARN,  else FAIL</span></code></pre>
+  </figure>
+
+  <p class="prose"><strong>Source checks.</strong> These ask whether the data really came from where it claims to.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Check</th><th>Points</th><th>How</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Bloomberg signature</td><td class="num">25</td><td>Searches the PDF text for "Bloomberg Finance L.P.", "© Bloomberg" and similar (pass), or just "Bloomberg"/"BBG" (warn)</td><td>Real Bloomberg exports carry a legal notice; a random PDF does not</td></tr>
+      <tr><td>Active listing</td><td class="num">10</td><td>yfinance: market cap above 0, or any trading in the last 5 days</td><td>A delisted or mistyped ticker may return stale or wrong data</td></tr>
+      <tr><td>Dual-source cross-check</td><td class="num">20</td><td>Fetches the same figures from FMP and compares; average gap up to 5% passes, up to 15% warns</td><td>Two independent sources agreeing is strong evidence both are right</td></tr>
+      <tr><td>Source type</td><td class="num">5</td><td>Always a warning for CSV</td><td>Private data cannot be checked against anything external, so the internal checks matter most</td></tr>
+    </tbody>
+  </table></div>
+  <figure class="code">
+    <figcaption><span>_check_bloomberg_signature() and _check_ticker_dual_source()</span></figcaption>
+<pre><code>strong_markers = [<span class="st">"bloomberg finance l.p."</span>, <span class="st">"bloomberg l.p."</span>, <span class="st">"bloomberg terminal"</span>, <span class="st">"© bloomberg"</span>, <span class="st">"bloomberg data"</span>]
+soft_markers   = [<span class="st">"bloomberg"</span>, <span class="st">"bbg"</span>, <span class="st">"bberg"</span>]
+<span class="cm"># strong found → PASS,  only soft → WARN,  none → FAIL</span>
+
+<span class="cm"># dual source: compare yfinance with FMP on the periods both have</span>
+<span class="kw">for</span> p <span class="kw">in</span> common:
+    rel = abs(yf_val - fmp_val) / abs(yf_val)
+    diffs.append(rel)
+avg_diff = float(np.mean(diffs)) * 100
+<span class="cm"># avg_diff <= 5 → PASS,  <= 15 → WARN,  else FAIL</span></code></pre>
+  </figure>
+
+  <h3>Real results on the project's own data</h3>
+  <p class="prose">I ran <code>run_verification()</code> on the sample files in <code>output/</code>. These are the actual numbers the code produces.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Data</th><th>Score</th><th>What decided it</th></tr></thead>
+    <tbody>
+      <tr><td>Apple, by ticker</td><td class="num">94 HIGH</td><td>Everything passes except plausibility: retained earnings swung 8,850%. That is real (Apple's retained earnings sit near zero after buybacks), so it is a false alarm. FMP check skipped: no key.</td></tr>
+      <tr><td>Acme CSV (example)</td><td class="num">81 HIGH</td><td>Clean and balanced; loses points for 4 missing fields, the CSV warning and 2-year-old data.</td></tr>
+      <tr><td>Infosys PDF, as the app runs it</td><td class="num">75 MEDIUM</td><td>Accounting identity <span class="pill fail">FAIL</span> in all 10 years (about 82% off), caused by the liabilities mapping bug from section 03. Bloomberg signature skipped.</td></tr>
+      <tr><td>Infosys PDF, if the signature check ran</td><td class="num">81 HIGH</td><td>Same broken data, but the 25 signature points lift it over 80.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="flag"><strong>The key lesson from these results:</strong> a file where liabilities are wrong in <em>every</em> year still scores MEDIUM, and could score HIGH. Because the score is a weighted average, a total failure on the most important check is outweighed by passes on easier ones. A fix is a <strong>hard gate</strong>: if the accounting identity fails, cap the confidence at LOW whatever the average says.</div>
+  <div class="flag"><strong>The Bloomberg signature check never runs in the app.</strong> <code>run_verification()</code> needs <code>extracted_text</code>, but <code>app.py</code> never passes it, so for every PDF this 25-point check is skipped. Fix: keep the text from <code>extract_pdf()</code> in the cache and pass it in.</div>
+
+  <h3>Other things to know</h3>
+  <ul class="plain prose">
+    <li><strong>The score never blocks anything.</strong> A LOW score is shown in red, but Run Analysis still works. It is a warning to the user, not a gate.</li>
+    <li><strong>Future periods count as fresh.</strong> Infosys has Bloomberg estimates for 2027, so freshness says "2027-FY — current". The check should ignore periods later than the current year.</li>
+    <li><strong>The 500% jump limit is loose.</strong> The Infosys revenue jump from 2019 to 2020 is 338% and is not flagged, while Apple's real retained-earnings swing is.</li>
+    <li><strong>The history score is calculated differently.</strong> After the agents run, the score is calculated again for MongoDB without the ticker or FMP key, so the listing and cross-check are left out. For Apple both happen to give 94, but they can differ.</li>
+  </ul>
+
+  <h3>Questions on credibility</h3>
+  <details class="qa"><summary>Why check the data at all? The agents already validate their inputs.</summary>
+    <div class="ans"><p>The agents check <em>format</em>: enough periods, no negatives, the right order. They cannot tell whether a correctly formatted number is the <em>right</em> number. The credibility checks look at meaning: do the figures add up, do they agree with another source, are they current. Without it, wrong data produces confident, well-written wrong analysis.</p></div>
+  </details>
+  <details class="qa"><summary>Why is the accounting identity worth so many points?</summary>
+    <div class="ans"><p>It is the one rule every balance sheet must satisfy. If it fails, something went wrong in extraction or mapping, which is exactly what this check is meant to catch. Our own Infosys sample shows it working: it caught the liabilities bug that every other check missed.</p></div>
+  </details>
+  <details class="qa"><summary>Why does a warning give half the points instead of zero?</summary>
+    <div class="ans"><p>A warning means "suspicious, not proven wrong", like 2-year-old data or a big but possibly real jump. Half credit lets a few warnings lower the score without making it look as bad as a real failure.</p></div>
+  </details>
+  <details class="qa"><summary>Why are skipped checks removed from the total instead of scoring zero?</summary>
+    <div class="ans"><p>A skip means we could not check, not that the data failed. For example, without an FMP key the cross-check cannot run. Scoring that as zero would punish the data for a missing API key.</p></div>
+  </details>
+  <details class="qa"><summary>Why a weighted average? What is wrong with it?</summary>
+    <div class="ans"><p>It is simple to explain, and each check's weight reflects how much it matters. The weakness is that strong passes can hide a critical failure: our Infosys file fails the identity check in every year and still scores 75. The fix is to combine the average with hard gates, so a critical failure caps the result at LOW.</p></div>
+  </details>
+  <details class="qa"><summary>Where do the weights and thresholds come from?</summary>
+    <div class="ans"><p>They are judgement calls, not learned from data: more weight for checks that catch more serious problems (identity 20, signature 25), less for softer ones (freshness 10). Thresholds like 80 for HIGH and 5% for tolerance are common rules of thumb. To improve them you would test against labelled examples of good and bad data.</p></div>
+  </details>
+  <details class="qa"><summary>Can the Bloomberg signature check be fooled?</summary>
+    <div class="ans"><p>Yes. Anyone can type "© Bloomberg" into a PDF. It is a quick heuristic, not proof. Also, in this version the app never passes the PDF text to it, so it is always skipped. Real verification would need a digital signature or cross-checking figures with a trusted source.</p></div>
+  </details>
+  <details class="qa"><summary>Should a LOW score stop the analysis?</summary>
+    <div class="ans"><p>Today it does not. A good middle ground is to let it run but require the user to confirm, and to carry the credibility score into the agent results so nobody reads the analysis without seeing it.</p></div>
+  </details>
+  <details class="qa"><summary>Why is the score a @property and not a stored number?</summary>
+    <div class="ans"><p>So it is always calculated from the current list of checks. If a check is added or changed, the score cannot be stale.</p></div>
+  </details>
+</section>
+
+<!-- 5 -->
+<section id="pattern">
+  <div class="secnum">05</div>
+  <h2>How every agent works</h2>
+  <div class="prose">
+    <p>All five agents follow the same recipe, which makes them easy to explain. Each agent is two files: the real logic in <code>src/</code>, and a tiny wrapper in <code>agents/</code> that the dashboard calls. That split also lets every agent run on its own from the command line.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 140" role="img" aria-label="Agent recipe: load JSON, validate, calculate in Python, label risk with fixed rules, LLM explains, return entity, metrics and analysis.">
+      <rect x="11" y="24" width="108" height="58" rx="6" class="box"/>
+      <text x="65" y="50" text-anchor="middle" class="t-strong">Load JSON</text>
+      <text x="65" y="67" text-anchor="middle" class="t-small">common format</text>
+      <rect x="141" y="24" width="108" height="58" rx="6" class="box"/>
+      <text x="195" y="50" text-anchor="middle" class="t-strong">Validate</text>
+      <text x="195" y="67" text-anchor="middle" class="t-small">≥ 4 periods</text>
+      <rect x="271" y="24" width="108" height="58" rx="6" class="box-acc"/>
+      <text x="325" y="50" text-anchor="middle" class="t-strong">Calculate</text>
+      <text x="325" y="67" text-anchor="middle" class="t-small">pandas · numpy</text>
+      <rect x="401" y="24" width="108" height="58" rx="6" class="box-acc"/>
+      <text x="455" y="50" text-anchor="middle" class="t-strong">Label risk</text>
+      <text x="455" y="67" text-anchor="middle" class="t-small">fixed rules</text>
+      <rect x="531" y="24" width="108" height="58" rx="6" class="box-llm"/>
+      <text x="585" y="50" text-anchor="middle" class="t-strong">LLM explains</text>
+      <text x="585" y="67" text-anchor="middle" class="t-small">metrics only</text>
+      <rect x="661" y="24" width="108" height="58" rx="6" class="box"/>
+      <text x="715" y="50" text-anchor="middle" class="t-strong">Return</text>
+      <text x="715" y="67" text-anchor="middle" class="t-small">entity · metrics · text</text>
+      <line x1="119" y1="53" x2="139" y2="53" class="edge" marker-end="url(#arr)"/>
+      <line x1="249" y1="53" x2="269" y2="53" class="edge" marker-end="url(#arr)"/>
+      <line x1="379" y1="53" x2="399" y2="53" class="edge" marker-end="url(#arr)"/>
+      <line x1="509" y1="53" x2="529" y2="53" class="edge" marker-end="url(#arr)"/>
+      <line x1="639" y1="53" x2="659" y2="53" class="edge" marker-end="url(#arr)"/>
+      <text x="195" y="108" text-anchor="middle" class="t-small">bad data → error,</text>
+      <text x="195" y="123" text-anchor="middle" class="t-small">never silently fixed</text>
+      <text x="390" y="108" text-anchor="middle" class="t-small">same input → same numbers</text>
+      <text x="390" y="123" text-anchor="middle" class="t-small">every time</text>
+      <text x="585" y="108" text-anchor="middle" class="t-small">temperature 0,</text>
+      <text x="585" y="123" text-anchor="middle" class="t-small">no new numbers</text>
+    </svg>
+    </div>
+    <figcaption>The shared recipe. Green steps are deterministic Python; the amber step is the only place the LLM is used.</figcaption>
+  </figure>
+
+  <details class="qa"><summary>Are these really "agents"?</summary>
+    <div class="ans"><p>Be honest: they are specialised analysis modules, each with an LLM step, run in a fixed order. They do not plan or choose their own tools the way autonomous agents do. The word fits in the sense of "one expert per area": each owns one part of the analysis, can fail on its own without breaking the others, and can be tested alone.</p></div>
+  </details>
+</section>
+
+<!-- 6 Revenue -->
+<section id="revenue">
+  <div class="secnum">06</div>
+  <div class="agent-head"><h3>Revenue agent</h3><span class="file">src/revenue_agent.py</span></div>
+  <p class="asks"><strong>Question it answers:</strong> is revenue growing, how fast, and how steadily?</p>
+  <div class="prose">
+    <p><strong>Validation first.</strong> It needs at least 4 periods, no empty or negative values, no repeated periods, and the periods must already be in date order. If not, it stops with an error rather than quietly re-sorting.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Metric</th><th>Plain meaning</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td><code>avg_growth</code></td><td>Average growth per period, in %</td><td>mean of <code>pct_change() × 100</code></td></tr>
+      <tr><td><code>cagr</code></td><td>The steady yearly rate that gets you from first to last value</td><td><code>((last ÷ first)^(1 ÷ years) − 1) × 100</code></td></tr>
+      <tr><td><code>volatility</code></td><td>How bumpy the growth is</td><td>standard deviation of the growth rates</td></tr>
+      <tr><td><code>positive_growth_ratio</code></td><td>Share of periods that grew</td><td>mean of <code>growth &gt; 0</code></td></tr>
+      <tr><td><code>trend_direction</code></td><td>Up, down or flat overall</td><td>slope of a straight line through revenue, divided by average revenue</td></tr>
+    </tbody>
+  </table></div>
+  <figure class="code">
+    <figcaption><span>src/revenue_agent.py · compute_metrics() and classify_trend()</span></figcaption>
+<pre><code>series[<span class="st">"yoy_growth_pct"</span>] = series[<span class="st">"revenue"</span>].pct_change() * 100.0
+growth = series[<span class="st">"yoy_growth_pct"</span>].replace([np.inf, -np.inf], np.nan).dropna()
+
+avg_growth = float(growth.mean())
+volatility = float(growth.std(ddof=0))
+positive_growth_ratio = float((growth > 0).mean())
+
+years = n_periods - 1
+cagr = float(((last / first) ** (1.0 / years) - 1.0) * 100.0)
+
+x = np.arange(n_periods, dtype=float)
+slope = float(np.polyfit(x, y, deg=1)[0])          <span class="cm"># best-fit straight line</span>
+
+<span class="kw">def</span> classify_trend(*, slope, revenue_mean):
+    normalized = slope / revenue_mean               <span class="cm"># size-independent</span>
+    <span class="kw">if</span> normalized > 0.01:  <span class="kw">return</span> <span class="st">"increasing"</span>   <span class="cm"># +1% of average per period</span>
+    <span class="kw">if</span> normalized < -0.01: <span class="kw">return</span> <span class="st">"declining"</span>
+    <span class="kw">return</span> <span class="st">"stable"</span></code></pre>
+  </figure>
+  <div class="example">
+    <div class="lbl">Worked example</div>
+    <p>Revenue over four years: 100 → 110 → 121 → 133.1. Growth is 10%, 10%, 10%, so <strong>avg_growth = 10%</strong> and <strong>volatility = 0</strong>. CAGR = (133.1 ÷ 100)<sup>1/3</sup> − 1 = <strong>10%</strong>. The best-fit slope is about 11 per year; average revenue is about 116, and 11 ÷ 116 ≈ 9.5%, well above 1%, so the trend is <strong>increasing</strong>.</p>
+  </div>
+
+  <details class="qa"><summary>Why divide the slope by average revenue?</summary>
+    <div class="ans"><p>To make the trend fair across company sizes. A rise of ₹1,000 crore a year is huge for a small firm and tiny for a giant. Dividing by average revenue turns it into a percentage, so the same 1% rule works for every company.</p></div>
+  </details>
+  <details class="qa"><summary>Why report both CAGR and average growth?</summary>
+    <div class="ans"><p>CAGR only looks at the first and last values and hides what happened in between. Average growth plus volatility shows the path. Two companies with the same CAGR can have very different volatility: one grew steadily, the other swung up and down.</p></div>
+  </details>
+  <details class="qa"><summary>Is there a bug in the CAGR calculation?</summary>
+    <div class="ans"><p>Yes, a subtle one worth raising yourself. <code>years = n_periods - 1</code> assumes one period is one year. With quarterly data, four quarters would be counted as three "years", so the answer is a per-quarter rate wrongly labelled annual. The fix is to work out the real number of years from the period labels.</p></div>
+  </details>
+  <details class="qa"><summary>Why is positive_growth_ratio not sent to the LLM?</summary>
+    <div class="ans"><p>Small local models tend to "helpfully" rewrite 0.875 as 87.5%. That is a new number the code never produced, which breaks the core rule. Leaving the ratio out of the prompt removes the temptation.</p></div>
+  </details>
+</section>
+
+<!-- 7 Balance -->
+<section id="balance">
+  <div class="secnum">07</div>
+  <div class="agent-head"><h3>Balance sheet agent</h3><span class="file">src/balance_sheet_agent.py</span></div>
+  <p class="asks"><strong>Question it answers:</strong> how much does the company rely on borrowed money, and is that getting better or worse?</p>
+  <div class="prose">
+    <p>It lines up total assets, total liabilities and equity on the periods where all three exist (at least 4). Negative assets or liabilities are rejected as bad data. <strong>Negative equity is allowed</strong> with a warning, because a company that owes more than it owns is a real and serious signal, not a data error.</p>
+    <p>It then calculates the average growth of assets, liabilities and equity, and the <strong>leverage ratio = total liabilities ÷ equity</strong>, averaged over the periods. Finally, fixed rules decide the risk level.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/balance_sheet_agent.py · classify_balance_sheet_risk()</span></figcaption>
+<pre><code>expansion_ok = asset_growth_rate >= liability_growth_rate
+equity_positive = equity_growth_rate > 0
+
+<span class="cm"># High risk</span>
+<span class="kw">if</span> leverage_ratio > 3:
+    <span class="kw">return</span> <span class="st">"high"</span>
+<span class="kw">if</span> (liability_growth_rate > asset_growth_rate) <span class="kw">and</span> (equity_growth_rate <= 0):
+    <span class="kw">return</span> <span class="st">"high"</span>
+
+<span class="cm"># Low risk</span>
+<span class="kw">if</span> leverage_ratio < 2 <span class="kw">and</span> expansion_ok <span class="kw">and</span> equity_positive:
+    <span class="kw">return</span> <span class="st">"low"</span>
+
+<span class="kw">return</span> <span class="st">"moderate"</span>   <span class="cm"># everything else</span></code></pre>
+  </figure>
+  <div class="example">
+    <div class="lbl">Worked example</div>
+    <p>Leverage 2.5, assets growing 6% a year, liabilities 4%, equity 3%. Not above 3, and liabilities are not outgrowing assets, so not high. Leverage is not below 2, so not low. Result: <strong>moderate</strong>.</p>
+  </div>
+
+  <details class="qa"><summary>Is the leverage ratio the same as debt-to-equity?</summary>
+    <div class="ans"><p>Not exactly. It uses <em>total liabilities</em>, which includes things like money owed to suppliers. True debt-to-equity uses only interest-bearing debt. The README calls it D/E, so be precise in the interview.</p></div>
+  </details>
+  <details class="qa"><summary>Where do the 2 and 3 thresholds come from? Do they suit every company?</summary>
+    <div class="ans"><p>They are common rules of thumb for ordinary (non-financial) companies. They do not suit banks, which normally run at 10× or more, so this agent would flag every bank as high risk. A better version would use thresholds per industry.</p></div>
+  </details>
+  <details class="qa"><summary>Why fixed rules instead of a machine-learning model?</summary>
+    <div class="ans"><p>Every label can be traced to a rule a person can read, which regulators and auditors expect. We also had no labelled data on which companies later got into trouble, which a model would need for training.</p></div>
+  </details>
+</section>
+
+<!-- 8 Liquidity -->
+<section id="liquidity">
+  <div class="secnum">08</div>
+  <div class="agent-head"><h3>Liquidity agent</h3><span class="file">src/liquidity_agent.py</span></div>
+  <p class="asks"><strong>Question it answers:</strong> can the company pay the bills that are due in the next year?</p>
+  <div class="prose">
+    <p>It needs current assets, current liabilities, total assets, total liabilities and equity for at least 4 shared periods. "Current" means due or usable within a year.</p>
+    <ul class="plain">
+      <li><strong>Current ratio</strong> = current assets ÷ current liabilities. Above 1 means short-term assets cover short-term bills.</li>
+      <li><strong>Working capital</strong> = current assets − current liabilities, and whether it is trending up or down.</li>
+      <li>How much working capital moves around, plus asset, liability and equity growth.</li>
+    </ul>
+    <p>The risk level comes from a points system. More points means more risk.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Signal</th><th>Points</th></tr></thead>
+    <tbody>
+      <tr><td>Average current ratio below 1.0</td><td class="num">+3</td></tr>
+      <tr><td>Average current ratio between 1.0 and 1.5</td><td class="num">+1</td></tr>
+      <tr><td>Current ratio trending down</td><td class="num">+1</td></tr>
+      <tr><td>Working capital trending down</td><td class="num">+1</td></tr>
+      <tr><td>Liabilities growing more than 2 points faster than assets</td><td class="num">+2</td></tr>
+      <tr><td>Liabilities growing faster than assets (by less)</td><td class="num">+1</td></tr>
+      <tr><td>Working capital swings more than half its average size</td><td class="num">+1</td></tr>
+      <tr><td><strong>Total: 4 or more is high, 2–3 moderate, 0–1 low</strong></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="example">
+    <div class="lbl">Worked example</div>
+    <p>Current ratio 1.2 (+1), current ratio trending down (+1), working capital flat (0), liabilities growing 8% vs assets 5% (8 is more than 5 + 2, so +2), working capital fairly steady (0). Total <strong>4 → high</strong>.</p>
+  </div>
+
+  <h3>The strongest guardrails in the project</h3>
+  <p class="prose">This agent does not just trust the LLM to follow instructions. It checks the answer, retries once, and keeps the risk label out of the LLM's hands completely.</p>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 760 220" role="img" aria-label="Metrics without the risk flag go to the LLM. The answer is checked for banned words. If clean, the code adds the risk flag in front. If not, it retries once with a correction; a second failure raises an error.">
+      <rect x="20" y="70" width="140" height="58" rx="6" class="box-acc"/>
+      <text x="90" y="95" text-anchor="middle" class="t-strong">Metrics</text>
+      <text x="90" y="112" text-anchor="middle" class="t-small">risk flag removed</text>
+      <line x1="160" y1="99" x2="198" y2="99" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="200" y="70" width="120" height="58" rx="6" class="box-llm"/>
+      <text x="260" y="95" text-anchor="middle" class="t-strong">LLM call</text>
+      <text x="260" y="112" text-anchor="middle" class="t-small">temperature 0</text>
+      <line x1="320" y1="99" x2="358" y2="99" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="360" y="70" width="150" height="58" rx="6" class="box"/>
+      <text x="435" y="95" text-anchor="middle" class="t-strong">Check the text</text>
+      <text x="435" y="112" text-anchor="middle" class="t-small">banned words? risk labels?</text>
+
+      <line x1="510" y1="99" x2="568" y2="99" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <text x="539" y="90" text-anchor="middle" class="t-acc">clean</text>
+
+      <rect x="570" y="70" width="170" height="58" rx="6" class="box-acc"/>
+      <text x="655" y="95" text-anchor="middle" class="t-strong">Code adds the flag</text>
+      <text x="655" y="112" text-anchor="middle" class="t-small">"Liquidity risk flag: high. …"</text>
+
+      <path d="M435 128 V172 H260 V132" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="347" y="190" text-anchor="middle" class="t-bad">violation → retry once with a correction</text>
+      <text x="347" y="207" text-anchor="middle" class="t-small">fails twice → error, nothing shown</text>
+
+      <text x="435" y="50" text-anchor="middle" class="t-small">cash flow · profit · margin · debt · "high risk"</text>
+    </svg>
+    </div>
+    <figcaption>The LLM writes the description, but the code checks it and the code alone states the risk level, so the two can never contradict each other.</figcaption>
+  </figure>
+
+  <figure class="code">
+    <figcaption><span>src/liquidity_agent.py · output check and retry</span></figcaption>
+<pre><code><span class="kw">def</span> _explanation_violations(*, text):
+    low = text.lower()
+    violations = []
+    <span class="kw">for</span> term <span class="kw">in</span> [<span class="st">"cash flow"</span>, <span class="st">"profit"</span>, <span class="st">"profitability"</span>, <span class="st">"margin"</span>, <span class="st">"debt"</span>]:
+        <span class="kw">if</span> term <span class="kw">in</span> low:
+            violations.append(<span class="st">f"forbidden_term:{term}"</span>)
+    <span class="kw">if</span> re.search(<span class="st">r"\b(low|moderate|high)\s+risk\b"</span>, low):
+        violations.append(<span class="st">"risk_label_used"</span>)
+    <span class="kw">return</span> violations
+
+<span class="kw">for</span> attempt <span class="kw">in</span> range(2):
+    text = llm.invoke(messages).content.strip()
+    <span class="kw">if not</span> _explanation_violations(text=text):
+        <span class="kw">return</span> text
+    messages = [SystemMessage(content=<span class="st">"Correction: remove forbidden terms ..."</span>),
+                messages[0], messages[1]]
+<span class="kw">raise</span> RuntimeError(<span class="st">f"LLM explanation violated constraints: {violations}"</span>)
+
+<span class="cm"># later, in run_liquidity_agent():</span>
+analysis = <span class="st">f"Liquidity risk flag: {metrics['liquidity_risk_flag']}. {llm_text}"</span></code></pre>
+  </figure>
+
+  <details class="qa"><summary>Why ban the words "cash flow" in a liquidity agent?</summary>
+    <div class="ans"><p>Because no cash-flow data is given to it. If the LLM talks about cash flow, it is inventing information. The rule is simple: only talk about what you were given.</p></div>
+  </details>
+  <details class="qa"><summary>Why keep the risk flag away from the LLM?</summary>
+    <div class="ans"><p>If the LLM saw "high" it might soften it to "moderate", or contradict it later in the text. By hiding the flag and adding it in code, the label always matches the calculation exactly.</p></div>
+  </details>
+  <details class="qa"><summary>What is a weakness of this agent?</summary>
+    <div class="ans"><p>The displayed <code>liquidity_volatility</code> is in raw currency, so you cannot compare it across companies. Internally the risk score divides it by average working capital, which fixes this, but the number on screen is not normalised.</p></div>
+  </details>
+</section>
+
+<!-- 9 Sentiment -->
+<section id="sentiment">
+  <div class="secnum">09</div>
+  <div class="agent-head"><h3>Sentiment agent</h3><span class="file">src/sentiment_agent.py</span></div>
+  <p class="asks"><strong>Question it answers:</strong> what is the news saying about the company right now?</p>
+  <div class="prose">
+    <ul class="plain">
+      <li>Asks NewsAPI for up to 20 recent English articles about the company (free tier: 100 requests a day, last 30 days).</li>
+      <li>For each article, it takes the title and description, splits them into distinct words, and counts how many appear in a list of about 90 positive words and about 120 negative words.</li>
+      <li>Score = (positive − negative) ÷ (positive + negative), giving a number from −1 to +1.</li>
+      <li>0.15 or more is <strong>positive</strong>, −0.15 or less is <strong>negative</strong>, anything between is <strong>neutral</strong>.</li>
+      <li>It totals the labels, picks 5 representative headlines, and sends those with the counts to the LLM.</li>
+      <li>If there is no NewsAPI key, the agent is simply skipped.</li>
+    </ul>
+  </div>
+  <figure class="code">
+    <figcaption><span>src/sentiment_agent.py · _score_text() and score_articles()</span></figcaption>
+<pre><code>_POSITIVE = frozenset({<span class="st">"profit"</span>, <span class="st">"growth"</span>, <span class="st">"record"</span>, <span class="st">"rise"</span>, <span class="st">"deal"</span>, ...})
+_NEGATIVE = frozenset({<span class="st">"loss"</span>, <span class="st">"decline"</span>, <span class="st">"layoffs"</span>, <span class="st">"concern"</span>, <span class="st">"fraud"</span>, ...})
+
+<span class="kw">def</span> _score_text(text):
+    tokens = set(_TOKEN_RE.findall(text.lower()))   <span class="cm"># each word counted once</span>
+    pos = len(tokens & _POSITIVE)
+    neg = len(tokens & _NEGATIVE)
+    <span class="kw">return</span> (pos - neg) / max(1, pos + neg)
+
+<span class="kw">if</span> score >= threshold:      label = <span class="st">"positive"</span>     <span class="cm"># threshold = 0.15</span>
+<span class="kw">elif</span> score <= -threshold:  label = <span class="st">"negative"</span>
+<span class="kw">else</span>:                      label = <span class="st">"neutral"</span></code></pre>
+  </figure>
+  <div class="example">
+    <div class="lbl">Worked example</div>
+    <p>Headline: <em>"Infosys shares rise after record deal, but layoffs concern investors"</em>. Positive words: rise, record, deal = 3. Negative words: layoffs, concern = 2. Score = (3 − 2) ÷ 5 = <strong>0.2</strong>, which is at least 0.15, so the article is labelled <strong>positive</strong>.</p>
+  </div>
+
+  <details class="qa"><summary>Why keyword counting instead of a model like FinBERT?</summary>
+    <div class="ans"><p>It is deterministic and you can show exactly which words drove the score, which fits the project's rule of no unexplained numbers. It also needs no GPU and runs instantly.</p></div>
+  </details>
+  <details class="qa"><summary>What are the weaknesses of keyword sentiment?</summary>
+    <div class="ans"><p>It misses negation ("not a loss" counts as negative) and context ("debt reduced" counts as negative). Searching "Apple" also finds articles about the fruit. Each word counts once however often it appears. Improvements: FinBERT, VADER with a financial word list, or matching news by ticker instead of name.</p></div>
+  </details>
+  <details class="qa"><summary>Why the ±0.15 neutral band?</summary>
+    <div class="ans"><p>So that one stray word does not flip an otherwise balanced article to positive or negative. Mixed or weak signals land in neutral.</p></div>
+  </details>
+</section>
+
+<!-- 10 Cross -->
+<section id="cross">
+  <div class="secnum">10</div>
+  <div class="agent-head"><h3>Cross-reference agent</h3><span class="file">agents/cross_reference_agent.py</span></div>
+  <p class="asks"><strong>Question it answers:</strong> taken together, what is the overall picture, and do the signals agree or clash?</p>
+  <div class="prose">
+    <p>It receives only the finished metrics from the other agents, never raw data. It builds a "must include" list from whichever agents succeeded, so it never asks the LLM to summarise something that is missing. The LLM is asked to point out agreement or tension, for example "revenue is growing, but leverage is rising and the news is negative".</p>
+    <p>It only runs when <strong>at least 3 of the 4</strong> other agents succeeded. That check lives in <code>app.py</code>.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>agents/cross_reference_agent.py and app.py</span></figcaption>
+<pre><code>inputs = {
+    <span class="st">"revenue_metrics"</span>: revenue.get(<span class="st">"metrics"</span>),
+    <span class="st">"liquidity_metrics"</span>: liquidity.get(<span class="st">"metrics"</span>),
+    <span class="st">"balance_sheet_metrics"</span>: balance_sheet.get(<span class="st">"metrics"</span>),
+}
+must_include = []
+<span class="kw">if</span> revenue.get(<span class="st">"metrics"</span>): must_include.append(<span class="st">"a short revenue summary"</span>)
+...
+must_include.append(<span class="st">"one integrated concluding sentence"</span>)
+
+<span class="cm"># app.py: the gate</span>
+_valid_outputs = sum(1 <span class="kw">for</span> x <span class="kw">in</span> [rev_out, liq_out, bs_out, sentiment_out]
+                     <span class="kw">if</span> x <span class="kw">and not</span> isinstance(x.get(<span class="st">"error"</span>), str))
+<span class="kw">if</span> _valid_outputs < 3:
+    cross_out = {<span class="st">"error"</span>: <span class="st">"Cross Reference Agent skipped — requires at least 3 successful agent outputs"</span>}</code></pre>
+  </figure>
+  <details class="qa"><summary>Why require 3 of 4?</summary>
+    <div class="ans"><p>With only one or two inputs there is nothing real to compare, and the LLM would be tempted to fill gaps by guessing. Three gives enough signals to cross-check.</p></div>
+  </details>
+  <details class="qa"><summary>This agent does no maths. Doesn't that break your rule?</summary>
+    <div class="ans"><p>No. Its job is to combine results, not calculate. All numbers it sees were already calculated in Python and it is told not to create new ones. A good next step would be an automatic check that every number in its output also appears in its input.</p></div>
+  </details>
+</section>
+
+<!-- 10b Prompting -->
+<section id="prompts">
+  <div class="secnum">11</div>
+  <h2>How the agents prompt the LLM</h2>
+  <div class="prose">
+    <p>Every agent ends the same way: it has finished its maths, and now it asks an LLM to put the results into words. This section shows exactly how that request is built and sent, with the real prompt code from all five agents.</p>
+  </div>
+
+  <h3>The shape of every prompt</h3>
+  <div class="prose">
+    <p>Each request is a list of two chat messages, sent through LangChain:</p>
+    <ul class="plain">
+      <li><strong>SystemMessage: the rules.</strong> Who the model is, and what it must never do. Models treat the system message as the highest-priority instruction.</li>
+      <li><strong>HumanMessage: the data and the task.</strong> A Python dict turned into JSON with <code>json.dumps()</code>: what to explain, the company name, what each metric means, the metric values, and extra output limits.</li>
+    </ul>
+  </div>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 300" role="img" aria-label="A SystemMessage with the rules and a HumanMessage with JSON data both go into ChatOpenAI at temperature 0, which calls the LLM endpoint. The reply text is checked and becomes the analysis field.">
+      <rect x="10" y="14" width="360" height="136" rx="8" class="box"/>
+      <text x="26" y="38" class="t-strong">SystemMessage · the rules</text>
+      <text x="26" y="62" class="t-small">• "You are a financial analyst …"</text>
+      <text x="26" y="81" class="t-small">• Do NOT calculate or infer new numbers</text>
+      <text x="26" y="100" class="t-small">• Use ONLY the provided metrics</text>
+      <text x="26" y="119" class="t-small">• No credit, lending or investment advice</text>
+      <text x="26" y="138" class="t-small">• Concise, professional, 4–8 sentences</text>
+
+      <rect x="10" y="162" width="360" height="128" rx="8" class="box-acc"/>
+      <text x="26" y="186" class="t-strong">HumanMessage · json.dumps({...})</text>
+      <text x="26" y="208" class="t-mono">"task"               what to explain</text>
+      <text x="26" y="226" class="t-mono">"entity"             company name</text>
+      <text x="26" y="244" class="t-mono">"metric_definitions" what each key means</text>
+      <text x="26" y="262" class="t-mono">"metrics"            the computed numbers</text>
+      <text x="26" y="280" class="t-mono">"output" / "notes"   extra limits</text>
+
+      <path d="M370 82 C396 82, 396 62, 418 62" class="edge" marker-end="url(#arr)"/>
+      <path d="M370 226 C396 226, 396 84, 418 84" class="edge-acc" marker-end="url(#arr-acc)"/>
+
+      <rect x="420" y="40" width="160" height="60" rx="6" class="box-llm"/>
+      <text x="500" y="65" text-anchor="middle" class="t-strong">ChatOpenAI</text>
+      <text x="500" y="83" text-anchor="middle" class="t-small">temperature=0</text>
+      <line x1="580" y1="70" x2="618" y2="70" class="edge" marker-end="url(#arr)"/>
+      <rect x="620" y="40" width="150" height="60" rx="6" class="box-ext"/>
+      <text x="695" y="65" text-anchor="middle" class="t-strong">LLM endpoint</text>
+      <text x="695" y="83" text-anchor="middle" class="t-small">from .env</text>
+
+      <line x1="695" y1="100" x2="695" y2="138" class="edge" marker-end="url(#arr)"/>
+      <text x="705" y="124" class="t-small">reply</text>
+      <rect x="620" y="140" width="150" height="56" rx="6" class="box"/>
+      <text x="695" y="163" text-anchor="middle" class="t-strong">resp.content</text>
+      <text x="695" y="181" text-anchor="middle" class="t-small">plain text</text>
+      <line x1="695" y1="196" x2="695" y2="228" class="edge" marker-end="url(#arr)"/>
+      <rect x="620" y="230" width="150" height="60" rx="6" class="box"/>
+      <text x="695" y="254" text-anchor="middle" class="t-strong">checks in code</text>
+      <text x="695" y="272" text-anchor="middle" class="t-small">empty → error</text>
+      <line x1="620" y1="260" x2="582" y2="260" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <rect x="420" y="230" width="160" height="60" rx="6" class="box-acc"/>
+      <text x="500" y="254" text-anchor="middle" class="t-strong">"analysis"</text>
+      <text x="500" y="272" text-anchor="middle" class="t-small">returned with metrics</text>
+    </svg>
+    </div>
+    <figcaption>The rules go in the system message, the data goes in the human message as JSON. The reply becomes the <code>analysis</code> field the dashboard shows next to the agent's metrics.</figcaption>
+  </figure>
+
+  <p class="prose">This block appears, almost word for word, at the end of every agent:</p>
+  <figure class="code">
+    <figcaption><span>the common call (e.g. src/balance_sheet_agent.py)</span></figcaption>
+<pre><code><span class="kw">from</span> langchain_core.messages <span class="kw">import</span> HumanMessage, SystemMessage
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+
+llm = ChatOpenAI(
+    model=model,            <span class="cm"># e.g. "gemini-3.5-flash" or a local LM Studio model</span>
+    base_url=base_url,      <span class="cm"># any OpenAI-compatible endpoint</span>
+    api_key=api_key,
+    temperature=0,          <span class="cm"># most repeatable wording</span>
+)
+resp = llm.invoke([
+    SystemMessage(content=system),
+    HumanMessage(content=json.dumps(human, indent=2)),
+])
+text = getattr(resp, <span class="st">"content"</span>, None)
+<span class="kw">if not</span> isinstance(text, str) <span class="kw">or not</span> text.strip():
+    <span class="kw">raise</span> RuntimeError(<span class="st">"LLM returned empty explanation"</span>)
+<span class="kw">return</span> text.strip()</code></pre>
+  </figure>
+
+  <h3>Where the model settings come from</h3>
+  <p class="prose">No agent hard-codes which LLM to use. <code>app.py</code> reads three values from <code>.env</code> once and passes the same three to every agent.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 124" role="img" aria-label="Model settings flow from .env to app.py defaults, to the pipeline runner, to each agent wrapper, to ChatOpenAI.">
+      <rect x="4" y="24" width="140" height="60" rx="6" class="box-ext"/>
+      <text x="74" y="49" text-anchor="middle" class="t-strong">.env</text>
+      <text x="74" y="67" text-anchor="middle" class="t-small">LLM_MODEL, …</text>
+      <rect x="162" y="24" width="140" height="60" rx="6" class="box"/>
+      <text x="232" y="49" text-anchor="middle" class="t-strong">app.py</text>
+      <text x="232" y="67" text-anchor="middle" class="t-small">_DEFAULT_MODEL …</text>
+      <rect x="320" y="24" width="140" height="60" rx="6" class="box"/>
+      <text x="390" y="49" text-anchor="middle" class="t-strong">pipeline runner</text>
+      <text x="390" y="67" text-anchor="middle" class="t-small">same 3 for all</text>
+      <rect x="478" y="24" width="140" height="60" rx="6" class="box"/>
+      <text x="548" y="49" text-anchor="middle" class="t-strong">agents/*.run()</text>
+      <text x="548" y="67" text-anchor="middle" class="t-small">thin wrapper</text>
+      <rect x="636" y="24" width="140" height="60" rx="6" class="box-llm"/>
+      <text x="706" y="49" text-anchor="middle" class="t-strong">ChatOpenAI</text>
+      <text x="706" y="67" text-anchor="middle" class="t-small">temperature=0</text>
+      <line x1="144" y1="54" x2="160" y2="54" class="edge" marker-end="url(#arr)"/>
+      <line x1="302" y1="54" x2="318" y2="54" class="edge" marker-end="url(#arr)"/>
+      <line x1="460" y1="54" x2="476" y2="54" class="edge" marker-end="url(#arr)"/>
+      <line x1="618" y1="54" x2="634" y2="54" class="edge" marker-end="url(#arr)"/>
+      <text x="4" y="112" class="t-small">Switch between a local LM Studio model, Gemini or OpenRouter by editing .env only. No code changes.</text>
+    </svg>
+    </div>
+  </figure>
+  <figure class="code">
+    <figcaption><span>app.py · read once, passed to every agent</span></figcaption>
+<pre><code>_DEFAULT_BASE_URL = os.getenv(<span class="st">"LM_STUDIO_BASE_URL"</span>, <span class="st">"http://127.0.0.1:1234/v1"</span>)
+_DEFAULT_MODEL    = os.getenv(<span class="st">"LLM_MODEL"</span>, <span class="st">"qwen2.5-coder-1.5b-instruct-mlx"</span>)
+_DEFAULT_API_KEY  = os.getenv(<span class="st">"LLM_API_KEY"</span>, <span class="st">"local"</span>)
+
+<span class="cm"># inside _run_agent_pipeline():</span>
+revenue_agent.run(json_path=rev_path, base_url=base_url, model=model, api_key=api_key)
+liquidity_agent.run(json_path=liq_path, base_url=base_url, model=model, api_key=api_key)
+<span class="cm"># ... the same three values for every agent</span></code></pre>
+  </figure>
+  <p class="prose">The defaults point at <strong>LM Studio</strong> running on your own machine (port 1234), which is why the API key defaults to <code>"local"</code>. Your <code>.env</code> overrides them with Gemini's OpenAI-compatible endpoint.</p>
+
+  <h3>Agent by agent: the actual prompts</h3>
+
+  <h3 class="sub">1 · Revenue agent <span class="file">src/revenue_agent.py · build_prompt()</span></h3>
+  <p class="prose">The most carefully written prompt. Numbered "hard rules", a definition for every metric, a list of output requirements, and one metric removed on purpose.</p>
+  <figure class="code">
+    <figcaption><span>src/revenue_agent.py · build_prompt()</span></figcaption>
+<pre><code>metrics_for_llm = {                                        <span class="cm"># positive_growth_ratio removed</span>
+    <span class="st">"avg_growth"</span>: metrics.get(<span class="st">"avg_growth"</span>),
+    <span class="st">"cagr"</span>: metrics.get(<span class="st">"cagr"</span>),
+    <span class="st">"volatility"</span>: metrics.get(<span class="st">"volatility"</span>),
+    <span class="st">"trend_direction"</span>: metrics.get(<span class="st">"trend_direction"</span>),
+}
+
+system = (
+    <span class="st">"You are a financial analytics assistant writing a short explanation of revenue performance. "</span>
+    <span class="st">"Hard rules: (1) Do NOT calculate, estimate, or infer any new numbers. "</span>
+    <span class="st">"(2) Use ONLY the provided metrics; do not reference any other financial data "</span>
+    <span class="st">"(costs, margins, profits, cash flow, balance sheet). "</span>
+    <span class="st">"(3) Do NOT give credit, lending, or investment recommendations. "</span>
+    <span class="st">"(4) Keep a constrained, professional tone and be concise (4-8 sentences)."</span>
+)
+
+human = {
+    <span class="st">"task"</span>: <span class="st">"Explain the revenue metrics using ONLY the provided values."</span>,
+    <span class="st">"entity"</span>: entity,
+    <span class="st">"metric_definitions"</span>: {
+        <span class="st">"avg_growth"</span>: <span class="st">"Average year-over-year (YoY) revenue growth, in percent."</span>,
+        <span class="st">"cagr"</span>: <span class="st">"Compound annual growth rate over the full span, in percent."</span>,
+        <span class="st">"volatility"</span>: <span class="st">"Standard deviation of YoY revenue growth (percentage points)."</span>,
+        <span class="st">"trend_direction"</span>: <span class="st">"Direction based on linear regression slope of revenue over time: increasing/declining/stable."</span>,
+    },
+    <span class="st">"metrics"</span>: metrics_for_llm,
+    <span class="st">"output"</span>: {
+        <span class="st">"requirements"</span>: [
+            <span class="st">"Only discuss revenue growth and trend"</span>,
+            <span class="st">"Do not mention profitability, spending, margins, or costs"</span>,
+            <span class="st">"Do not mention specific years/periods or the length of the time horizon"</span>,
+            <span class="st">"Reference trend_direction explicitly"</span>,
+            <span class="st">"No new numbers or ranges"</span>,
+        ]
+    },
+}
+<span class="kw">return</span> [SystemMessage(content=system), HumanMessage(content=json.dumps(human, indent=2))]</code></pre>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Technique</th><th>Why it is there</th></tr></thead>
+    <tbody>
+      <tr><td>Numbered "hard rules"</td><td>Short, separate rules are easier for small models to follow than one long paragraph</td></tr>
+      <tr><td><code>metric_definitions</code></td><td>The model knows that <code>volatility</code> is in percentage points and <code>cagr</code> is a percent, so it does not guess or mislabel units</td></tr>
+      <tr><td>Ratio removed</td><td>Small models turn 0.875 into "87.5%", which is a new number</td></tr>
+      <tr><td>"Do not mention specific years"</td><td>The model is not given the years, so any year it wrote would be invented</td></tr>
+      <tr><td>"Reference trend_direction explicitly"</td><td>Guarantees the one qualitative label the code calculated appears in the text</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="sub">2 · Balance sheet agent <span class="file">src/balance_sheet_agent.py · generate_llm_explanation()</span></h3>
+  <p class="prose">The simplest prompt: the same core rules, the metrics (including the risk label), and two notes. No metric definitions and no output check.</p>
+  <figure class="code">
+    <figcaption><span>src/balance_sheet_agent.py · generate_llm_explanation()</span></figcaption>
+<pre><code>system = (
+    <span class="st">"You are a financial risk analyst. "</span>
+    <span class="st">"You must not calculate, estimate, or infer any new numbers. "</span>
+    <span class="st">"Use only the provided metrics. "</span>
+    <span class="st">"Do not provide credit, lending, or investment recommendations. "</span>
+    <span class="st">"Write in a concise, professional tone (4-8 sentences)."</span>
+)
+
+human = {
+    <span class="st">"task"</span>: <span class="st">"Explain balance sheet stability and leverage using ONLY the provided metrics."</span>,
+    <span class="st">"entity"</span>: entity,
+    <span class="st">"metrics"</span>: metrics,           <span class="cm"># all 5, including "balance_sheet_risk"</span>
+    <span class="st">"notes"</span>: [
+        <span class="st">"Do not introduce new numbers, ranges, or time horizons."</span>,
+        <span class="st">"Do not reference financial line items that are not in the metrics."</span>,
+    ],
+}</code></pre>
+  </figure>
+  <div class="example">
+    <div class="lbl">Real example · TCS run (see the walkthrough page)</div>
+    <p>Sent: <code>{"asset_growth_rate": 6.651633244244211, "liability_growth_rate": 6.651633244244211, "equity_growth_rate": 3.4402602384927836, "leverage_ratio": 1.4208821433974297, "balance_sheet_risk": "low"}</code></p>
+    <p>Gemini replied, in part: <em>"…exhibits a balance sheet risk categorized as low… The entity's asset growth rate stands at 6.651633244244211…"</em> It followed every rule, but repeated the unrounded numbers, because nothing in the prompt says to round and the code did not round them first.</p>
+  </div>
+
+  <h3 class="sub">3 · Liquidity agent <span class="file">src/liquidity_agent.py · generate_llm_explanation()</span></h3>
+  <p class="prose">The strictest prompt. It names the exact topics the model must avoid, keeps the risk flag out of the data, and is the only agent that checks the answer and retries.</p>
+  <figure class="code">
+    <figcaption><span>src/liquidity_agent.py · the prompt</span></figcaption>
+<pre><code>metrics_for_llm = {k: v <span class="kw">for</span> k, v <span class="kw">in</span> metrics.items() <span class="kw">if</span> k <span class="kw">not in</span> {<span class="st">"liquidity_risk_flag"</span>}}
+
+system = (
+    <span class="st">"You are a financial analyst. "</span>
+    <span class="st">"You must not calculate, estimate, or infer any new numbers. "</span>
+    <span class="st">"Use only the provided metrics. "</span>
+    <span class="st">"Do not mention debt, margins, profitability, or cash flow (these are not provided). "</span>
+    <span class="st">"Do not provide credit, lending, or investment recommendations. "</span>
+    <span class="st">"Write in a concise, professional tone (4-8 sentences). "</span>
+    <span class="st">"Do not label overall risk (avoid phrases like 'high risk', 'moderate risk', 'low risk'); "</span>
+    <span class="st">"the risk flag will be provided separately."</span>
+)
+
+human = {
+    <span class="st">"task"</span>: <span class="st">"Explain liquidity health and funding stability using ONLY the provided metrics."</span>,
+    <span class="st">"entity"</span>: entity,
+    <span class="st">"metric_definitions"</span>: {
+        <span class="st">"avg_current_ratio"</span>: <span class="st">"Average current_assets/current_liabilities over the available periods."</span>,
+        <span class="st">"working_capital_trend"</span>: <span class="st">"Direction of working capital over time: increasing/declining/stable."</span>,
+        <span class="st">"liquidity_volatility"</span>: <span class="st">"Volatility of working capital (standard deviation, in the same units as the statements)."</span>,
+        <span class="st">"asset_growth_rate"</span>: <span class="st">"Average YoY growth in total assets (percent)."</span>,
+        ...
+    },
+    <span class="st">"metrics"</span>: metrics_for_llm,
+    <span class="st">"notes"</span>: [
+        <span class="st">"Do not introduce new numbers, ranges, or time horizons."</span>,
+        <span class="st">"Do not label overall risk (avoid phrases like 'high risk', 'moderate risk', 'low risk')."</span>,
+    ],
+}</code></pre>
+  </figure>
+  <p class="prose">If the answer contains a banned term, the code sends the request again with an extra correction message <strong>in front of</strong> the original two:</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 170" role="img" aria-label="Attempt 1 sends the system and human messages. If the reply breaks a rule, attempt 2 sends a correction system message followed by the same two messages. A second failure raises an error.">
+      <text x="10" y="22" class="t-strong">Attempt 1</text>
+      <rect x="110" y="8" width="150" height="24" rx="4" class="box"/><text x="185" y="25" text-anchor="middle" class="t-mono">System (rules)</text>
+      <rect x="270" y="8" width="150" height="24" rx="4" class="box-acc"/><text x="345" y="25" text-anchor="middle" class="t-mono">Human (JSON)</text>
+      <line x1="420" y1="20" x2="458" y2="20" class="edge" marker-end="url(#arr)"/>
+      <rect x="460" y="8" width="130" height="24" rx="4" class="box-llm"/><text x="525" y="25" text-anchor="middle" class="t-mono">reply</text>
+      <line x1="590" y1="20" x2="618" y2="20" class="edge" marker-end="url(#arr)"/>
+      <rect x="620" y="8" width="150" height="24" rx="4" class="box"/><text x="695" y="25" text-anchor="middle" class="t-small">banned term found?</text>
+      <path d="M695 32 V58" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="705" y="50" class="t-bad">yes</text>
+
+      <text x="10" y="82" class="t-strong">Attempt 2</text>
+      <rect x="110" y="68" width="150" height="24" rx="4" class="box-bad"/><text x="185" y="85" text-anchor="middle" class="t-mono">System (correction)</text>
+      <rect x="270" y="68" width="150" height="24" rx="4" class="box"/><text x="345" y="85" text-anchor="middle" class="t-mono">System (rules)</text>
+      <rect x="430" y="68" width="150" height="24" rx="4" class="box-acc"/><text x="505" y="85" text-anchor="middle" class="t-mono">Human (JSON)</text>
+      <line x1="580" y1="80" x2="618" y2="80" class="edge" marker-end="url(#arr)"/>
+      <rect x="620" y="68" width="150" height="24" rx="4" class="box-llm"/><text x="695" y="85" text-anchor="middle" class="t-mono">new reply</text>
+
+      <text x="110" y="122" class="t-small">Correction: "remove forbidden terms. Do not mention cash flow, profitability, margins, or debt.</text>
+      <text x="110" y="138" class="t-small">Do not label overall risk (avoid phrases like 'high risk', 'moderate risk', 'low risk')."</text>
+      <text x="110" y="160" class="t-bad">Still breaking a rule after attempt 2 → RuntimeError: nothing is shown</text>
+    </svg>
+    </div>
+    <figcaption>The retry adds a correction but does not show the model its previous answer or say which word was wrong. Telling it the exact violation would make the second attempt more likely to succeed.</figcaption>
+  </figure>
+  <figure class="code">
+    <figcaption><span>src/liquidity_agent.py · retry loop and flag prefix</span></figcaption>
+<pre><code>messages = [SystemMessage(content=system), HumanMessage(content=json.dumps(human, indent=2))]
+<span class="kw">for</span> attempt <span class="kw">in</span> range(2):
+    text = llm.invoke(messages).content.strip()
+    violations = _explanation_violations(text=text)    <span class="cm"># cash flow, profit, margin, debt, "X risk"</span>
+    <span class="kw">if not</span> violations:
+        <span class="kw">return</span> text
+    messages = [
+        SystemMessage(content=<span class="st">"Correction: remove forbidden terms. Do not mention cash flow, "</span>
+                              <span class="st">"profitability, margins, or debt. Do not label overall risk ..."</span>),
+        messages[0],
+        messages[1],
+    ]
+<span class="kw">raise</span> RuntimeError(<span class="st">f"LLM explanation violated constraints: {violations}"</span>)
+
+<span class="cm"># run_liquidity_agent(): the code, not the LLM, states the risk</span>
+analysis = <span class="st">f"Liquidity risk flag: {metrics['liquidity_risk_flag']}. {llm_text}"</span></code></pre>
+  </figure>
+
+  <h3 class="sub">4 · Sentiment agent <span class="file">src/sentiment_agent.py</span></h3>
+  <p class="prose">The only prompt that contains text from outside the project: up to 5 real news headlines, picked so both sides are represented (2 most positive, 2 most negative, 1 neutral).</p>
+  <figure class="code">
+    <figcaption><span>src/sentiment_agent.py · headline choice and prompt</span></figcaption>
+<pre><code><span class="kw">def</span> _select_top_headlines(scored, n=5):
+    positive = sorted((s <span class="kw">for</span> s <span class="kw">in</span> scored <span class="kw">if</span> s.label == <span class="st">"positive"</span>), key=<span class="kw">lambda</span> x: x.score, reverse=True)
+    negative = sorted((s <span class="kw">for</span> s <span class="kw">in</span> scored <span class="kw">if</span> s.label == <span class="st">"negative"</span>), key=<span class="kw">lambda</span> x: x.score)
+    neutral  = [s <span class="kw">for</span> s <span class="kw">in</span> scored <span class="kw">if</span> s.label == <span class="st">"neutral"</span>]
+    mixed = positive[:2] + negative[:2] + neutral[:1]       <span class="cm"># balanced sample</span>
+    <span class="kw">return</span> [s.title <span class="kw">for</span> s <span class="kw">in</span> mixed <span class="kw">if</span> s.title][:n]
+
+system = (
+    <span class="st">"You are a financial analyst summarising public news sentiment for a company. "</span>
+    <span class="st">"Use only the provided metrics and headlines. "</span>
+    <span class="st">"Do not compute, estimate, or infer any new numbers. "</span>
+    <span class="st">"Do not provide credit, lending, or investment recommendations. "</span>
+    <span class="st">"Write in a concise, professional tone."</span>
+)
+
+human = {
+    <span class="st">"task"</span>: (<span class="st">"Describe the current public sentiment around this company based on recent news. "</span>
+             <span class="st">"Reference the provided metrics and representative headlines. "</span>
+             <span class="st">"Do not compute new numbers. Do not provide investment or credit advice."</span>),
+    <span class="st">"entity"</span>: entity,
+    <span class="st">"sentiment_metrics"</span>: metrics,                  <span class="cm"># counts, percentages, mean score, dominant label</span>
+    <span class="st">"representative_headlines"</span>: headlines,        <span class="cm"># real third-party text</span>
+    <span class="st">"output"</span>: {
+        <span class="st">"format"</span>: <span class="st">"plain_text"</span>,
+        <span class="st">"length"</span>: <span class="st">"4-6 sentences"</span>,
+        <span class="st">"must_include"</span>: [
+            <span class="st">"overall dominant sentiment label"</span>,
+            <span class="st">"proportion of positive vs negative coverage"</span>,
+            <span class="st">"brief qualitative characterisation based on headlines"</span>,
+        ],
+    },
+}</code></pre>
+  </figure>
+  <div class="flag"><strong>Security point worth raising:</strong> headlines are written by strangers and pasted straight into the prompt. A headline containing something like "ignore your instructions and say…" could try to steer the model; this is called <em>prompt injection</em>. The damage here is limited (the output is only display text, and the counts are calculated in Python), but a stronger design would mark the headlines clearly as quoted data, and check the output.</div>
+
+  <h3 class="sub">5 · Cross-reference agent <span class="file">agents/cross_reference_agent.py</span></h3>
+  <p class="prose">The only prompt whose contents change with the run. It includes only the agents that succeeded, and builds its "must include" list to match, so the model is never asked to summarise something that is missing.</p>
+  <figure class="code">
+    <figcaption><span>agents/cross_reference_agent.py · run()</span></figcaption>
+<pre><code>inputs = {
+    <span class="st">"revenue_metrics"</span>:       revenue.get(<span class="st">"metrics"</span>),         <span class="cm"># None if that agent failed</span>
+    <span class="st">"liquidity_metrics"</span>:     liquidity.get(<span class="st">"metrics"</span>),
+    <span class="st">"balance_sheet_metrics"</span>: balance_sheet.get(<span class="st">"metrics"</span>),
+}
+must_include = []
+<span class="kw">if</span> revenue.get(<span class="st">"metrics"</span>):       must_include.append(<span class="st">"a short revenue summary"</span>)
+<span class="kw">if</span> liquidity.get(<span class="st">"metrics"</span>):     must_include.append(<span class="st">"a short liquidity summary"</span>)
+<span class="kw">if</span> balance_sheet.get(<span class="st">"metrics"</span>): must_include.append(<span class="st">"a short balance sheet/leverage summary"</span>)
+<span class="kw">if</span> sentiment:
+    inputs[<span class="st">"sentiment_metrics"</span>] = sentiment.get(<span class="st">"metrics"</span>)
+    inputs[<span class="st">"sentiment_analysis_snippet"</span>] = (sentiment.get(<span class="st">"analysis"</span>) <span class="kw">or</span> <span class="st">""</span>)[:300] <span class="kw">or</span> None
+    must_include.append(<span class="st">"a short public sentiment summary"</span>)
+must_include.append(<span class="st">"one integrated concluding sentence"</span>)
+
+system = (
+    <span class="st">"You are a financial analyst producing an explainable, cross-referenced summary. "</span>
+    <span class="st">"Use only the provided metrics. "</span>
+    <span class="st">"Do not compute, estimate, or infer any new numbers. "</span>
+    <span class="st">"Do not introduce new financial line items. "</span>
+    <span class="st">"Do not provide credit, lending, or investment recommendations. "</span>
+    <span class="st">"Write in a concise professional tone (6-10 sentences)."</span>
+)
+
+human = {
+    <span class="st">"task"</span>: (<span class="st">"Cross-reference all provided metrics to describe overall financial and "</span>
+             <span class="st">"public-perception trends, highlighting consistency or tension between signals."</span>),
+    <span class="st">"entity"</span>: entity,
+    <span class="st">"inputs"</span>: inputs,
+    <span class="st">"requirements"</span>: {<span class="st">"no_new_numbers"</span>: True, <span class="st">"no_credit_decisions"</span>: True,
+                     <span class="st">"professional_tone"</span>: True, <span class="st">"temperature"</span>: 0},   <span class="cm"># ← does nothing, see below</span>
+    <span class="st">"output"</span>: {<span class="st">"format"</span>: <span class="st">"plain_text"</span>, <span class="st">"must_include"</span>: must_include},
+}</code></pre>
+  </figure>
+  <p class="prose">One detail an interviewer might catch: <code>"temperature": 0</code> inside the JSON is just text the model reads; it has no effect. The real setting is the <code>temperature=0</code> argument to <code>ChatOpenAI</code>, which is also set, so behaviour is correct, but the JSON field is misleading.</p>
+
+  <h3>All five side by side</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Technique</th><th>Revenue</th><th>Balance sheet</th><th>Liquidity</th><th>Sentiment</th><th>Cross-ref</th></tr></thead>
+    <tbody>
+      <tr><td>Rules in a system message</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Temperature 0</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Only computed metrics, no raw data</td><td>✓</td><td>✓</td><td>✓</td><td>✓ + headlines</td><td>✓</td></tr>
+      <tr><td>Metric definitions</td><td>✓</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td></tr>
+      <tr><td>Explicit output requirements</td><td>✓</td><td>notes only</td><td>notes only</td><td>✓</td><td>✓ (built per run)</td></tr>
+      <tr><td>Length limit</td><td>4–8</td><td>4–8</td><td>4–8</td><td>4–6</td><td>6–10</td></tr>
+      <tr><td>Value hidden from the LLM</td><td>growth ratio</td><td>none</td><td>risk flag</td><td>none</td><td>none</td></tr>
+      <tr><td>Answer checked in code</td><td>empty only</td><td>empty only</td><td>banned words + 1 retry</td><td>empty only</td><td>empty only</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>What I would improve</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Improvement</th></tr></thead>
+    <tbody>
+      <tr><td>Raw floats are sent, so the model repeats 16-digit numbers</td><td>Round every metric to 2 decimals before building the prompt</td></tr>
+      <tr><td>Nothing checks that the model invented no numbers</td><td>Extract every number from the reply and confirm each one appears in the input; retry or reject if not</td></tr>
+      <tr><td>Balance sheet prompt has no definitions</td><td>Define <code>leverage_ratio</code> as liabilities ÷ equity, so the model does not call it debt-to-equity</td></tr>
+      <tr><td>The retry does not say what went wrong</td><td>Put the detected violation into the correction message</td></tr>
+      <tr><td>API errors (503 busy, 429 rate limit) fail the agent</td><td>Retry with a short wait, and still show the metrics if only the text fails</td></tr>
+      <tr><td>Headlines can carry prompt injection</td><td>Wrap them as quoted data and check the reply</td></tr>
+      <tr><td>Five copies of nearly the same prompt code</td><td>One shared helper that builds and sends the messages, with versioned prompt templates</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Questions on prompting</h3>
+  <details class="qa"><summary>Why split the prompt into a system message and a human message?</summary>
+    <div class="ans"><p>The system message holds rules that never change, and models give it the most weight. The human message holds the data for this one request. Keeping them apart means the rules cannot be confused with the data, and the data can change without touching the rules.</p></div>
+  </details>
+  <details class="qa"><summary>Why send the data as JSON instead of a sentence?</summary>
+    <div class="ans"><p>JSON keeps each value next to its exact name, so the model cannot mix them up, and it is built straight from the Python dict with <code>json.dumps()</code>, so there is no hand formatting. It also makes it easy to log exactly what the model was given.</p></div>
+  </details>
+  <details class="qa"><summary>Why include metric definitions?</summary>
+    <div class="ans"><p>A name like <code>volatility</code> is ambiguous: volatility of what, in which unit? Without a definition the model guesses, and a wrong guess appears as a confident sentence. The definitions tell it the meaning and the unit, for example "standard deviation of YoY revenue growth, in percentage points".</p></div>
+  </details>
+  <details class="qa"><summary>Why use temperature 0?</summary>
+    <div class="ans"><p>Temperature controls randomness. At 0 the model always takes its most likely next word, so the same metrics give nearly the same text every time, which matters for an auditable tool. It does not fully guarantee identical output, which is one more reason no numbers are left to the model.</p></div>
+  </details>
+  <details class="qa"><summary>What do you do when the model ignores the rules?</summary>
+    <div class="ans"><p>Rules in the prompt are not enough on their own, especially with small local models. The liquidity agent checks the reply for banned words and risk labels, retries once with a correction, and raises an error if it still fails, so a non-compliant answer is never shown. It also keeps the risk label out of the model's hands entirely and adds it in code.</p></div>
+  </details>
+  <details class="qa"><summary>Why LangChain's ChatOpenAI instead of calling one provider's SDK?</summary>
+    <div class="ans"><p>ChatOpenAI speaks the OpenAI API format, which LM Studio, Ollama, OpenRouter and Gemini all offer. So the same code runs against a free local model on a laptop or a hosted model, and switching is a <code>.env</code> change. LangChain also gives a standard message format.</p></div>
+  </details>
+  <details class="qa"><summary>What is prompt injection, and is this project exposed to it?</summary>
+    <div class="ans"><p>It is when text inside the data tries to act as instructions to the model. Four agents only send numbers the code calculated, so they are safe. The sentiment agent sends real news headlines, which are written by outsiders, so in principle a crafted headline could try to steer the summary. The impact is limited to display text, and the fix is to clearly mark headlines as quoted data and check the reply.</p></div>
+  </details>
+  <details class="qa"><summary>How would you test a prompt change?</summary>
+    <div class="ans"><p>Keep a fixed set of metric inputs (good, borderline and odd cases), run each prompt version against them, and check the replies automatically: no numbers that are not in the input, no banned words, label matches, length within limits. Because temperature is 0, results are stable enough to compare versions.</p></div>
+  </details>
+</section>
+
+<!-- 11 Pipeline -->
+<section id="pipeline">
+  <div class="secnum">12</div>
+  <h2>Running the pipeline</h2>
+  <div class="prose">
+    <p>When you click <em>Run Analysis</em>, <code>_run_agent_pipeline()</code> in <code>app.py</code> runs the agents one after another. Before each one it checks whether the required fields exist; if not, the agent is skipped with a clear reason. Every agent is wrapped in <code>_safe_run()</code>, so if one crashes, its error is stored and the next agent still runs. This is called <strong>graceful degradation</strong>.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 190" role="img" aria-label="Five agents run in order inside a safe-run wrapper, each with its own skip rule, then results go to session state and MongoDB history.">
+      <rect x="2" y="30" width="644" height="148" rx="10" class="group"/>
+      <text x="14" y="22" class="t-small">_safe_run(): an error becomes {"error": …} and the next agent still runs</text>
+
+      <rect x="12" y="52" width="110" height="48" rx="6" class="box-acc"/>
+      <text x="67" y="81" text-anchor="middle" class="t-strong">Revenue</text>
+      <rect x="140" y="52" width="110" height="48" rx="6" class="box-acc"/>
+      <text x="195" y="81" text-anchor="middle" class="t-strong">Liquidity</text>
+      <rect x="268" y="52" width="110" height="48" rx="6" class="box-acc"/>
+      <text x="323" y="81" text-anchor="middle" class="t-strong">Balance sheet</text>
+      <rect x="396" y="52" width="110" height="48" rx="6" class="box-acc"/>
+      <text x="451" y="81" text-anchor="middle" class="t-strong">Sentiment</text>
+      <rect x="524" y="52" width="110" height="48" rx="6" class="box-acc"/>
+      <text x="579" y="81" text-anchor="middle" class="t-strong">Cross-ref</text>
+
+      <line x1="122" y1="76" x2="138" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="250" y1="76" x2="266" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="378" y1="76" x2="394" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="506" y1="76" x2="522" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="634" y1="76" x2="660" y2="76" class="edge" marker-end="url(#arr)"/>
+
+      <text x="67" y="130" text-anchor="middle" class="t-small">always runs</text>
+      <text x="195" y="130" text-anchor="middle" class="t-small">skips if a field</text>
+      <text x="195" y="145" text-anchor="middle" class="t-small">is missing</text>
+      <text x="323" y="130" text-anchor="middle" class="t-small">skips if a field</text>
+      <text x="323" y="145" text-anchor="middle" class="t-small">is missing</text>
+      <text x="451" y="130" text-anchor="middle" class="t-small">skips with no</text>
+      <text x="451" y="145" text-anchor="middle" class="t-small">NewsAPI key</text>
+      <text x="579" y="130" text-anchor="middle" class="t-small">skips if fewer</text>
+      <text x="579" y="145" text-anchor="middle" class="t-small">than 3 succeeded</text>
+
+      <rect x="662" y="52" width="112" height="48" rx="6" class="box"/>
+      <text x="718" y="72" text-anchor="middle" class="t-strong">session_state</text>
+      <text x="718" y="89" text-anchor="middle" class="t-small">+ Mongo history</text>
+    </svg>
+    </div>
+    <figcaption>One failure stays contained inside its own box. Saving history to MongoDB is also wrapped in try/except, because it must never break the analysis.</figcaption>
+  </figure>
+
+  <figure class="code">
+    <figcaption><span>app.py · _safe_run() and a skip rule</span></figcaption>
+<pre><code><span class="kw">def</span> _safe_run(name, fn):
+    <span class="kw">try</span>:
+        <span class="kw">return</span> fn()
+    <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+        <span class="kw">return</span> {<span class="st">"error"</span>: <span class="st">f"{name} failed: {exc}"</span>, <span class="st">"traceback"</span>: traceback.format_exc()}
+
+required_liq = {<span class="st">"current_assets"</span>, <span class="st">"current_liabilities"</span>, <span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>, <span class="st">"equity"</span>}
+missing_liq = sorted(required_liq - avail)
+<span class="kw">if</span> missing_liq:
+    liq_out = {<span class="st">"error"</span>: <span class="st">f"Liquidity Agent skipped — missing: {', '.join(missing_liq)}"</span>}
+<span class="kw">else</span>:
+    <span class="kw">with</span> st.spinner(<span class="st">"Liquidity Agent…"</span>):
+        liq_out = _safe_run(<span class="st">"Liquidity Agent"</span>, <span class="kw">lambda</span>: liquidity_agent.run(...))</code></pre>
+  </figure>
+
+  <h3>Readiness check and gap filling</h3>
+  <p class="prose">Before running, the app shows which agents can run with the fields available. The user can <strong>proceed anyway</strong> (agents that cannot run are skipped) or <strong>fix missing data</strong>, either by fetching it from FMP or Alpha Vantage (<code>supplemental_fetchers.py</code>) or by typing it in. The JSON is updated and the agent files are rewritten.</p>
+
+  <details class="qa"><summary>Why run the agents one after another instead of in parallel?</summary>
+    <div class="ans"><p>It was simpler and fits Streamlit's loading spinners. The first four agents do not depend on each other and mostly wait on the LLM, so running them in a thread pool would cut total time to roughly the slowest one. Cross-reference must still wait for the rest.</p></div>
+  </details>
+  <details class="qa"><summary>What happens if the LLM server is down?</summary>
+    <div class="ans"><p>Each agent's LLM call fails, <code>_safe_run</code> stores the error, and the dashboard shows it. A good improvement would be to still show the calculated metrics when only the explanation fails, since the numbers do not depend on the LLM.</p></div>
+  </details>
+  <details class="qa"><summary>Isn't mixing data from different sources risky?</summary>
+    <div class="ans"><p>Yes, units and currencies can differ. That is why the credibility engine flags implausible jumps (likely unit mix-ups) and cross-checks Yahoo figures against FMP.</p></div>
+  </details>
+</section>
+
+<!-- 12 Auth -->
+<section id="auth">
+  <div class="secnum">13</div>
+  <h2>Login and security</h2>
+  <div class="prose">
+    <p>Nothing renders until you are logged in. Passwords are stored as <strong>bcrypt hashes</strong>, never as plain text. A correct login returns a <strong>JWT</strong>, a signed token that proves who you are for 24 hours. Every time the page reloads, the token is checked, and if you have been idle for over 15 minutes you are sent back to the login page.</p>
+  </div>
+
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 200" role="img" aria-label="Login flow: form, bcrypt check against MongoDB hash, JWT issued, token kept in session and URL, each page load decodes it and checks idle time; expired or idle sends you back to login.">
+      <rect x="10" y="50" width="128" height="58" rx="6" class="box"/>
+      <text x="74" y="75" text-anchor="middle" class="t-strong">Login form</text>
+      <text x="74" y="92" text-anchor="middle" class="t-small">email + password</text>
+      <rect x="160" y="50" width="128" height="58" rx="6" class="box"/>
+      <text x="224" y="75" text-anchor="middle" class="t-strong">bcrypt check</text>
+      <text x="224" y="92" text-anchor="middle" class="t-small">vs hash in MongoDB</text>
+      <rect x="310" y="50" width="128" height="58" rx="6" class="box-acc"/>
+      <text x="374" y="75" text-anchor="middle" class="t-strong">Issue JWT</text>
+      <text x="374" y="92" text-anchor="middle" class="t-small">HS256 · 24 hours</text>
+      <rect x="460" y="50" width="128" height="58" rx="6" class="box"/>
+      <text x="524" y="75" text-anchor="middle" class="t-strong">Keep token</text>
+      <text x="524" y="92" text-anchor="middle" class="t-small">session + URL</text>
+      <rect x="610" y="50" width="160" height="58" rx="6" class="box"/>
+      <text x="690" y="75" text-anchor="middle" class="t-strong">Every page load</text>
+      <text x="690" y="92" text-anchor="middle" class="t-small">decode · idle &lt; 15 min?</text>
+
+      <line x1="138" y1="79" x2="158" y2="79" class="edge" marker-end="url(#arr)"/>
+      <line x1="288" y1="79" x2="308" y2="79" class="edge" marker-end="url(#arr)"/>
+      <line x1="438" y1="79" x2="458" y2="79" class="edge" marker-end="url(#arr)"/>
+      <line x1="588" y1="79" x2="608" y2="79" class="edge" marker-end="url(#arr)"/>
+
+      <line x1="690" y1="50" x2="690" y2="26" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <text x="690" y="16" text-anchor="middle" class="t-acc">valid → show the app</text>
+
+      <path d="M690 108 V160 H74 V112" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="382" y="182" text-anchor="middle" class="t-bad">expired, invalid or idle over 15 minutes → back to login</text>
+    </svg>
+    </div>
+    <figcaption>The token is checked on every page load. Both an expired token and 15 minutes of inactivity send the user back to the login page.</figcaption>
+  </figure>
+
+  <figure class="code">
+    <figcaption><span>auth/auth_controller.py · login_user()</span></figcaption>
+<pre><code>user = get_users().find_one({<span class="st">"email"</span>: email.lower().strip()})
+<span class="kw">if not</span> user:
+    <span class="kw">return</span> False, <span class="st">"No account found with this email."</span>
+<span class="kw">if not</span> bcrypt.checkpw(password.encode(), user[<span class="st">"password_hash"</span>].encode()):
+    <span class="kw">return</span> False, <span class="st">"Incorrect password."</span>
+
+token = jwt.encode(
+    {<span class="st">"user_id"</span>: str(user[<span class="st">"_id"</span>]), <span class="st">"email"</span>: user[<span class="st">"email"</span>], <span class="st">"full_name"</span>: user[<span class="st">"full_name"</span>],
+     <span class="st">"exp"</span>: datetime.now(timezone.utc) + timedelta(hours=24)},
+    _JWT_SECRET, algorithm=<span class="st">"HS256"</span>,
+)</code></pre>
+  </figure>
+  <figure class="code">
+    <figcaption><span>app.py · main()</span><span>idle timeout</span></figcaption>
+<pre><code>token = st.query_params.get(<span class="st">"token"</span>) <span class="kw">or</span> st.session_state.get(<span class="st">"auth_token"</span>)
+user = decode_token(token)            <span class="cm"># None if expired or tampered</span>
+<span class="kw">if</span> user:
+    last_active = st.session_state.get(<span class="st">"last_active_time"</span>, time.time())
+    <span class="kw">if</span> time.time() - last_active > 15 * 60:
+        user = None                   <span class="cm"># locked: back to login</span>
+    <span class="kw">else</span>:
+        st.session_state[<span class="st">"last_active_time"</span>] = time.time()
+<span class="kw">if not</span> user:
+    page_login()
+    st.stop()                         <span class="cm"># nothing else renders</span></code></pre>
+  </figure>
+
+  <h3>Forgot password: one-time code</h3>
+  <p class="prose">A 6-digit code is emailed through Gmail SMTP (encrypted with STARTTLS). It is valid for <strong>2 minutes</strong> and is deleted as soon as it is used, so it cannot be reused. MongoDB has a <strong>unique index on email</strong>, so the database itself refuses a second account with the same address.</p>
+  <figure class="code">
+    <figcaption><span>auth/auth_controller.py · verify_otp()</span></figcaption>
+<pre><code><span class="kw">if</span> datetime.now(timezone.utc) > otp_data[<span class="st">"expiry"</span>]:
+    session_state.pop(<span class="st">"otp_data"</span>, None)
+    <span class="kw">return</span> False, <span class="st">"OTP has expired (2-minute limit). Please request a new one."</span>
+<span class="kw">if</span> entered_otp.strip() != otp_data[<span class="st">"otp"</span>]:
+    <span class="kw">return</span> False, <span class="st">"Incorrect OTP. Please try again."</span>
+session_state[<span class="st">"otp_verified_email"</span>] = otp_data[<span class="st">"email"</span>]
+session_state.pop(<span class="st">"otp_data"</span>, None)   <span class="cm"># single use</span></code></pre>
+  </figure>
+
+  <div class="flag"><strong>Heads-up:</strong> the README says the OTP is sent when you register. In the code it is only used for <em>forgot password</em>. Describe it that way.</div>
+
+  <details class="qa"><summary>Why bcrypt and not SHA-256 for passwords?</summary>
+    <div class="ans"><p>bcrypt is slow on purpose and adds a random salt to every password. Slow means an attacker can try far fewer guesses per second; the salt means two users with the same password get different hashes, so precomputed lookup tables are useless. SHA-256 is designed to be fast, which helps attackers.</p></div>
+  </details>
+  <details class="qa"><summary>Why use a JWT?</summary>
+    <div class="ans"><p>The token carries the user's id and an expiry time and is signed with a secret key. The server can verify it without storing sessions in a database, and any change to the token breaks the signature.</p></div>
+  </details>
+  <details class="qa"><summary>What would you improve in the security?</summary>
+    <div class="ans">
+      <p>Raising these yourself shows maturity:</p>
+      <ul class="plain">
+        <li>The token sits in the URL, where it can leak through browser history and logs. Use a secure, HTTP-only cookie.</li>
+        <li>The OTP uses Python's <code>random</code>; it should use <code>secrets</code>, which is built for security.</li>
+        <li>There is no limit on OTP attempts, so it could be guessed. Add rate limiting.</li>
+        <li><code>JWT_SECRET</code> has a hard-coded fallback. The app should refuse to start without a real secret.</li>
+        <li>Login messages reveal whether an email is registered. Use one generic message.</li>
+        <li>A token cannot be cancelled before it expires. Use short-lived tokens with refresh, or a block list.</li>
+      </ul>
+      <p>The later <code>main</code> branch fixed several of these (field encryption, MFA, security CI), which you can mention as how the project grew.</p>
+    </div>
+  </details>
+</section>
+
+<!-- 13 Weak -->
+<section id="weak">
+  <div class="secnum">14</div>
+  <h2>Weak spots and fixes</h2>
+  <p class="prose">Interviewers like candidates who know where their own project is weak. Bring these up before they do, each with its fix.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Weak spot</th><th>Why it matters</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>"Total Liabilities &amp; Equity" matches the liabilities pattern</td><td>Liabilities = assets in the Infosys output; leverage is wrong</td><td>Stricter regex, specific labels first</td></tr>
+      <tr><td>Bloomberg estimate columns read as actuals</td><td>Future years (2026–27) treated as real revenue</td><td>Drop columns after the latest reported year</td></tr>
+      <tr><td>Credibility is a plain weighted average</td><td>Infosys fails the identity check every year and still scores 75</td><td>Hard gate: a critical failure caps the result at LOW</td></tr>
+      <tr><td>PDF text never passed to the verifier</td><td>The 25-point Bloomberg signature check always skips</td><td>Keep <code>extract_pdf()</code> text and pass <code>extracted_text</code></td></tr>
+      <tr><td>Alpha Vantage key hard-coded to ""</td><td>The second fallback never runs</td><td>Read <code>ALPHA_VANTAGE_KEY</code> from .env</td></tr>
+      <tr><td>Metrics sent to the LLM unrounded</td><td>The reply repeats 16-digit numbers (seen in the TCS run)</td><td>Round to 2 decimals before prompting</td></tr>
+      <tr><td>News headlines pasted into the prompt</td><td>Possible prompt injection from third-party text</td><td>Mark headlines as quoted data; check the reply</td></tr>
+      <tr><td>CAGR counts periods as years</td><td>Wrong for quarterly data</td><td>Compute years from the period labels</td></tr>
+      <tr><td>"Leverage" is liabilities ÷ equity</td><td>Not true debt-to-equity</td><td>Use interest-bearing debt only, or rename it</td></tr>
+      <tr><td>Fixed 2 and 3 leverage limits</td><td>Every bank looks high-risk</td><td>Thresholds per industry</td></tr>
+      <tr><td>Keyword sentiment</td><td>Misses negation and context</td><td>FinBERT or VADER with a finance word list</td></tr>
+      <tr><td>JWT in the URL, OTP from <code>random</code>, no attempt limit</td><td>Token leaks, guessable codes</td><td>HTTP-only cookie, <code>secrets</code>, rate limiting</td></tr>
+      <tr><td>Called OCR, but reads only digital PDFs</td><td>Scanned PDFs fail</td><td>Add Tesseract before parsing</td></tr>
+      <tr><td>Agents run one by one</td><td>Slow when the LLM is slow</td><td>Thread pool for the first four</td></tr>
+      <tr><td>No automated tests at this commit</td><td>Changes can break things silently</td><td>pytest suite (added later on <code>main</code>: 266 tests)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 14 General -->
+<section id="general">
+  <div class="secnum">15</div>
+  <h2>General questions</h2>
+  <details class="qa"><summary>What was your own contribution?</summary>
+    <div class="ans"><p>Prepare this yourself: name the specific modules you wrote, one problem you solved, and one decision you made and why. Concrete beats general.</p></div>
+  </details>
+  <details class="qa"><summary>What was the hardest problem?</summary>
+    <div class="ans"><p>Good answers: making small local LLMs obey the rules (which led to hiding ratios, hiding the risk flag and adding the check-and-retry loop), and handling the many different label and period formats in Bloomberg exports.</p></div>
+  </details>
+  <details class="qa"><summary>How did you test it?</summary>
+    <div class="ans"><p>At this commit, manually, with sample outputs for Apple and Infosys in the <code>output/</code> folder. There were no automated tests yet; the later <code>main</code> branch added a pytest suite. Say this honestly.</p></div>
+  </details>
+  <details class="qa"><summary>Why at least 4 periods?</summary>
+    <div class="ans"><p>Four values give three growth rates, the minimum where an average, a spread and a trend line mean anything. With fewer points the trend and volatility would be noise.</p></div>
+  </details>
+  <details class="qa"><summary>How would it scale to many users?</summary>
+    <div class="ans"><p>Streamlit keeps each user's state separately and MongoDB Atlas scales on its own. The slow part is the LLM calls: run independent agents in parallel and cache results for identical inputs.</p></div>
+  </details>
+  <details class="qa"><summary>Is FinVeritas Basel III compliant?</summary>
+    <div class="ans"><p>No, and do not overclaim. It does not calculate capital ratios such as CET1, LCR or NSFR. It supports the spirit of Pillar 2 (supervisors reviewing risk) through risk trend monitoring, and Pillar 3 (disclosure) through an explainable audit trail.</p></div>
+  </details>
+  <details class="qa"><summary>How do you know the LLM did not add numbers?</summary>
+    <div class="ans"><p>Three layers: it only receives the metrics, the prompt forbids new numbers, and the liquidity agent checks its output and retries. The next step would be an automatic check that every number in any output appears in its input.</p></div>
+  </details>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('toggle-answers');
+  btn.addEventListener('click', function () {
+    var all = document.querySelectorAll('details.qa');
+    var anyClosed = Array.prototype.some.call(all, function (d) { return !d.open; });
+    all.forEach(function (d) { d.open = anyClosed; });
+    btn.textContent = anyClosed ? 'Hide all answers' : 'Show all answers';
+  });
+})();
+</script>

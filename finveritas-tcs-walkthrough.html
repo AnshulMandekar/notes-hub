@@ -1,0 +1,1122 @@
+<title>TCS Data Flow Walkthrough</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: sticky contents rail on the left, one reading column on the right; stacks to one column on phones. */
+:root {
+  --bg: #F3F6F4;
+  --surface: #FFFFFF;
+  --fg: #15201C;
+  --muted: #56635E;
+  --line: #D6DEDA;
+  --line-strong: #8F9E97;
+  --accent: #0B6B5C;
+  --accent-soft: #DCEFEA;
+  --amber: #8F5200;
+  --amber-soft: #FBEBD3;
+  --bad: #B3261E;
+  --bad-soft: #F8DFDC;
+  --code-bg: #EBF0ED;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D1A; --fg: #E2EAE6; --muted: #9AA9A3;
+    --line: #25312D; --line-strong: #56675F; --accent: #4CC3AD; --accent-soft: #12352F;
+    --amber: #F0B45A; --amber-soft: #36270F; --bad: #F2867D; --bad-soft: #3B1917;
+    --code-bg: #111916; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D1A; --fg: #E2EAE6; --muted: #9AA9A3;
+  --line: #25312D; --line-strong: #56675F; --accent: #4CC3AD; --accent-soft: #12352F;
+  --amber: #F0B45A; --amber-soft: #36270F; --bad: #F2867D; --bad-soft: #3B1917;
+  --code-bg: #111916; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 16px/1.65 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap {
+  max-width: 1120px; margin: 0 auto; padding-block: 40px 80px;
+  display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 56px;
+}
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+
+/* contents rail */
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 13.5px; }
+nav.toc .lbl { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: s; }
+nav.toc li { counter-increment: s; }
+nav.toc a { display: flex; gap: 8px; padding: 4px 8px; border-radius: 4px; color: var(--fg); text-decoration: none; }
+nav.toc a::before { content: counter(s, decimal-leading-zero); font: 12px/1.9 var(--mono); color: var(--muted); }
+nav.toc a:hover { background: var(--accent-soft); }
+nav.toc .tools { margin-top: 18px; display: grid; gap: 8px; }
+@media (max-width: 900px) {
+  nav.toc { position: static; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 14px; }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+}
+
+button.toggle {
+  font: 500 13px var(--sans); color: var(--accent); background: transparent;
+  border: 1px solid var(--accent); border-radius: 6px; padding: 7px 10px; cursor: pointer; text-align: left;
+}
+button.toggle:hover { background: var(--accent-soft); }
+button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* reading column */
+main { min-width: 0; }
+main > section { padding-block: 28px 8px; border-top: 1px solid var(--line); }
+main > section:first-of-type { border-top: 0; padding-top: 0; }
+.prose { max-width: 70ch; }
+header.hero { margin-bottom: 36px; max-width: 72ch; }
+.eyebrow { font: 600 11.5px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(34px, 5vw, 48px)/1.1 var(--display); margin: 12px 0 14px; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font: 700 28px/1.2 var(--display); margin: 6px 0 12px; text-wrap: balance; }
+h3 { font: 600 19px/1.3 var(--sans); margin: 28px 0 8px; }
+.secnum { font: 500 12px var(--mono); color: var(--muted); }
+p { margin: 0 0 14px; }
+.lede { font-size: 18.5px; color: var(--fg); }
+.meta { font-size: 14px; color: var(--muted); }
+code { font: 0.88em var(--mono); background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+a { color: var(--accent); }
+ul.plain { padding-left: 20px; margin: 0 0 14px; }
+ul.plain li { margin-bottom: 6px; }
+
+.thesis {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 18px 20px; font-size: 17px; margin: 18px 0;
+}
+.thesis strong { color: var(--accent); }
+
+/* code blocks */
+figure.code { margin: 16px 0 20px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--code-bg); }
+figure.code figcaption {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font: 12px var(--mono); color: var(--muted); padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface);
+}
+figure.code pre { margin: 0; padding: 14px; overflow-x: auto; font: 13px/1.6 var(--mono); }
+figure.code pre code { background: none; padding: 0; font-size: inherit; }
+.cm { color: var(--muted); font-style: italic; }
+.kw { color: var(--accent); font-weight: 500; }
+.st { color: var(--amber); }
+
+/* diagrams */
+figure.dia { margin: 20px 0 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 14px 12px; }
+figure.dia .scroll { overflow-x: auto; }
+figure.dia svg { display: block; width: 100%; min-width: 680px; height: auto; color: var(--fg); }
+figure.dia figcaption { font-size: 14px; color: var(--muted); margin-top: 10px; max-width: 72ch; }
+svg text { font-family: var(--sans); font-size: 13.5px; fill: currentColor; }
+svg .t-strong { font-weight: 600; }
+svg .t-small { font-size: 11.5px; fill: var(--muted); }
+svg .t-acc { fill: var(--accent); font-weight: 600; }
+svg .t-bad { fill: var(--bad); font-weight: 600; font-size: 11.5px; }
+svg .box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.2; }
+svg .box-acc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.4; }
+svg .box-llm { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.4; }
+svg .box-ext { fill: var(--bg); stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg .edge { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+svg .edge-acc { stroke: var(--accent); stroke-width: 1.6; fill: none; }
+svg .edge-bad { stroke: var(--bad); stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; }
+svg .group { fill: none; stroke: var(--line-strong); stroke-width: 1.2; stroke-dasharray: 6 4; }
+svg .m-def { fill: var(--line-strong); }
+svg .m-acc { fill: var(--accent); }
+svg .m-bad { fill: var(--bad); }
+
+/* tables */
+.tbl { overflow-x: auto; margin: 14px 0 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 600 12px var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; }
+.pill { display: inline-block; font: 600 11px/1 var(--sans); letter-spacing: .05em; padding: 4px 7px; border-radius: 999px; }
+.pill.pass { background: var(--accent-soft); color: var(--accent); }
+.pill.warn { background: var(--amber-soft); color: var(--amber); }
+.pill.fail { background: var(--bad-soft); color: var(--bad); }
+.pill.skip { background: var(--code-bg); color: var(--muted); }
+
+/* worked example */
+.example { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 16px 0 20px; }
+.example .lbl { font: 600 11px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.example p:last-child { margin-bottom: 0; }
+
+/* interview questions */
+details.qa { background: var(--amber-soft); border-radius: 8px; margin: 10px 0; }
+details.qa summary {
+  cursor: pointer; list-style: none; padding: 11px 14px 11px 46px; position: relative; font-weight: 500;
+}
+details.qa summary::-webkit-details-marker { display: none; }
+details.qa summary::before {
+  content: "Q"; position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center; font: 700 12px var(--mono); background: var(--amber); color: var(--surface);
+}
+details.qa summary::after { content: "Show answer"; float: right; font-size: 12px; color: var(--amber); font-weight: 600; margin-left: 12px; }
+details.qa[open] summary::after { content: "Hide"; }
+details.qa .ans { padding: 0 16px 14px 46px; }
+details.qa .ans p:last-child { margin-bottom: 0; }
+
+.flag { border: 1px solid var(--bad); background: var(--bad-soft); border-radius: 8px; padding: 12px 14px; margin: 14px 0; font-size: 15px; }
+.flag strong { color: var(--bad); }
+
+.agent-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; margin-top: 34px; }
+.agent-head h3 { margin: 0; font: 700 22px/1.25 var(--display); }
+.agent-head .file { font: 12.5px var(--mono); color: var(--muted); }
+.asks { font-size: 15px; color: var(--muted); margin: 4px 0 12px; }
+.asks strong { color: var(--fg); }
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* walkthrough additions */
+svg .t-mono { font-family: var(--mono); font-size: 12px; }
+svg .box-bad { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 1.4; }
+svg .box-warn { fill: var(--amber-soft); stroke: var(--amber); stroke-width: 1.4; }
+svg .box-num { fill: var(--code-bg); stroke: var(--line-strong); stroke-width: 1.2; }
+svg .edge-red { stroke: var(--bad); stroke-width: 1.6; fill: none; }
+svg .bar-bg { fill: var(--code-bg); stroke: var(--line-strong); stroke-width: 1; }
+svg .bar-pass { fill: var(--accent); }
+svg .bar-warn { fill: var(--amber); }
+svg .bar-fail { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 1.4; }
+svg .gridl { stroke: var(--line); stroke-width: 1; }
+svg .dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+svg g.pt:hover .dot { r: 6.5; }
+svg g title { pointer-events: none; }
+.tiles, .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 18px 0 20px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.tile .k { font: 600 11px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font: 700 26px/1.2 var(--display); margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.tile .v .vs { font: 400 14px var(--sans); color: var(--muted); margin: 0 4px; }
+.tile .s { font-size: 13.5px; color: var(--muted); }
+.tile-good { border-color: var(--accent); background: var(--accent-soft); }
+pre.raw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin: 14px 0 20px; overflow-x: auto; font: 12.5px/1.7 var(--mono); white-space: pre; }
+mark.m-acc { background: var(--accent-soft); color: var(--fg); border-radius: 3px; padding: 0 2px; }
+mark.m-amb { background: var(--amber-soft); color: var(--fg); border-radius: 3px; padding: 0 2px; }
+.t-note { color: var(--muted); font-size: 13px; }
+.t-bad { color: var(--bad); }
+.t-acc { color: var(--accent); }
+tr.row-bad td { background: var(--bad-soft); }
+tr.row-total td { font-weight: 600; background: var(--bg); }
+.reply { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 14px 18px; margin: 14px 0; position: relative; }
+.reply .lbl { font: 600 11px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: 6px; }
+.reply p { margin: 0; font-size: 15px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-def"/></marker>
+    <marker id="arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-acc"/></marker>
+    <marker id="arr-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="m-bad"/></marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="lbl">Contents</div>
+  <ol>
+    <li><a href="#journey">The whole journey</a></li>
+    <li><a href="#upload">Upload</a></li>
+    <li><a href="#extract">Reading the PDF</a></li>
+    <li><a href="#header">Reading the header</a></li>
+    <li><a href="#rows">Finding the numbers</a></li>
+    <li><a href="#labels">Matching labels</a></li>
+    <li><a href="#merge">Merging into JSON</a></li>
+    <li><a href="#split">One file per agent</a></li>
+    <li><a href="#cred">Credibility check</a></li>
+    <li><a href="#ready">Readiness check</a></li>
+    <li><a href="#agents">Running the agents</a></li>
+    <li><a href="#bs">Balance sheet agent</a></li>
+    <li><a href="#liq">Liquidity agent</a></li>
+    <li><a href="#llm">The LLM step</a></li>
+    <li><a href="#store">Where it ends up</a></li>
+    <li><a href="#lessons">What this run teaches</a></li>
+  </ol>
+  <div class="tools">
+    <button class="toggle" id="toggle-answers" type="button">Show all answers</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="eyebrow">FinVeritas · live run on a real Bloomberg PDF</div>
+  <h1>TCS Data Flow Walkthrough</h1>
+  <p class="lede">We fed one real Bloomberg export, the Tata Consultancy Services balance sheet, through the actual FinVeritas code at commit <code>3d8626da</code> and recorded what happened at every step. Every number on this page came out of the code.</p>
+  <div class="tiles">
+    <div class="tile"><div class="k">Input</div><div class="v">3 pages</div><div class="s">TCS balance sheet, FY2016–FY2025</div></div>
+    <div class="tile"><div class="k">Captured</div><div class="v">6 fields</div><div class="s">× 10 years, from 74 rows of numbers</div></div>
+    <div class="tile"><div class="k">Credibility</div><div class="v">65</div><div class="s">MEDIUM · identity check failed</div></div>
+    <div class="tile"><div class="k">Agents</div><div class="v">2 of 5</div><div class="s">ran successfully</div></div>
+  </div>
+  <p class="meta">The run used the project's own <code>.env</code> settings (Gemini through its OpenAI-compatible endpoint). Files were written to a scratch folder, not the project's <code>output/</code>, and no project code was changed.</p>
+</header>
+
+<!-- 1 -->
+<section id="journey">
+  <div class="secnum">01</div>
+  <h2>The whole journey on one page</h2>
+  <p class="prose">Each row is one step in the code (left) and what the TCS data looked like after it (right). The red and amber rows are where things went wrong; the rest of this page zooms into each step.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 700" role="img" aria-label="Eleven steps from upload to storage, with the real TCS result after each step.">
+      <g>
+        <circle cx="24" cy="40" r="13" class="box"/><text x="24" y="44" text-anchor="middle" class="t-strong">1</text>
+        <rect x="46" y="16" width="270" height="48" rx="6" class="box"/>
+        <text x="60" y="36" class="t-strong">Upload</text><text x="60" y="53" class="t-mono">app.py · page_upload()</text>
+        <line x1="316" y1="40" x2="344" y2="40" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="16" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="36">00001325 (1).pdf · 36.9 KB</text><text x="360" y="53" class="t-small">cache key ('pdf', '00001325 (1).pdf')</text>
+        <line x1="181" y1="64" x2="181" y2="76" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="102" r="13" class="box"/><text x="24" y="106" text-anchor="middle" class="t-strong">2</text>
+        <rect x="46" y="78" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="98" class="t-strong">Read the PDF</text><text x="60" y="115" class="t-mono">extract_pdf()</text>
+        <line x1="316" y1="102" x2="344" y2="102" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="78" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="98">3 pages · 152 lines of text</text><text x="360" y="115" class="t-small">3 tables found, each only the 2-row period header</text>
+        <line x1="181" y1="126" x2="181" y2="138" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="164" r="13" class="box"/><text x="24" y="168" text-anchor="middle" class="t-strong">3</text>
+        <rect x="46" y="140" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="160" class="t-strong">Read the header</text><text x="60" y="177" class="t-mono">_parse_header()</text>
+        <line x1="316" y1="164" x2="344" y2="164" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="140" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="160">Tata Consultancy Services Ltd · INR</text><text x="360" y="177" class="t-small">statement type: not detected (None)</text>
+        <line x1="181" y1="188" x2="181" y2="200" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="226" r="13" class="box"/><text x="24" y="230" text-anchor="middle" class="t-strong">4</text>
+        <rect x="46" y="202" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="222" class="t-strong">Try the tables</text><text x="60" y="239" class="t-mono">_parse_from_tables()</text>
+        <line x1="316" y1="226" x2="344" y2="226" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="202" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="222">10 periods: 2016-FY … 2025-FY</text><text x="360" y="239" class="t-small">0 data rows → fall back to reading text</text>
+        <line x1="181" y1="250" x2="181" y2="262" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="288" r="13" class="box"/><text x="24" y="292" text-anchor="middle" class="t-strong">5</text>
+        <rect x="46" y="264" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="284" class="t-strong">Read line by line</text><text x="60" y="301" class="t-mono">_parse_from_text()</text>
+        <line x1="316" y1="288" x2="344" y2="288" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="264" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="284">74 rows of numbers · 8 labels recognised</text><text x="360" y="301" class="t-small">6 fields × 10 years</text>
+        <line x1="181" y1="312" x2="181" y2="324" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="350" r="13" class="box"/><text x="24" y="354" text-anchor="middle" class="t-strong">6</text>
+        <rect x="46" y="326" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="346" class="t-strong">Merge</text><text x="60" y="363" class="t-mono">build_company_json()</text>
+        <line x1="316" y1="350" x2="344" y2="350" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="326" width="424" height="48" rx="6" class="box-bad"/>
+        <text x="360" y="346">9 fields (3 of them empty)</text><text x="360" y="363" class="t-bad">total_liabilities overwritten with total assets</text>
+        <line x1="181" y1="374" x2="181" y2="386" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="412" r="13" class="box"/><text x="24" y="416" text-anchor="middle" class="t-strong">7</text>
+        <rect x="46" y="388" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="408" class="t-strong">Split per agent</text><text x="60" y="425" class="t-mono">_sub_payload() + _write()</text>
+        <line x1="316" y1="412" x2="344" y2="412" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="388" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="408">4 JSON files written</text><text x="360" y="425" class="t-small">full · revenue · balance_sheet · liquidity</text>
+        <line x1="181" y1="436" x2="181" y2="448" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="474" r="13" class="box"/><text x="24" y="478" text-anchor="middle" class="t-strong">8</text>
+        <rect x="46" y="450" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="470" class="t-strong">Check credibility</text><text x="60" y="487" class="t-mono">run_verification()</text>
+        <line x1="316" y1="474" x2="344" y2="474" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="450" width="424" height="48" rx="6" class="box-warn"/>
+        <text x="360" y="470">65 / 100 · MEDIUM</text><text x="360" y="487" class="t-small">accounting identity FAIL in all 10 years, but nothing stops</text>
+        <line x1="181" y1="498" x2="181" y2="510" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="536" r="13" class="box"/><text x="24" y="540" text-anchor="middle" class="t-strong">9</text>
+        <rect x="46" y="512" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="532" class="t-strong">Readiness check</text><text x="60" y="549" class="t-mono">app.py · page_upload()</text>
+        <line x1="316" y1="536" x2="344" y2="536" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="512" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="532">"All required data present" → Run Analysis</text><text x="360" y="549" class="t-small">revenue is not part of this check</text>
+        <line x1="181" y1="560" x2="181" y2="572" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="598" r="13" class="box"/><text x="24" y="602" text-anchor="middle" class="t-strong">10</text>
+        <rect x="46" y="574" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="594" class="t-strong">Run agents</text><text x="60" y="611" class="t-mono">_run_agent_pipeline()</text>
+        <line x1="316" y1="598" x2="344" y2="598" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="574" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="594">Balance sheet ✓ low · Liquidity ✓ low</text><text x="360" y="611" class="t-small">Revenue ✗ · Sentiment skipped · Cross-reference skipped</text>
+        <line x1="181" y1="622" x2="181" y2="634" class="edge" marker-end="url(#arr)"/>
+      </g>
+      <g>
+        <circle cx="24" cy="660" r="13" class="box"/><text x="24" y="664" text-anchor="middle" class="t-strong">11</text>
+        <rect x="46" y="636" width="270" height="48" rx="6" class="box-acc"/>
+        <text x="60" y="656" class="t-strong">Store</text><text x="60" y="673" class="t-mono">session_state + MongoDB</text>
+        <line x1="316" y1="660" x2="344" y2="660" class="edge" marker-end="url(#arr)"/>
+        <rect x="346" y="636" width="424" height="48" rx="6" class="box"/>
+        <text x="360" y="656">results in memory · score 65 in history</text><text x="360" y="673" class="t-small">the uploaded PDF is deleted with its temp folder</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption>The full run at a glance. One label-matching problem at step 5 becomes wrong data at step 6, is noticed (but not acted on) at step 8, and changes both risk labels at step 10.</figcaption>
+  </figure>
+</section>
+
+<!-- 2 -->
+<section id="upload">
+  <div class="secnum">02</div>
+  <h2>Upload</h2>
+  <div class="prose">
+    <p>On the Upload page, the <em>Bloomberg PDF</em> tab accepts the file. Its name becomes the cache key, so Streamlit will not parse it again on every click. The bytes go to <code>parse_pdf_to_json()</code>, which writes them to a temporary file because pdfplumber opens files by path.</p>
+  </div>
+  <figure class="code">
+    <figcaption><span>app.py · what happened for this upload</span></figcaption>
+<pre><code>uploads   = [(pdf_bytes, <span class="st">"00001325 (1).pdf"</span>)]             <span class="cm"># 36.9 KB</span>
+cache_key = (<span class="st">"pdf"</span>, <span class="st">"00001325 (1).pdf"</span>)
+payload, written_path, agent_paths = parse_pdf_to_json(uploads=uploads, output_dir=<span class="st">"output"</span>)
+
+<span class="cm"># inside parse_pdf_to_json():</span>
+<span class="kw">with</span> tempfile.TemporaryDirectory() <span class="kw">as</span> td:
+    pdf_path = Path(td) / <span class="st">"upload_0.pdf"</span>                  <span class="cm"># deleted when the block ends</span>
+    pdf_path.write_bytes(pdf_bytes)
+    content = extract_pdf(pdf_path)</code></pre>
+  </figure>
+</section>
+
+<!-- 3 -->
+<section id="extract">
+  <div class="secnum">03</div>
+  <h2>Reading the PDF</h2>
+  <div class="prose">
+    <p><code>extract_pdf()</code> visits each of the 3 pages and saves two things: the page's text, and any tables pdfplumber can detect. Here is what came out.</p>
+  </div>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 250" role="img" aria-label="Each page produces text containing all the numbers, and tables containing only the two-row period header.">
+      <rect x="36" y="12" width="130" height="180" rx="4" class="box"/>
+      <rect x="28" y="18" width="130" height="180" rx="4" class="box"/>
+      <rect x="20" y="24" width="130" height="180" rx="4" class="box"/>
+      <rect x="32" y="40" width="70" height="6" rx="2" fill="var(--line-strong)"/>
+      <rect x="32" y="56" width="106" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="70" width="96" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="84" width="106" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="98" width="88" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="112" width="106" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="126" width="100" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="140" width="106" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="154" width="92" height="5" rx="2" fill="var(--line)"/>
+      <rect x="32" y="168" width="106" height="5" rx="2" fill="var(--line)"/>
+      <text x="85" y="224" text-anchor="middle" class="t-small">3 pages</text>
+
+      <path d="M150 80 C185 80, 185 66, 218 66" class="edge" marker-end="url(#arr)"/>
+      <path d="M150 160 C185 160, 185 190, 218 190" class="edge" marker-end="url(#arr)"/>
+
+      <rect x="220" y="14" width="550" height="114" rx="6" class="box-acc"/>
+      <text x="236" y="36" class="t-strong">page.extract_text() → text (152 lines in total)</text>
+      <text x="236" y="62" class="t-mono">Total Current Assets 632,140.00 803,160.00 … 1,230,110.00</text>
+      <text x="236" y="82" class="t-mono">+ Cash, Cash 288,270.00 456,630.00 … 452,460.00</text>
+      <text x="236" y="102" class="t-mono">Equivalents &amp; STI</text>
+      <text x="236" y="120" class="t-small">all the numbers are here, one financial line per text line</text>
+
+      <rect x="220" y="140" width="550" height="100" rx="6" class="box"/>
+      <text x="236" y="162" class="t-strong">page.extract_tables() → tables (1 per page)</text>
+      <text x="236" y="186" class="t-mono">row 1:  '' | Restated:2016 A | … | Original:2025 A</text>
+      <text x="236" y="206" class="t-mono">row 2:  For the period ending | 2016-3-31 | … | 2025-3-31</text>
+      <text x="236" y="228" class="t-bad">only the header block was detected as a table, no financial rows</text>
+    </svg>
+    </div>
+    <figcaption>The strict, line-based table search found only the small boxed header on each page. Because it found <em>something</em>, the looser text-based search never ran, and we checked: on page 1 it would have returned a 64-row table with all the numbers. So the financial data had to come from the plain text.</figcaption>
+  </figure>
+  <p class="prose">The raw text of page 1 starts like this. Note how long labels wrap onto a second line; that matters in step 05.</p>
+<pre class="raw">Financial Statement Analysis
+Ticker: TCS IN Equity Periodicity: Annuals <mark class="m-acc">Currency: INR</mark> Note: Years shown on the report are Fiscal Years <mark class="m-acc">Company: Tata Consultancy Services Ltd</mark>
+Filing: Most Recent Consolidation Basis: Consolidated Data
+Standardized
+<mark class="m-amb">Restated:2016 A Restated:2017 A Restated:2018 A Original:2019 A … Original:2025 A</mark>
+For the period ending 2016-3-31 2017-3-31 2018-3-31 2019-3-31 … 2025-3-31
+Total Assets
++ Cash, Cash 288,270.00 456,630.00 426,460.00 417,430.00 … 452,460.00
+Equivalents &amp; STI
+…
+<mark class="m-acc">Total Current Assets 632,140.00 803,160.00 812,240.00 … 1,230,110.00</mark>
+…
+Bloomberg ® 02/21/2026 05:05:05 1</pre>
+</section>
+
+<!-- 4 -->
+<section id="header">
+  <div class="secnum">04</div>
+  <h2>Reading the header</h2>
+  <div class="prose">
+    <p><code>_parse_header()</code> looks only at the first 15 non-empty lines (the green highlights above).</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>What</th><th>How</th><th>Result for this PDF</th></tr></thead>
+    <tbody>
+      <tr><td>Company</td><td>Regex <code>Company\s*:\s*(.+)</code> on the header block</td><td><strong>Tata Consultancy Services Ltd</strong></td></tr>
+      <tr><td>Currency</td><td>First match of INR|USD|EUR|… (default INR)</td><td><strong>INR</strong></td></tr>
+      <tr><td>Statement type</td><td>"income statement", "profit and loss", "balance sheet", or the words IS / BS</td><td><strong>None</strong>. The page says "Financial Statement Analysis" and never "Balance Sheet". Nothing later depends on this field, so no harm done.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 5 -->
+<section id="rows">
+  <div class="secnum">05</div>
+  <h2>Finding the numbers</h2>
+  <div class="prose">
+    <p><code>parse_statement()</code> always tries the tables first. Here the tables held only the period header, so it found 10 periods but no data, and fell back to reading the text line by line.</p>
+  </div>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 216" role="img" aria-label="Table parser finds 10 periods and zero data rows, so the text parser runs, finds the period header on line 5 and normalises each period label.">
+      <rect x="10" y="20" width="200" height="56" rx="6" class="box-acc"/>
+      <text x="110" y="44" text-anchor="middle" class="t-strong">_parse_from_tables()</text>
+      <text x="110" y="62" text-anchor="middle" class="t-small">3 header-only tables</text>
+      <line x1="210" y1="48" x2="248" y2="48" class="edge" marker-end="url(#arr)"/>
+      <rect x="250" y="20" width="210" height="56" rx="6" class="box"/>
+      <text x="355" y="44" text-anchor="middle">periods found: 10</text>
+      <text x="355" y="62" text-anchor="middle" class="t-bad">data rows: 0</text>
+      <line x1="460" y1="48" x2="498" y2="48" class="edge" marker-end="url(#arr)"/>
+      <rect x="500" y="20" width="120" height="56" rx="6" class="box"/>
+      <text x="560" y="53" text-anchor="middle" class="t-strong">any data?</text>
+      <text x="636" y="44" class="t-small">yes → use it</text>
+      <text x="636" y="60" class="t-small">(not this PDF)</text>
+      <line x1="560" y1="76" x2="560" y2="108" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="572" y="96" class="t-bad">no</text>
+      <rect x="440" y="110" width="330" height="56" rx="6" class="box-acc"/>
+      <text x="605" y="134" text-anchor="middle" class="t-strong">_parse_from_text()</text>
+      <text x="605" y="152" text-anchor="middle" class="t-small">find the first line with ≥ 2 periods</text>
+      <line x1="440" y1="138" x2="402" y2="138" class="edge" marker-end="url(#arr)"/>
+      <rect x="10" y="110" width="390" height="56" rx="6" class="box"/>
+      <text x="24" y="132" class="t-strong">header found on line 5</text>
+      <text x="24" y="152" class="t-mono">Restated:2016 A Restated:2017 A … Original:2025 A</text>
+      <text x="10" y="200" class="t-mono">normalise_period():  "Restated:2016 A" → 2016-FY    "Original:2025 A" → 2025-FY    "2016-3-31" → 2016-FY</text>
+    </svg>
+    </div>
+    <figcaption>The period labels contain extra words ("Restated:", "Original:", "A"), but the "plain year" part of the regex picks out the four-digit year and turns each into <code>YYYY-FY</code>.</figcaption>
+  </figure>
+
+  <h3>How one line becomes ten numbers</h3>
+  <p class="prose">For every line after the header, the parser splits on spaces and walks <strong>from the right</strong>, collecting tokens while they look like numbers. The first token that is not a number marks the end of the label.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 236" role="img" aria-label="The line Total Current Assets followed by ten numbers is split into a label and ten values. The label maps to current_assets and the values pair with 2016 to 2025.">
+      <path d="M556 22 H222" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <text x="388" y="14" text-anchor="middle" class="t-acc">walk left while the token is a number</text>
+      <rect x="10" y="30" width="60" height="34" rx="4" class="box-acc"/><text x="40" y="52" text-anchor="middle" class="t-mono">Total</text>
+      <rect x="76" y="30" width="70" height="34" rx="4" class="box-acc"/><text x="111" y="52" text-anchor="middle" class="t-mono">Current</text>
+      <rect x="152" y="30" width="62" height="34" rx="4" class="box-acc"/><text x="183" y="52" text-anchor="middle" class="t-mono">Assets</text>
+      <rect x="220" y="30" width="92" height="34" rx="4" class="box-num"/><text x="266" y="52" text-anchor="middle" class="t-mono">632,140.00</text>
+      <rect x="318" y="30" width="92" height="34" rx="4" class="box-num"/><text x="364" y="52" text-anchor="middle" class="t-mono">803,160.00</text>
+      <rect x="416" y="30" width="30" height="34" rx="4" class="box-num"/><text x="431" y="52" text-anchor="middle" class="t-mono">…</text>
+      <rect x="452" y="30" width="104" height="34" rx="4" class="box-num"/><text x="504" y="52" text-anchor="middle" class="t-mono">1,230,110.00</text>
+      <path d="M10 72 V78 H214 V72" class="edge"/>
+      <path d="M220 72 V78 H556 V72" class="edge"/>
+      <text x="112" y="96" text-anchor="middle" class="t-small">label: "Total Current Assets"</text>
+      <text x="388" y="96" text-anchor="middle" class="t-small">10 numbers, put back in left-to-right order</text>
+      <line x1="112" y1="102" x2="112" y2="126" class="edge" marker-end="url(#arr)"/>
+      <line x1="388" y1="102" x2="388" y2="126" class="edge" marker-end="url(#arr)"/>
+      <rect x="10" y="128" width="204" height="40" rx="6" class="box"/>
+      <text x="112" y="153" text-anchor="middle" class="t-mono">resolve_field(label)</text>
+      <rect x="220" y="128" width="336" height="40" rx="6" class="box"/>
+      <text x="388" y="153" text-anchor="middle" class="t-mono">_parse_number("632,140.00") → 632140.0</text>
+      <line x1="112" y1="168" x2="112" y2="186" class="edge" marker-end="url(#arr)"/>
+      <line x1="388" y1="168" x2="388" y2="186" class="edge" marker-end="url(#arr)"/>
+      <rect x="10" y="188" width="204" height="38" rx="6" class="box-acc"/>
+      <text x="112" y="212" text-anchor="middle" class="t-strong">current_assets</text>
+      <rect x="220" y="188" width="336" height="38" rx="6" class="box-acc"/>
+      <text x="388" y="212" text-anchor="middle" class="t-mono">2016-FY → 632140 … 2025-FY → 1230110</text>
+      <rect x="580" y="128" width="190" height="98" rx="6" class="box-ext"/>
+      <text x="594" y="150" class="t-strong">Why from the right?</text>
+      <text x="594" y="172" class="t-small">Labels contain spaces,</text>
+      <text x="594" y="190" class="t-small">numbers are always the</text>
+      <text x="594" y="208" class="t-small">last tokens on the line.</text>
+    </svg>
+    </div>
+    <figcaption>The same procedure runs on every line. Lines with fewer than 2 numbers (like the wrapped "Equivalents &amp; STI") are ignored.</figcaption>
+  </figure>
+
+  <h3>From 152 lines to 6 fields</h3>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 200" role="img" aria-label="Funnel drawn to scale: 152 lines of text, 147 after the period header, 74 rows ending in two or more numbers, 8 labels recognised, 6 distinct fields.">
+      <text x="180" y="37" text-anchor="end">Lines of text</text>
+      <rect x="190" y="20" width="540" height="24" rx="3" class="box-num"/>
+      <text x="738" y="37" class="t-strong">152</text>
+      <text x="180" y="73" text-anchor="end">After the period header</text>
+      <rect x="190" y="56" width="522" height="24" rx="3" class="box-num"/>
+      <text x="720" y="73" class="t-strong">147</text>
+      <text x="180" y="109" text-anchor="end">Rows with ≥ 2 numbers</text>
+      <rect x="190" y="92" width="263" height="24" rx="3" class="box-num"/>
+      <text x="461" y="109" class="t-strong">74</text>
+      <text x="180" y="145" text-anchor="end">Labels recognised</text>
+      <rect x="190" y="128" width="28" height="24" rx="3" class="box-acc"/>
+      <text x="226" y="145" class="t-strong">8</text>
+      <text x="180" y="181" text-anchor="end">Distinct fields</text>
+      <rect x="190" y="164" width="21" height="24" rx="3" class="box-acc"/>
+      <text x="219" y="181" class="t-strong">6</text>
+    </svg>
+    </div>
+    <figcaption>Drawn to scale (1 line ≈ 3.6 px). Only about 1 in 9 rows of numbers matched a known label. That is by design, since the agents need only a handful of totals, but it also means useful rows such as cash and debt are dropped.</figcaption>
+  </figure>
+</section>
+
+<!-- 6 -->
+<section id="labels">
+  <div class="secnum">06</div>
+  <h2>Matching labels</h2>
+  <p class="prose">Each label goes through <code>resolve_field()</code>, which tries the regex patterns in <code>mapper.py</code> in order. These are the 8 rows that matched, in the order they appear in the PDF:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Label read from the line</th><th>Pattern that matched</th><th>Field</th><th>FY2025 value</th></tr></thead>
+    <tbody>
+      <tr><td>Total Current Assets</td><td><code>^(?:total\s+)?current\s+assets</code></td><td><code>current_assets</code></td><td class="num">1,230,110</td></tr>
+      <tr><td>Total Assets</td><td><code>^total\s+assets</code></td><td><code>total_assets</code></td><td class="num">1,617,550</td></tr>
+      <tr><td>Total Current Liabilities</td><td><code>^(?:total\s+)?current\s+liabilities</code></td><td><code>current_liabilities</code></td><td class="num">530,010</td></tr>
+      <tr><td>Total Liabilities</td><td><code>^total\s+liabilities</code></td><td><code>total_liabilities</code></td><td class="num">638,580</td></tr>
+      <tr><td>Retained Earnings</td><td><code>^retained\s+earnings</code></td><td><code>retained_earnings</code></td><td class="num">916,830</td></tr>
+      <tr><td>Equity Before Minority</td><td><code>^(?:shareholders?…)?equity</code></td><td><code>equity</code></td><td class="num">968,820</td></tr>
+      <tr><td>Total Equity</td><td><code>^total\s+(?:shareholders?…)?equity</code></td><td><code>equity</code></td><td class="num">978,970</td></tr>
+      <tr class="row-bad"><td><strong>Total Liabilities &amp;</strong> <span class="t-note">(the line is "Total Liabilities &amp; Equity")</span></td><td><code>^total\s+liabilities</code></td><td><code>total_liabilities</code></td><td class="num">1,617,550</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Some rows that were <em>not</em> recognised, and why:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Label</th><th>Why it was skipped</th></tr></thead>
+    <tbody>
+      <tr><td>Cash, Cash <span class="t-note">(+ "Equivalents &amp; STI" on the next line)</span></td><td>The label wrapped onto two lines, so the parser only saw "Cash, Cash", which matches no pattern</td></tr>
+      <tr><td>ST Debt, LT Debt</td><td>The patterns expect "short-term debt" / "long-term debt", not the abbreviations ST / LT</td></tr>
+      <tr><td>Total Noncurrent</td><td>Wrapped label; the word "Assets" is on the next line</td></tr>
+      <tr><td>Current Ratio, Net Debt</td><td>Bloomberg's own ratios; no pattern for them (FinVeritas calculates its own)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7 -->
+<section id="merge">
+  <div class="secnum">07</div>
+  <h2>Merging into JSON</h2>
+  <div class="prose">
+    <p><code>build_company_json()</code> pours every value into one list per field. Two fields received <strong>two sets</strong> of 10 values, one from each matching row. <code>_dedup_series()</code> then keeps one value per year, and the rule is simple: <strong>the last one seen wins</strong>.</p>
+  </div>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 256" role="img" aria-label="For total liabilities, the real value 638,580 is overwritten by the Total Liabilities and Equity value 1,617,550. For equity, Total Equity comes last, so the correct value is kept.">
+      <text x="10" y="14" class="t-small">total_liabilities, FY2025</text>
+      <rect x="10" y="22" width="270" height="42" rx="6" class="box"/>
+      <text x="24" y="40" class="t-strong">"Total Liabilities"</text>
+      <text x="24" y="56" class="t-small">638,580 · the real value · comes 1st</text>
+      <rect x="10" y="72" width="270" height="42" rx="6" class="box-bad"/>
+      <text x="24" y="90" class="t-strong">"Total Liabilities &amp; Equity"</text>
+      <text x="24" y="106" class="t-small">1,617,550 · = total assets · comes 2nd</text>
+      <path d="M280 43 C305 43, 305 60, 328 60" class="edge" marker-end="url(#arr)"/>
+      <path d="M280 93 C305 93, 305 76, 328 76" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <rect x="330" y="43" width="180" height="50" rx="6" class="box"/>
+      <text x="420" y="64" text-anchor="middle" class="t-mono">merged[…] : 20 values</text>
+      <text x="420" y="82" text-anchor="middle" class="t-small">2 per year</text>
+      <line x1="510" y1="68" x2="558" y2="68" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <text x="534" y="60" text-anchor="middle" class="t-small">dedup</text>
+      <rect x="560" y="43" width="210" height="50" rx="6" class="box-bad"/>
+      <text x="665" y="64" text-anchor="middle" class="t-strong">keeps 1,617,550 ✗</text>
+      <text x="665" y="82" text-anchor="middle" class="t-small">wrong: that is total assets</text>
+
+      <text x="10" y="146" class="t-small">equity, FY2025</text>
+      <rect x="10" y="154" width="270" height="42" rx="6" class="box"/>
+      <text x="24" y="172" class="t-strong">"Equity Before Minority …"</text>
+      <text x="24" y="188" class="t-small">968,820 · comes 1st</text>
+      <rect x="10" y="204" width="270" height="42" rx="6" class="box-acc"/>
+      <text x="24" y="222" class="t-strong">"Total Equity"</text>
+      <text x="24" y="238" class="t-small">978,970 · comes 2nd</text>
+      <path d="M280 175 C305 175, 305 192, 328 192" class="edge" marker-end="url(#arr)"/>
+      <path d="M280 225 C305 225, 305 208, 328 208" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <rect x="330" y="175" width="180" height="50" rx="6" class="box"/>
+      <text x="420" y="196" text-anchor="middle" class="t-mono">merged[…] : 20 values</text>
+      <text x="420" y="214" text-anchor="middle" class="t-small">2 per year</text>
+      <line x1="510" y1="200" x2="558" y2="200" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <text x="534" y="192" text-anchor="middle" class="t-small">dedup</text>
+      <rect x="560" y="175" width="210" height="50" rx="6" class="box-acc"/>
+      <text x="665" y="196" text-anchor="middle" class="t-strong">keeps 978,970 ✓</text>
+      <text x="665" y="214" text-anchor="middle" class="t-small">right only due to row order</text>
+    </svg>
+    </div>
+    <figcaption>The same mechanism gives one right answer and one wrong one. Which value survives depends only on the order of the rows in the PDF.</figcaption>
+  </figure>
+  <figure class="code">
+    <figcaption><span>src/builder.py · the line that decides</span></figcaption>
+<pre><code><span class="kw">def</span> _dedup_series(series):
+    seen = {}
+    <span class="kw">for</span> entry <span class="kw">in</span> series:
+        seen[entry[<span class="st">"period"</span>]] = entry          <span class="cm"># 2nd "2025-FY" replaces the 1st</span>
+    <span class="kw">return</span> sorted(seen.values(), key=<span class="kw">lambda</span> e: e[<span class="st">"period"</span>])</code></pre>
+  </figure>
+  <p class="prose">The builder also adds empty lists for the required fields that were not found (<code>revenue</code>, <code>net_income</code>, <code>total_debt</code>). This is the actual payload that was produced:</p>
+  <figure class="code">
+    <figcaption><span>output/Tata_Consultancy_Services_Ltd.json (abridged)</span><span>9 fields, 3 empty</span></figcaption>
+<pre><code>{
+  <span class="st">"entity"</span>: {<span class="st">"entity_id"</span>: <span class="st">"Tata Consultancy Services Ltd"</span>, <span class="st">"source"</span>: <span class="st">"Bloomberg"</span>,
+             <span class="st">"currency"</span>: <span class="st">"INR"</span>, <span class="st">"source_files"</span>: [<span class="st">"00001325 (1).pdf"</span>]},
+  <span class="st">"time_series"</span>: {
+    <span class="st">"current_assets"</span>:      [{<span class="st">"period"</span>: <span class="st">"2016-FY"</span>, <span class="st">"value"</span>: 632140.0}, …, {<span class="st">"period"</span>: <span class="st">"2025-FY"</span>, <span class="st">"value"</span>: 1230110.0}],
+    <span class="st">"current_liabilities"</span>: [… 155690.0 … 530010.0],
+    <span class="st">"equity"</span>:              [… 735440.0 … 978970.0],
+    <span class="st">"net_income"</span>:          [],
+    <span class="st">"retained_earnings"</span>:   [… 664960.0 … 916830.0],
+    <span class="st">"revenue"</span>:             [],
+    <span class="st">"total_assets"</span>:        [… 912130.0 … 1617550.0],
+    <span class="st">"total_debt"</span>:          [],
+    <span class="st">"total_liabilities"</span>:   [… 912130.0 … 1617550.0]      <span class="cm"># ✗ identical to total_assets</span>
+  }
+}</code></pre>
+  </figure>
+</section>
+
+<!-- 8 -->
+<section id="split">
+  <div class="secnum">08</div>
+  <h2>One file per agent</h2>
+  <p class="prose">The full payload is written to disk, then three smaller copies, each holding only the fields one agent reads. Follow the lines to see which data reaches which agent, including the wrong liabilities.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 330" role="img" aria-label="Nine payload fields routed into three agent files. The revenue file gets two empty fields. The balance sheet and liquidity files both receive the wrong total liabilities.">
+      <g>
+        <rect x="20" y="24" width="210" height="24" rx="4" class="box"/><text x="32" y="40" class="t-mono">current_assets</text><text x="222" y="40" text-anchor="end" class="t-small">10 yrs</text>
+        <rect x="20" y="56" width="210" height="24" rx="4" class="box"/><text x="32" y="72" class="t-mono">current_liabilities</text><text x="222" y="72" text-anchor="end" class="t-small">10 yrs</text>
+        <rect x="20" y="88" width="210" height="24" rx="4" class="box"/><text x="32" y="104" class="t-mono">equity</text><text x="222" y="104" text-anchor="end" class="t-small">10 yrs</text>
+        <rect x="20" y="120" width="210" height="24" rx="4" class="box-ext"/><text x="32" y="136" class="t-mono">net_income</text><text x="222" y="136" text-anchor="end" class="t-small">empty</text>
+        <rect x="20" y="152" width="210" height="24" rx="4" class="box"/><text x="32" y="168" class="t-mono">retained_earnings</text><text x="222" y="168" text-anchor="end" class="t-small">10 yrs</text>
+        <rect x="20" y="184" width="210" height="24" rx="4" class="box-ext"/><text x="32" y="200" class="t-mono">revenue</text><text x="222" y="200" text-anchor="end" class="t-small">empty</text>
+        <rect x="20" y="216" width="210" height="24" rx="4" class="box"/><text x="32" y="232" class="t-mono">total_assets</text><text x="222" y="232" text-anchor="end" class="t-small">10 yrs</text>
+        <rect x="20" y="248" width="210" height="24" rx="4" class="box-ext"/><text x="32" y="264" class="t-mono">total_debt</text><text x="222" y="264" text-anchor="end" class="t-small">empty</text>
+        <rect x="20" y="280" width="210" height="24" rx="4" class="box-bad"/><text x="32" y="296" class="t-mono">total_liabilities</text><text x="222" y="296" text-anchor="end" class="t-bad">wrong</text>
+      </g>
+      <path d="M230 132 C380 132, 370 44, 518 44" class="edge" stroke-dasharray="4 3"/>
+      <path d="M230 196 C380 196, 370 68, 518 68" class="edge" stroke-dasharray="4 3"/>
+      <path d="M230 100 C380 100, 370 120, 518 120" class="edge"/>
+      <path d="M230 164 C380 164, 370 138, 518 138" class="edge"/>
+      <path d="M230 228 C380 228, 370 156, 518 156" class="edge"/>
+      <path d="M230 260 C380 260, 370 174, 518 174" class="edge" stroke-dasharray="4 3"/>
+      <path d="M230 292 C380 292, 370 192, 518 192" class="edge-red"/>
+      <path d="M230 36 C380 36, 370 236, 518 236" class="edge"/>
+      <path d="M230 68 C380 68, 370 254, 518 254" class="edge"/>
+      <path d="M230 100 C380 100, 370 272, 518 272" class="edge"/>
+      <path d="M230 228 C380 228, 370 290, 518 290" class="edge"/>
+      <path d="M230 292 C380 292, 370 308, 518 308" class="edge-red"/>
+      <rect x="520" y="24" width="250" height="64" rx="6" class="box-ext"/>
+      <text x="536" y="48" class="t-mono">…_revenue.json</text>
+      <text x="536" y="68" class="t-small">2 fields · both empty</text>
+      <rect x="520" y="108" width="250" height="96" rx="6" class="box"/>
+      <text x="536" y="140" class="t-mono">…_balance_sheet.json</text>
+      <text x="536" y="160" class="t-small">5 fields · 1 empty · 1 wrong</text>
+      <rect x="520" y="224" width="250" height="96" rx="6" class="box"/>
+      <text x="536" y="256" class="t-mono">…_liquidity.json</text>
+      <text x="536" y="276" class="t-small">5 fields · 1 wrong</text>
+    </svg>
+    </div>
+    <figcaption>Dashed lines carry empty fields, red lines carry the wrong liabilities. The Revenue agent's file is empty because this PDF is a balance sheet only.</figcaption>
+  </figure>
+</section>
+
+<!-- 9 -->
+<section id="cred">
+  <div class="secnum">09</div>
+  <h2>Credibility check</h2>
+  <p class="prose">The Upload page now runs <code>run_verification("bloomberg_pdf", payload)</code>. Hover over a bar to see the check's message.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 300" role="img" aria-label="Credibility points for the TCS run: signature skipped, completeness 7 of 15, coverage 10 of 10, identity 0 of 20, freshness 10 of 10, plausibility 10 of 10, consistency 15 of 15. 52 of 80 points, score 65, medium.">
+      <text x="10" y="16" class="t-small">Check</text>
+      <text x="210" y="16" class="t-small">1 point = 16 px · outline = possible · fill = earned</text>
+      <g><title>SKIP · No extracted text provided — cannot check PDF signature</title>
+        <text x="10" y="47">Bloomberg signature</text>
+        <rect x="210" y="34" width="400" height="18" rx="3" class="group"/>
+        <text x="770" y="47" text-anchor="end" class="t-small">skipped · not counted</text></g>
+      <g><title>WARN · 5/10 fields (50%). Missing: ebitda, gross_profit, net_income, operating_income…</title>
+        <text x="10" y="79">Field completeness</text>
+        <rect x="210" y="66" width="240" height="18" rx="3" class="bar-bg"/>
+        <rect x="210" y="66" width="112" height="18" rx="3" class="bar-warn"/>
+        <text x="770" y="79" text-anchor="end">7 / 15 <tspan class="t-small">WARN</tspan></text></g>
+      <g><title>PASS · 10 periods available — good trend depth</title>
+        <text x="10" y="111">Temporal coverage</text>
+        <rect x="210" y="98" width="160" height="18" rx="3" class="bar-pass"/>
+        <text x="770" y="111" text-anchor="end">10 / 10 <tspan class="t-small">PASS</tspan></text></g>
+      <g><title>FAIL · Significant mismatch in 10 period(s): 2016-FY: 80.6% off, 2017-FY: 84.2% off, 2018-FY: 80.8% off</title>
+        <text x="10" y="143" class="t-strong">Accounting identity</text>
+        <rect x="210" y="130" width="320" height="18" rx="3" class="bar-fail"/>
+        <text x="770" y="143" text-anchor="end" class="t-bad">0 / 20 FAIL</text></g>
+      <g><title>PASS · Latest period: 2025-FY — current</title>
+        <text x="10" y="175">Data freshness</text>
+        <rect x="210" y="162" width="160" height="18" rx="3" class="bar-pass"/>
+        <text x="770" y="175" text-anchor="end">10 / 10 <tspan class="t-small">PASS</tspan></text></g>
+      <g><title>PASS · No implausibly large year-over-year swings detected</title>
+        <text x="10" y="207">YoY plausibility</text>
+        <rect x="210" y="194" width="160" height="18" rx="3" class="bar-pass"/>
+        <text x="770" y="207" text-anchor="end">10 / 10 <tspan class="t-small">PASS</tspan></text></g>
+      <g><title>PASS · All field relationships are internally consistent</title>
+        <text x="10" y="239">Internal consistency</text>
+        <rect x="210" y="226" width="240" height="18" rx="3" class="bar-pass"/>
+        <text x="770" y="239" text-anchor="end">15 / 15 <tspan class="t-small">PASS</tspan></text></g>
+      <line x1="10" y1="256" x2="770" y2="256" stroke="var(--line)"/>
+      <text x="10" y="282" class="t-strong">Total</text>
+      <text x="770" y="282" text-anchor="end" class="t-strong">52 / 80 → 65 · MEDIUM</text>
+    </svg>
+    </div>
+    <figcaption>The identity check did exactly its job: it caught the wrong liabilities in every year. But it is one bar among seven, so the average still lands in MEDIUM, and the app lets the user run the analysis anyway.</figcaption>
+  </figure>
+
+  <h3>The check that caught it, year by year</h3>
+  <p class="prose">Assets should equal liabilities + equity. With the wrong liabilities, the right-hand side is assets + equity, so every year is off by equity ÷ assets.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Year</th><th>Total assets</th><th>Liabilities used</th><th>Equity</th><th>Liab. + equity</th><th>Off by</th><th>With real liabilities</th></tr></thead>
+    <tbody>
+      <tr><td>FY2016</td><td class="num">912,130</td><td class="num">912,130</td><td class="num">735,440</td><td class="num">1,647,570</td><td class="num t-bad">80.6%</td><td class="num">0.00%</td></tr>
+      <tr><td>FY2017</td><td class="num">1,053,530</td><td class="num">1,053,530</td><td class="num">886,810</td><td class="num">1,940,340</td><td class="num t-bad">84.2%</td><td class="num">0.00%</td></tr>
+      <tr><td>FY2020</td><td class="num">1,230,130</td><td class="num">1,230,130</td><td class="num">868,630</td><td class="num">2,098,760</td><td class="num t-bad">70.6%</td><td class="num">0.00%</td></tr>
+      <tr><td>FY2025</td><td class="num">1,617,550</td><td class="num">1,617,550</td><td class="num">978,970</td><td class="num">2,596,520</td><td class="num t-bad">60.5%</td><td class="num">0.00%</td></tr>
+    </tbody>
+  </table></div>
+  <div class="compare">
+    <div class="tile"><div class="k">As the app ran it</div><div class="v">65</div><div class="s">MEDIUM · signature skipped</div></div>
+    <div class="tile"><div class="k">If the PDF text were passed</div><div class="v">73</div><div class="s">MEDIUM · "bloomberg data" found</div></div>
+    <div class="tile tile-good"><div class="k">With the regex fixed</div><div class="v">90</div><div class="s">HIGH · identity passes</div></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="ready">
+  <div class="secnum">10</div>
+  <h2>Readiness check</h2>
+  <div class="prose">
+    <p>Before showing the Run button, the page compares the fields that have data with what two agents need:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Agent</th><th>Needs</th><th>Present?</th></tr></thead>
+    <tbody>
+      <tr><td>Liquidity</td><td><code>current_assets, current_liabilities, total_assets, total_liabilities, equity</code></td><td><span class="pill pass">ALL 5</span></td></tr>
+      <tr><td>Balance sheet</td><td><code>total_assets, total_liabilities, equity</code></td><td><span class="pill pass">ALL 3</span></td></tr>
+      <tr><td>Revenue</td><td><code>revenue</code> (≥ 4 periods)</td><td><span class="pill fail">NOT CHECKED</span> it is empty</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">So the page shows <em>"All required data present"</em> and a plain <strong>Run Full Analysis</strong> button, even though the Revenue agent is certain to fail. Note also that it only checks that fields <em>exist</em>; the wrong liabilities pass straight through.</p>
+</section>
+
+<!-- 11 -->
+<section id="agents">
+  <div class="secnum">11</div>
+  <h2>Running the agents</h2>
+  <p class="prose"><code>_run_agent_pipeline()</code> runs the five agents in order, each inside <code>_safe_run()</code>. These are the real outcomes.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 200" role="img" aria-label="Revenue failed, liquidity succeeded with risk low, balance sheet succeeded with risk low, sentiment and cross-reference were skipped. Two of five agents produced results.">
+      <rect x="2" y="30" width="644" height="160" rx="10" class="group"/>
+      <text x="14" y="22" class="t-small">_safe_run(): each failure is stored as {"error": …}; the next agent still runs</text>
+      <rect x="12" y="50" width="110" height="52" rx="6" class="box-bad"/>
+      <text x="67" y="72" text-anchor="middle" class="t-strong">Revenue</text><text x="67" y="90" text-anchor="middle" class="t-bad">✗ error</text>
+      <rect x="140" y="50" width="110" height="52" rx="6" class="box-acc"/>
+      <text x="195" y="72" text-anchor="middle" class="t-strong">Liquidity</text><text x="195" y="90" text-anchor="middle" class="t-acc">✓ risk: low</text>
+      <rect x="268" y="50" width="110" height="52" rx="6" class="box-acc"/>
+      <text x="323" y="72" text-anchor="middle" class="t-strong">Balance sheet</text><text x="323" y="90" text-anchor="middle" class="t-acc">✓ risk: low</text>
+      <rect x="396" y="50" width="110" height="52" rx="6" class="box-ext"/>
+      <text x="451" y="72" text-anchor="middle" class="t-strong">Sentiment</text><text x="451" y="90" text-anchor="middle" class="t-small">skipped</text>
+      <rect x="524" y="50" width="110" height="52" rx="6" class="box-ext"/>
+      <text x="579" y="72" text-anchor="middle" class="t-strong">Cross-ref</text><text x="579" y="90" text-anchor="middle" class="t-small">skipped</text>
+      <line x1="122" y1="76" x2="138" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="250" y1="76" x2="266" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="378" y1="76" x2="394" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="506" y1="76" x2="522" y2="76" class="edge" marker-end="url(#arr)"/>
+      <line x1="634" y1="76" x2="660" y2="76" class="edge" marker-end="url(#arr)"/>
+      <rect x="662" y="50" width="112" height="52" rx="6" class="box"/>
+      <text x="718" y="72" text-anchor="middle" class="t-strong">agent_outputs</text><text x="718" y="90" text-anchor="middle" class="t-small">2 of 5 succeeded</text>
+      <text x="67" y="128" text-anchor="middle" class="t-small">0 revenue periods</text>
+      <text x="67" y="144" text-anchor="middle" class="t-small">(balance sheet only)</text>
+      <text x="195" y="128" text-anchor="middle" class="t-small">14.1 s when it worked;</text>
+      <text x="195" y="144" text-anchor="middle" class="t-small">1st try: Gemini 503</text>
+      <text x="323" y="128" text-anchor="middle" class="t-small">18.4 s</text>
+      <text x="323" y="144" text-anchor="middle" class="t-small">1 LLM call</text>
+      <text x="451" y="128" text-anchor="middle" class="t-small">no NEWSAPI_KEY</text>
+      <text x="451" y="144" text-anchor="middle" class="t-small">in .env</text>
+      <text x="579" y="128" text-anchor="middle" class="t-small">needs 3 successes,</text>
+      <text x="579" y="144" text-anchor="middle" class="t-small">only 2</text>
+    </svg>
+    </div>
+    <figcaption>Two agents produced results. The first liquidity attempt failed with "model is experiencing high demand" (503), a retry hit the free-tier limit of 5 requests a minute (429), and a third attempt succeeded. In the app, the first failure would have shown on screen and left only 1 successful agent.</figcaption>
+  </figure>
+  <figure class="code">
+    <figcaption><span>agent_outputs (as stored in session_state)</span></figcaption>
+<pre><code>{
+  <span class="st">"revenue"</span>:   {<span class="st">"error"</span>: <span class="st">"Revenue Agent failed: Need at least 4 revenue periods; got 0"</span>},
+  <span class="st">"liquidity"</span>: {<span class="st">"entity"</span>: <span class="st">"Tata Consultancy Services Ltd"</span>, <span class="st">"metrics"</span>: {...}, <span class="st">"analysis"</span>: <span class="st">"Liquidity risk flag: low. ..."</span>},
+  <span class="st">"balance_sheet"</span>: {<span class="st">"entity"</span>: <span class="st">"Tata Consultancy Services Ltd"</span>, <span class="st">"metrics"</span>: {...}, <span class="st">"analysis"</span>: <span class="st">"..."</span>},
+  <span class="st">"sentiment"</span>: {<span class="st">"error"</span>: <span class="st">"Sentiment Agent skipped — add a NewsAPI key in the sidebar (newsapi.org)."</span>},
+  <span class="st">"cross_reference"</span>: {<span class="st">"error"</span>: <span class="st">"Cross Reference Agent skipped — requires at least 3 successful agent outputs to run reliably."</span>}
+}</code></pre>
+  </figure>
+</section>
+
+<!-- 12 -->
+<section id="bs">
+  <div class="secnum">12</div>
+  <h2>Inside the balance sheet agent</h2>
+  <div class="prose">
+    <p>It reads <code>…_balance_sheet.json</code>, lines up the 10 years where assets, liabilities and equity all exist, and calculates. It also printed a warning: <em>"Accounting identity mismatch &gt; 5% detected. Max mismatch=84.18%"</em>. A warning is all it does; the calculation continues.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Year</th><th>Assets</th><th>Liabilities used</th><th>Real liabilities</th><th>Equity</th><th>Leverage used</th><th>Real leverage</th></tr></thead>
+    <tbody>
+      <tr><td>FY2016</td><td class="num">912,130</td><td class="num">912,130</td><td class="num">176,690</td><td class="num">735,440</td><td class="num">1.240</td><td class="num">0.240</td></tr>
+      <tr><td>FY2017</td><td class="num">1,053,530</td><td class="num">1,053,530</td><td class="num">166,720</td><td class="num">886,810</td><td class="num">1.188</td><td class="num">0.188</td></tr>
+      <tr><td>FY2018</td><td class="num">1,084,090</td><td class="num">1,084,090</td><td class="num">207,660</td><td class="num">876,430</td><td class="num">1.237</td><td class="num">0.237</td></tr>
+      <tr><td>FY2019</td><td class="num">1,170,530</td><td class="num">1,170,530</td><td class="num">250,440</td><td class="num">920,090</td><td class="num">1.272</td><td class="num">0.272</td></tr>
+      <tr><td>FY2020</td><td class="num">1,230,130</td><td class="num">1,230,130</td><td class="num">361,500</td><td class="num">868,630</td><td class="num">1.416</td><td class="num">0.416</td></tr>
+      <tr><td>FY2021</td><td class="num">1,328,810</td><td class="num">1,328,810</td><td class="num">436,510</td><td class="num">892,300</td><td class="num">1.489</td><td class="num">0.489</td></tr>
+      <tr><td>FY2022</td><td class="num">1,436,340</td><td class="num">1,436,340</td><td class="num">516,680</td><td class="num">919,660</td><td class="num">1.562</td><td class="num">0.562</td></tr>
+      <tr><td>FY2023</td><td class="num">1,457,690</td><td class="num">1,457,690</td><td class="num">524,450</td><td class="num">933,240</td><td class="num">1.562</td><td class="num">0.562</td></tr>
+      <tr><td>FY2024</td><td class="num">1,485,720</td><td class="num">1,485,720</td><td class="num">551,300</td><td class="num">934,420</td><td class="num">1.590</td><td class="num">0.590</td></tr>
+      <tr><td>FY2025</td><td class="num">1,617,550</td><td class="num">1,617,550</td><td class="num">638,580</td><td class="num">978,970</td><td class="num">1.652</td><td class="num">0.652</td></tr>
+      <tr class="row-total"><td>Average</td><td></td><td></td><td></td><td></td><td class="num">1.421</td><td class="num">0.421</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">Notice that every "leverage used" is exactly <strong>1 more</strong> than the real one. The wrong liabilities equal assets, and assets = real liabilities + equity, so assets ÷ equity = real leverage + 1.</p>
+  <div class="compare">
+    <div class="tile"><div class="k">Average leverage</div><div class="v">1.42 <span class="vs">vs</span> 0.42</div><div class="s">used vs real</div></div>
+    <div class="tile"><div class="k">Liability growth per year</div><div class="v">6.65% <span class="vs">vs</span> 16.16%</div><div class="s">used (= asset growth) vs real</div></div>
+    <div class="tile"><div class="k">Risk label</div><div class="v">low <span class="vs">vs</span> moderate</div><div class="s">used vs real</div></div>
+  </div>
+  <h3>Following the risk rules</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Rule in classify_balance_sheet_risk()</th><th>As the app ran it</th><th>With real liabilities</th></tr></thead>
+    <tbody>
+      <tr><td>1. leverage &gt; 3 → <strong>high</strong></td><td>1.42: no</td><td>0.42: no</td></tr>
+      <tr><td>2. liabilities growing faster than assets <em>and</em> equity growth ≤ 0 → <strong>high</strong></td><td>6.65 = 6.65: no</td><td>16.16 &gt; 6.65 but equity +3.44%: no</td></tr>
+      <tr><td>3. leverage &lt; 2 <em>and</em> assets growing at least as fast as liabilities <em>and</em> equity growing → <strong>low</strong></td><td class="t-acc">1.42 ✓ · 6.65 ≥ 6.65 ✓ · 3.44 ✓ → <strong>low</strong></td><td>0.42 ✓ · 6.65 ≥ 16.16 ✗</td></tr>
+      <tr><td>4. otherwise → <strong>moderate</strong></td><td>not reached</td><td class="t-acc"><strong>moderate</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">The wrong data passes rule 3 only because liability growth is <em>exactly equal</em> to asset growth, which is a direct side effect of copying assets into liabilities. With the real data, TCS's liabilities grew far faster than its assets (mostly lease liabilities appearing from FY2020 under the new lease accounting rules), which is why the honest label is moderate.</p>
+</section>
+
+<!-- 13 -->
+<section id="liq">
+  <div class="secnum">13</div>
+  <h2>Inside the liquidity agent</h2>
+  <p class="prose">This agent mostly uses current assets and current liabilities, which were read correctly. The current ratio fell steadily from 5.53 to 2.32 but stayed far above the danger lines.</p>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 760 262" role="img" aria-label="TCS current ratio by year: FY16 4.06, FY17 5.53, FY18 4.56, FY19 4.17, FY20 3.34, FY21 2.91, FY22 2.56, FY23 2.53, FY24 2.45, FY25 2.32. Average 3.44. Risk thresholds at 1.5 and 1.0.">
+      <text x="60" y="16" class="t-small">Current ratio (current assets ÷ current liabilities)</text>
+      <line x1="60" y1="220" x2="740" y2="220" class="gridl"/><text x="50" y="224" text-anchor="end" class="t-small">0</text>
+      <line x1="60" y1="156.7" x2="740" y2="156.7" class="gridl"/><text x="50" y="160.7" text-anchor="end" class="t-small">2</text>
+      <line x1="60" y1="93.3" x2="740" y2="93.3" class="gridl"/><text x="50" y="97.3" text-anchor="end" class="t-small">4</text>
+      <line x1="60" y1="30" x2="740" y2="30" class="gridl"/><text x="50" y="34" text-anchor="end" class="t-small">6</text>
+      <line x1="60" y1="172.5" x2="740" y2="172.5" stroke="var(--amber)" stroke-dasharray="5 4" stroke-width="1.2"/>
+      <text x="736" y="167" text-anchor="end" class="t-small">1.5: below this adds 1 risk point</text>
+      <line x1="60" y1="188.3" x2="740" y2="188.3" stroke="var(--bad)" stroke-dasharray="5 4" stroke-width="1.2"/>
+      <text x="736" y="204" text-anchor="end" class="t-small">1.0: below this adds 3</text>
+      <line x1="60" y1="111" x2="740" y2="111" stroke="var(--accent)" stroke-dasharray="2 4" stroke-width="1.2"/>
+      <text x="736" y="106" text-anchor="end" class="t-acc">average 3.44</text>
+      <polyline points="60,91.4 135.6,44.8 211.1,75.7 286.7,87.9 362.2,114.4 437.8,127.9 513.3,139.0 588.9,139.8 664.4,142.4 740,146.5" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+      <g class="pt"><title>FY2016 · 4.06</title><circle cx="60" cy="91.4" r="12" fill="transparent"/><circle cx="60" cy="91.4" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2017 · 5.53</title><circle cx="135.6" cy="44.8" r="12" fill="transparent"/><circle cx="135.6" cy="44.8" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2018 · 4.56</title><circle cx="211.1" cy="75.7" r="12" fill="transparent"/><circle cx="211.1" cy="75.7" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2019 · 4.17</title><circle cx="286.7" cy="87.9" r="12" fill="transparent"/><circle cx="286.7" cy="87.9" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2020 · 3.34</title><circle cx="362.2" cy="114.4" r="12" fill="transparent"/><circle cx="362.2" cy="114.4" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2021 · 2.91</title><circle cx="437.8" cy="127.9" r="12" fill="transparent"/><circle cx="437.8" cy="127.9" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2022 · 2.56</title><circle cx="513.3" cy="139.0" r="12" fill="transparent"/><circle cx="513.3" cy="139.0" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2023 · 2.53</title><circle cx="588.9" cy="139.8" r="12" fill="transparent"/><circle cx="588.9" cy="139.8" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2024 · 2.45</title><circle cx="664.4" cy="142.4" r="12" fill="transparent"/><circle cx="664.4" cy="142.4" r="4.5" class="dot"/></g>
+      <g class="pt"><title>FY2025 · 2.32</title><circle cx="740" cy="146.5" r="12" fill="transparent"/><circle cx="740" cy="146.5" r="4.5" class="dot"/></g>
+      <text x="135.6" y="34" text-anchor="middle" class="t-strong">5.53</text>
+      <text x="740" y="136" text-anchor="end" class="t-strong">2.32</text>
+      <text x="60" y="242" text-anchor="middle" class="t-small">FY16</text><text x="135.6" y="242" text-anchor="middle" class="t-small">FY17</text><text x="211.1" y="242" text-anchor="middle" class="t-small">FY18</text><text x="286.7" y="242" text-anchor="middle" class="t-small">FY19</text><text x="362.2" y="242" text-anchor="middle" class="t-small">FY20</text><text x="437.8" y="242" text-anchor="middle" class="t-small">FY21</text><text x="513.3" y="242" text-anchor="middle" class="t-small">FY22</text><text x="588.9" y="242" text-anchor="middle" class="t-small">FY23</text><text x="664.4" y="242" text-anchor="middle" class="t-small">FY24</text><text x="740" y="242" text-anchor="middle" class="t-small">FY25</text>
+    </svg>
+    </div>
+    <figcaption>Hover a point for its value. The straight line fitted through these points falls by about 9% of the average each year, so the current-ratio trend is "declining", which adds 1 risk point. Working capital still rose overall (from 476,450 to 700,100).</figcaption>
+  </figure>
+  <h3>The risk points, both ways</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Signal</th><th>Value</th><th>As the app ran it</th><th>With real liabilities</th></tr></thead>
+    <tbody>
+      <tr><td>Average current ratio below 1.5?</td><td class="num">3.44</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td>Current ratio trending down?</td><td class="num">−9.3% / yr</td><td class="num">+1</td><td class="num">+1</td></tr>
+      <tr><td>Working capital trending down?</td><td class="num">+2.0% / yr</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td>Liabilities growing faster than assets?</td><td class="num">6.65 vs 6.65 · real 16.16 vs 6.65</td><td class="num">0</td><td class="num t-bad">+2</td></tr>
+      <tr><td>Working capital unstable (swing &gt; half its average)?</td><td class="num">0.09</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr class="row-total"><td>Total → label</td><td></td><td class="num">1 → <strong>low</strong></td><td class="num">3 → <strong>moderate</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose">So even an agent that mostly uses correctly read data changes its answer, because one of its signals compares liability growth with asset growth.</p>
+</section>
+
+<!-- 14 -->
+<section id="llm">
+  <div class="secnum">14</div>
+  <h2>The LLM step</h2>
+  <div class="prose">
+    <p>Only now does the LLM get involved. Each agent sends its finished metrics, never the raw table, to Gemini through LangChain's <code>ChatOpenAI</code> at temperature 0.</p>
+  </div>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 150" role="img" aria-label="Liquidity metrics without the risk flag go to Gemini, the reply is checked for banned words, then the code puts the risk flag in front.">
+      <rect x="10" y="30" width="170" height="58" rx="6" class="box-acc"/>
+      <text x="95" y="54" text-anchor="middle" class="t-strong">6 metrics</text>
+      <text x="95" y="72" text-anchor="middle" class="t-small">risk flag removed</text>
+      <line x1="180" y1="59" x2="208" y2="59" class="edge" marker-end="url(#arr)"/>
+      <rect x="210" y="30" width="170" height="58" rx="6" class="box-llm"/>
+      <text x="295" y="54" text-anchor="middle" class="t-strong">Gemini · temp 0</text>
+      <text x="295" y="72" text-anchor="middle" class="t-small">rules in the system prompt</text>
+      <line x1="380" y1="59" x2="408" y2="59" class="edge" marker-end="url(#arr)"/>
+      <rect x="410" y="30" width="170" height="58" rx="6" class="box"/>
+      <text x="495" y="54" text-anchor="middle" class="t-strong">banned-word check</text>
+      <text x="495" y="72" text-anchor="middle" class="t-small">final text was clean</text>
+      <line x1="580" y1="59" x2="608" y2="59" class="edge-acc" marker-end="url(#arr-acc)"/>
+      <rect x="610" y="30" width="160" height="58" rx="6" class="box-acc"/>
+      <text x="690" y="54" text-anchor="middle" class="t-strong">code adds flag</text>
+      <text x="690" y="72" text-anchor="middle" class="t-small">"Liquidity risk flag: low."</text>
+      <text x="10" y="124" class="t-small">The balance sheet agent is simpler: it sends all 5 metrics including the risk label, and has no banned-word check or retry.</text>
+    </svg>
+    </div>
+    <figcaption>The liquidity agent's guardrails, as they ran for TCS.</figcaption>
+  </figure>
+  <figure class="code">
+    <figcaption><span>What the balance sheet agent sent (human message)</span></figcaption>
+<pre><code>{
+  <span class="st">"task"</span>: <span class="st">"Explain balance sheet stability and leverage using ONLY the provided metrics."</span>,
+  <span class="st">"entity"</span>: <span class="st">"Tata Consultancy Services Ltd"</span>,
+  <span class="st">"metrics"</span>: {
+    <span class="st">"asset_growth_rate"</span>: 6.651633244244211,
+    <span class="st">"liability_growth_rate"</span>: 6.651633244244211,
+    <span class="st">"equity_growth_rate"</span>: 3.4402602384927836,
+    <span class="st">"leverage_ratio"</span>: 1.4208821433974297,
+    <span class="st">"balance_sheet_risk"</span>: <span class="st">"low"</span>
+  },
+  <span class="st">"notes"</span>: [<span class="st">"Do not introduce new numbers, ranges, or time horizons."</span>,
+            <span class="st">"Do not reference financial line items that are not in the metrics."</span>]
+}</code></pre>
+  </figure>
+  <div class="reply">
+    <div class="lbl">Gemini's reply · balance sheet agent</div>
+    <p>Tata Consultancy Services Ltd exhibits a balance sheet risk categorized as low based on the provided metrics. The entity's asset growth rate stands at 6.651633244244211. Parallel to this, the liability growth rate is also recorded at 6.651633244244211. Meanwhile, the equity growth rate is positioned at 3.4402602384927836. Additionally, the reported leverage ratio for the entity is 1.4208821433974297. Together, these specific metrics outline the balance sheet stability and leverage structure for Tata Consultancy Services Ltd.</p>
+  </div>
+  <div class="reply">
+    <div class="lbl">Final text · liquidity agent (flag added by code)</div>
+    <p><strong>Liquidity risk flag: low.</strong> Tata Consultancy Services Ltd exhibits an average current ratio of 3.442453030172449 alongside an increasing working capital trend. The liquidity volatility is recorded at 60246.206727062905, indicating variation in working capital across the evaluated periods. Regarding balance sheet growth, both the average YoY asset growth rate and liability growth rate stand at 6.651633244244211%. Furthermore, the company shows an average YoY equity growth rate of 3.4402602384927836%. Together, these specific metrics outline the company's operational liquidity metrics and funding growth dynamics.</p>
+  </div>
+  <div class="prose">
+    <p>Three things to notice:</p>
+    <ul class="plain">
+      <li><strong>The rules worked.</strong> No invented numbers, no advice, no banned words, and the risk label matches the calculation.</li>
+      <li><strong>The numbers are not rounded.</strong> The code sends raw floats, so the LLM repeats "6.651633244244211". Rounding to 2 decimals before building the prompt would fix this.</li>
+      <li><strong>The LLM faithfully explained wrong data.</strong> "Both asset growth and liability growth stand at 6.65%" sounds perfectly reasonable and is entirely a side effect of the parsing bug. The LLM cannot know; this is exactly why the credibility check exists, and why it should be able to stop a run.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 15 -->
+<section id="store">
+  <div class="secnum">15</div>
+  <h2>Where it ends up</h2>
+  <figure class="dia">
+    <div class="scroll">
+    <svg viewBox="0 0 780 196" role="img" aria-label="After the run: results in session state, four JSON files in output, a history document with score 65 in MongoDB, and the temporary PDF deleted.">
+      <rect x="300" y="10" width="180" height="40" rx="6" class="box-acc"/>
+      <text x="390" y="35" text-anchor="middle" class="t-strong">Run finished</text>
+      <path d="M390 50 V74 H97 V108" class="edge" marker-end="url(#arr)"/>
+      <path d="M390 74 H292 V108" class="edge" marker-end="url(#arr)"/>
+      <path d="M390 74 H487 V108" class="edge" marker-end="url(#arr)"/>
+      <path d="M390 74 H682 V108" class="edge-bad" marker-end="url(#arr-bad)"/>
+      <rect x="10" y="110" width="175" height="76" rx="6" class="box"/>
+      <text x="24" y="132" class="t-strong">session_state</text>
+      <text x="24" y="152" class="t-small">payload + agent_outputs</text>
+      <text x="24" y="170" class="t-small">memory: gone on refresh</text>
+      <rect x="205" y="110" width="175" height="76" rx="6" class="box"/>
+      <text x="219" y="132" class="t-strong">output/ folder</text>
+      <text x="219" y="152" class="t-small">4 JSON files</text>
+      <text x="219" y="170" class="t-small">replaced by the next TCS run</text>
+      <rect x="400" y="110" width="175" height="76" rx="6" class="box-ext"/>
+      <text x="414" y="132" class="t-strong">MongoDB file_history</text>
+      <text x="414" y="152" class="t-small">score 65 · 6 fields loaded</text>
+      <text x="414" y="170" class="t-small">summary only, no numbers</text>
+      <rect x="595" y="110" width="175" height="76" rx="6" class="box-bad"/>
+      <text x="609" y="132" class="t-strong">temp folder</text>
+      <text x="609" y="152" class="t-small">upload_0.pdf</text>
+      <text x="609" y="170" class="t-small">deleted ✗</text>
+    </svg>
+    </div>
+    <figcaption>Only the summary in MongoDB outlives the session. The analysis text itself is lost on refresh.</figcaption>
+  </figure>
+  <figure class="code">
+    <figcaption><span>MongoDB · file_history document for this run</span></figcaption>
+<pre><code>{
+  <span class="st">"user_id"</span>: ObjectId(<span class="st">"…"</span>),
+  <span class="st">"source_type"</span>: <span class="st">"pdf"</span>,
+  <span class="st">"source_label"</span>: <span class="st">"1 Bloomberg PDF(s)"</span>,
+  <span class="st">"entity_name"</span>: <span class="st">"Tata Consultancy Services Ltd"</span>,
+  <span class="st">"fields_loaded"</span>: [<span class="st">"current_assets"</span>, <span class="st">"current_liabilities"</span>, <span class="st">"equity"</span>,
+                    <span class="st">"retained_earnings"</span>, <span class="st">"total_assets"</span>, <span class="st">"total_liabilities"</span>],
+  <span class="st">"credibility_score"</span>: 65,
+  <span class="st">"timestamp"</span>: ISODate(<span class="st">"…"</span>)
+}</code></pre>
+  </figure>
+</section>
+
+<!-- 16 -->
+<section id="lessons">
+  <div class="secnum">16</div>
+  <h2>What this run teaches</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>What happened</th><th>Why</th><th>Fix</th></tr></thead>
+    <tbody>
+      <tr><td>Liabilities replaced by total assets</td><td><code>^total\s+liabilities</code> also matches "Total Liabilities &amp; Equity", and the last value wins</td><td><code>^total\s+liabilities(?!\s*(?:&amp;|and))</code>. Tested: liabilities correct, score 65 → 90</td></tr>
+      <tr><td>Both risk labels said "low"</td><td>Wrong liabilities made liability growth equal asset growth</td><td>Same fix: they become "moderate"</td></tr>
+      <tr><td>The run went ahead despite an identity FAIL</td><td>The score is an average and never blocks</td><td>Cap at LOW on a critical failure and ask the user to confirm</td></tr>
+      <tr><td>Revenue agent failed, cross-reference skipped</td><td>A balance-sheet-only PDF, and the readiness check ignores revenue</td><td>Upload the income statement too; add revenue to the readiness check</td></tr>
+      <tr><td>Tables held only the header</td><td>The strict table search found a 2-row header box, so the looser search (64 rows on page 1) was skipped</td><td>Also try the looser search when the strict tables have fewer than 3 rows</td></tr>
+      <tr><td>Cash and debt never captured</td><td>Labels wrap onto two lines; "ST/LT Debt" abbreviations not in the patterns</td><td>Join wrapped label lines; add Bloomberg's abbreviations</td></tr>
+      <tr><td>LLM repeated 16-digit numbers</td><td>Metrics are not rounded before the prompt</td><td>Round to 2 decimals when building the prompt</td></tr>
+      <tr><td>Liquidity agent failed on the first try</td><td>Gemini free tier: 503 busy, then 429 limit of 5 requests/minute</td><td>Retry with a short wait; keep metrics visible when only the text fails</td></tr>
+    </tbody>
+  </table></div>
+  <figure class="code">
+    <figcaption><span>src/mapper.py · the one-line fix (tested in memory only, not applied)</span></figcaption>
+<pre><code><span class="st">"total_liabilities"</span>: [
+    re.compile(<span class="st">r"^total\s+liabilities(?!\s*(?:&amp;|and))"</span>, re.IGNORECASE),   <span class="cm"># reject "& Equity"</span>
+],</code></pre>
+  </figure>
+
+  <h3>Questions about this run</h3>
+  <details class="qa"><summary>Walk me through what happens when you upload a Bloomberg PDF.</summary>
+    <div class="ans"><p>The bytes are saved to a temporary file and pdfplumber extracts each page's text and tables. The parser reads the company and currency from the header, tries the tables, and if they hold no data reads the text line by line: it finds the period header, then for each line reads numbers from the right and maps the remaining label to a field with regex. The builder merges everything into one JSON, writes it plus three agent-specific files, then the credibility checks and the readiness check run, and finally the agents calculate and the LLM explains.</p></div>
+  </details>
+  <details class="qa"><summary>In your TCS demo, the credibility score was 65. What caused that?</summary>
+    <div class="ans"><p>The accounting identity check failed in all ten years: liabilities had been overwritten by the "Total Liabilities &amp; Equity" row, which equals total assets. That cost all 20 points. The rest was mostly passes plus a completeness warning, since a balance sheet has no revenue or profit fields. With a one-line regex fix the identity passes and the score is 90.</p></div>
+  </details>
+  <details class="qa"><summary>How did a parsing bug change the final risk label?</summary>
+    <div class="ans"><p>With liabilities equal to assets, liability growth exactly equalled asset growth (6.65%). That satisfied the "assets growing at least as fast as liabilities" condition, so both agents said low. The real liability growth was 16.16%, which makes both labels moderate.</p></div>
+  </details>
+  <details class="qa"><summary>Why did the Revenue agent fail on this PDF?</summary>
+    <div class="ans"><p>The file is a balance sheet only, so there is no revenue. The agent needs at least 4 periods and found 0, so it raised an error, which <code>_safe_run</code> stored. The fix is to upload the income statement as well; the app also should have warned about it in the readiness check.</p></div>
+  </details>
+  <details class="qa"><summary>Did the LLM make any mistakes?</summary>
+    <div class="ans"><p>It followed every rule: no invented numbers, no advice, and the labels matched. But it repeated unrounded numbers and confidently described wrong data. That shows the design is right to keep the LLM away from calculation, and that the quality of the explanation depends entirely on the input, which is why data checks matter.</p></div>
+  </details>
+</section>
+</main>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('toggle-answers');
+  btn.addEventListener('click', function () {
+    var all = document.querySelectorAll('details.qa');
+    var anyClosed = Array.prototype.some.call(all, function (d) { return !d.open; });
+    all.forEach(function (d) { d.open = anyClosed; });
+    btn.textContent = anyClosed ? 'Hide all answers' : 'Show all answers';
+  });
+})();
+</script>

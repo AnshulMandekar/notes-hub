@@ -1,0 +1,1143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM Project Notes</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#636b76; --border:#e2e5ea; --accent:#3b6ef5; --code:#eef0f4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14161a; --card:#1d2026; --text:#e8eaee; --muted:#9aa2ad; --border:#2c3038; --accent:#7c9dff; --code:#262a32; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); }
+  nav { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 24px; position:sticky; top:0; background:var(--bg); padding:8px 0; z-index:1; }
+  nav button { font:inherit; font-size:14px; padding:8px 14px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:inherit; cursor:pointer; }
+  nav button[aria-selected=true] { border-color:var(--accent); color:var(--accent); font-weight:600; }
+  article { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:8px 24px 24px; overflow-wrap:anywhere; }
+  code { background:var(--code); padding:1px 5px; border-radius:4px; font-size:.9em; }
+  pre { background:var(--code); padding:14px; border-radius:8px; overflow-x:auto; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; display:block; overflow-x:auto; }
+  th, td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
+  .mermaid { background:#fff; border-radius:8px; padding:12px; overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <a href="index.html">← All notes</a>
+  <h1>CRM Project Notes</h1>
+  <nav role="tablist"><button data-i="0">User Workflow</button><button data-i="1">ER Diagram</button><button data-i="2">Proposed ER Diagram</button><button data-i="3">System Design &amp; MongoDB</button></nav>
+  <article id="out"></article>
+</main>
+<script type="text/markdown" id="md0">
+# CRM Platform User Workflow & Lifecycle Guide
+
+This guide details the step-by-step operational workflows of the CRM platform. It explains the interactions of the three primary actors—**Company Admins (Developers)**, **Sales Employees (Agents)**, and **Leads (Customers)**—and maps every real-life action to its underlying database model transitions.
+
+---
+
+## 1. Actor Personas & System Access
+
+1. **Company Admin / Developer User (`User.js`):**
+   * Configures company parameters, tax registrations (GST/PAN), and billing locations.
+   * Manages project inventories (properties, towers, individual flats).
+   * Provisions credentials and permissions for sales agents.
+   * Monitors performance metrics and financial reports.
+2. **Sales Employee / Agent (`Employee.js`):**
+   * Accesses the platform using assigned credentials and OTP challenges.
+   * Claims, updates, logs calls, and sends text alerts to leads.
+   * Finalizes flat reservations and initiates booking agreements.
+3. **Lead / Prospective Buyer (`lead.js`):**
+   * Submits enquiries online or via broker sheets.
+   * Receives communications (emails, SMS) and selects target units.
+   * Becomes a buyer upon booking confirmation.
+
+---
+
+## 2. Workflow 1: Admin Setup & Real Estate Inventory Config
+
+Before sales operations can begin, the admin must establish the project catalog.
+
+```mermaid
+sequenceDiagram
+    actor Admin as Admin (Developer)
+    participant API as Express API Server
+    participant DB as MongoDB Cluster
+
+    Admin->>API: Sign Up / Log In (User details, PAN, GST)
+    API->>DB: Create User Document
+    DB-->>Admin: Account Verified (OTP validated)
+
+    Admin->>API: Add Real Estate Project (Name, Address, Amenities)
+    API->>DB: Save Property Document
+    DB-->>Admin: Project Added (ID generated)
+
+    Admin->>API: Add Towers/Buildings (Wing Name, Floor Counts)
+    API->>DB: Save Building Document (ref Project ID)
+    API->>DB: Push Building reference into Property's array
+    DB-->>Admin: Building Linked
+
+    Admin->>API: Load Flats / Unit Catalog (Flat #, Price, Floor, Area)
+    API->>DB: Save Flat Documents (ref Building ID)
+    API->>DB: Push Flat references into Building's array
+    DB-->>Admin: Flats Populated (Inventory Locked)
+
+    Admin->>API: Add Sales Agents (Email, Username, Role)
+    API->>DB: Save Employee Document (ref CompanyId)
+    DB-->>Admin: Employee Account Prepared
+```
+
+### Action-to-Model Mapping:
+1. **Developer Registration:** Creates a `User` document.
+2. **Create Project:** Creates a `Property` document.
+3. **Add Building Wing:** Creates a `Building` document containing `project_id`. The project ID is appended to `Property.buildings`.
+4. **Populate Units:** Creates multiple `Flat` documents containing `building_id`. Flat IDs are appended to `Building.flats`.
+5. **Staff Hiring:** Creates `Employee` documents referencing the Admin's `CompanyId`.
+
+---
+
+## 3. Workflow 2: Sales Agent Follow-up & Interaction Loop
+
+Once inventory is configured and staff are active, leads are processed through the sales pipeline.
+
+```mermaid
+flowchart TD
+    Inflow([Lead Acquisition: Form / CSV Import]) -->|Create Lead Document| Unassigned[Unassigned Leads Pool]
+    Unassigned -->|Agent Claims Lead| Assigned[Lead Assigned to Agent]
+    
+    subgraph Follow-up Engagement Loop
+        Assigned --> LogCall[Log Agent Phone Call]
+        LogCall -->|Update callHistory Array| LeadStatusChange{Review Status?}
+        
+        Assigned --> SendSMS[Send Outbound SMS]
+        SendSMS -->|Create SMS Doc & Twilio Delivery| LeadStatusChange
+        
+        Assigned --> Schedule[Schedule Video/Audio Call]
+        Schedule -->|Create ScheduledCall Document| LeadStatusChange
+    end
+
+    LeadStatusChange -->|If Cold / Lost| Terminate([Archive Lead])
+    LeadStatusChange -->|If Contact Established| Warm[Set Lead to Warm / Hot]
+    Warm -->|Pushes entry into statusHistory| EngagementLoop[Refine Property Search]
+    EngagementLoop -->|Customer Selects Flat| BookingFlow([Proceed to Booking Flow])
+```
+
+### Action-to-Model Mapping:
+1. **Lead Creation:** Creates a `Lead` document with status `"Hot"`, `"Warm"`, or `"Cold"` and preferences like `typeOfUnits` (e.g. `"2BHK"`).
+2. **Call Logging:** Agent submits call details. The controller runs a `$push` update to append `{ date, type, duration, notes }` into the `Lead.callHistory` array and increments `calls.made`.
+3. **Callback Reminders:** Agent books a follow-up. Creates a `ScheduledCall` document referencing `leadId` and sets the `dateTime` trigger.
+4. **SMS Dispatch:** Backend triggers Twilio API and saves a new `SMS` document mapping `leadId`, message content, and transmission statuses (`queued` -> `delivered`).
+5. **State Progression:** When the agent updates a lead's category, a `$push` append writes `{ status, changedAt, changedBy }` into `Lead.statusHistory`.
+
+---
+
+## 4. Workflow 3: Flat Booking & Deal Closure
+
+When a lead commits to purchasing a unit, the agent processes the transaction.
+
+```mermaid
+sequenceDiagram
+    actor Agent as Sales Agent (Employee)
+    participant UI as React UI (Booking Screen)
+    participant API as Express API Server
+    participant DB as MongoDB Cluster
+    participant External as Twilio / Nodemailer APIs
+
+    Agent->>UI: Select Project, Tower, and Flat (Checks Availability)
+    UI->>API: GET Request /api/properties & /api/flats
+    API->>DB: Scan Available Inventory
+    DB-->>UI: Displays available flats
+
+    Agent->>UI: Enter Client KYC, Rate terms, and Payment split
+    UI->>API: POST Request /api/bookings (Form Data)
+    
+    Note over API: Generates Atomic Booking Reference (BK-YYYYMMDD-XXXX)
+    API->>DB: Save Booking Document (ref Property, Building, Flat)
+    API->>DB: Set Flat status to Reserve/Sold
+    DB-->>API: Write Confirmation
+    
+    API->>DB: Create Report Document (mixed analytical details)
+    API->>External: Dispatch thank-you Email & SMS confirmation alerts
+    API->>UI: Booking Success Response
+    UI-->>Agent: Ticket Generated & Dashboard updated via WebSockets
+```
+
+### Action-to-Model Mapping:
+1. **Inventory Lookup:** API searches `Property`, `Building`, and `Flat` schemas to return active, unsold rooms.
+2. **Booking Submission:** Creates a `Booking` document containing:
+   * String-based identifier `bookingId`.
+   * Reference keys: `propertyId`, `buildingId`, `flatId`, and `companyId`.
+   * Nested sub-objects: `flatDetails` (frozen unit dimensions), `clientInfo` (KYC agreements), and `charges` (preferential, parking, maintenance fees).
+3. **Reporting Compilation:** Creates a `Report` document. Its `details` property (Mongoose type `Mixed`) stores tax audits and commission margins related to the `bookingId`.
+4. **Real-time Synchronization:** Socket.io triggers an event broadcast, while the Twilio and Nodemailer utility packages trigger SMS and email dispatches to the customer.
+
+</script><script type="text/markdown" id="md1">
+# Entity-Relationship (ER) Diagram - CRM Project
+
+This document provides a comprehensive Entity-Relationship (ER) diagram and database schema overview of the CRM Project. Since the project uses MongoDB/Mongoose (a NoSQL database), the relationships are defined via **Object References (ObjectIds)** and **Embedded Documents/Subdocuments**.
+
+---
+
+## 📊 ER Diagram (Mermaid)
+
+Below is the visual database schema representation. It highlights the primary entities, their fields, and how they reference each other.
+
+```mermaid
+erDiagram
+    User ||--o{ Project : "owns (projects array / CompanyId)"
+    User ||--o{ Employee : "employs (CompanyId)"
+    User ||--o{ Booking : "records (companyId)"
+    User ||--o{ Lead : "manages (CompanyId)"
+    User ||--o{ PersonalInfo : "manages (CompanyId)"
+    User ||--o{ Event : "creates (createdBy / CompanyId)"
+    
+    Project ||--o{ Building : "contains (buildings array / project_id)"
+    Project ||--o{ Booking : "has (propertyId)"
+    
+    Building ||--o{ Flat : "contains (flats array / building_id)"
+    Building ||--o{ Booking : "has (buildingId)"
+    
+    Flat ||--o{ Booking : "has (flatId)"
+    
+    Booking ||--|| Report : "generates (bookingId)"
+    
+    Lead ||--o{ SMS : "receives_sends (leadId)"
+    PersonalInfo ||--o{ ScheduleCall : "receives (leadId)"
+    User ||--o{ ScheduleCall : "schedules (createdBy)"
+
+    User {
+        ObjectId _id PK
+        string username
+        string firstname
+        string lastname
+        string email
+        string phone
+        string companyType
+        string gst
+        string PanCard
+        string street
+        string city
+        string state
+        string pincode
+        string password
+        boolean terms
+        string role
+        string otp
+        date otpExpiry
+        array_ObjectId projects FK
+    }
+
+    Employee {
+        ObjectId _id PK
+        string firstname
+        string lastname
+        string email
+        string phone
+        string role
+        string username
+        string password
+        string otp
+        date otpExpiry
+        ObjectId CompanyId FK
+    }
+
+    Project {
+        ObjectId _id PK
+        string projectName
+        string propertyType
+        number areaOfLand
+        string projectAddress
+        date projectStartDate
+        date expectedCompletionDate
+        string geoTag
+        string typeOfBuilding
+        number numberOfBuildings
+        number numberOfPhases
+        number flatsPerFloor
+        number totalFloors
+        number fsi
+        number superBuiltUpArea
+        array_string unitTypes
+        array_string amenities
+        number currentASRRate
+        number parkingCharges
+        number societyFormationFees
+        number developmentCharges
+        number legalCharges
+        number maintenance
+        number stampDuty
+        number registrationCharges
+        number gstRate
+        number infrastructureCharges
+        string reraNumber
+        string bankAccountDetails
+        array_object files
+        ObjectId CompanyId FK
+        array_ObjectId buildings FK
+    }
+
+    Building {
+        ObjectId _id PK
+        string buildingName
+        number number_of_floors
+        ObjectId project_id FK
+        array_ObjectId flats FK
+    }
+
+    Flat {
+        ObjectId _id PK
+        string flat_number
+        string type
+        number area
+        number price
+        ObjectId building_id FK
+    }
+
+    Booking {
+        ObjectId _id PK
+        string bookingId
+        ObjectId propertyId FK
+        ObjectId buildingId FK
+        ObjectId flatId FK
+        object flatDetails
+        object clientInfo
+        object charges
+        string status
+        ObjectId companyId FK
+        date createdAt
+        date updatedAt
+    }
+
+    Report {
+        ObjectId _id PK
+        string reportId
+        string bookingId FK
+        object details
+        date createdAt
+    }
+
+    Lead {
+        ObjectId _id PK
+        string firstName
+        string lastName
+        string phoneNumber
+        string email
+        string street
+        string area
+        string city
+        string typeOfUnits
+        string typeOfProject
+        string source
+        string typeOfLead
+        ObjectId CompanyId FK
+        date meetingScheduled
+        string interestedProperty
+        object calls
+        boolean isConfirmed
+        date confirmedAt
+        ObjectId confirmedBy FK
+        string notes
+        string nextSteps
+        string role
+        string username
+        date lastCallDate
+        date lastActivity
+        date nextFollowup
+        array_object callHistory
+        array_object statusHistory
+    }
+
+    PersonalInfo {
+        ObjectId _id PK
+        string firstName
+        string lastName
+        string phoneNumber
+        string email
+        string street
+        string area
+        string city
+        string typeOfUnits
+        string typeOfProject
+        string source
+        string typeOfLead
+        date meetingScheduled
+        string interestedProperty
+        object calls
+        string role
+        string username
+        date lastCallDate
+        date lastActivity
+        date nextFollowup
+        array_object callHistory
+        array_object statusHistory
+        ObjectId CompanyId FK
+    }
+
+    ScheduleCall {
+        ObjectId _id PK
+        ObjectId leadId FK
+        date dateTime
+        number duration
+        string callType
+        string notes
+        string reminder
+        string status
+        ObjectId createdBy FK
+        date createdAt
+    }
+
+    SMS {
+        ObjectId _id PK
+        string twilioSid
+        string senderId
+        string recipientPhone
+        string recipientName
+        string message
+        ObjectId leadId FK
+        string status
+        string direction
+        date sentAt
+        date deliveredAt
+        string errorCode
+        string errorMessage
+    }
+
+    Message {
+        ObjectId _id PK
+        string senderId FK
+        string receiverId FK
+        string text
+        date timestamp
+        boolean read
+    }
+
+    Event {
+        ObjectId _id PK
+        string id
+        string title
+        string start
+        string end
+        string color
+        ObjectId createdBy FK
+        ObjectId CompanyId FK
+    }
+```
+
+---
+
+## 📂 Entity Details
+
+### 1. User
+*   **Source File**: `User.js`
+*   **Collection Name**: `users`
+*   **Description**: Represents the primary business account (Admin / Developer Company) that owns properties, manages employees, and registers customers/leads.
+*   **Key Fields**:
+    *   `projects`: References multiple projects (`Property` model) that are owned by this user/company.
+    *   `role`: Defines the permissions of the user.
+
+### 2. Employee
+*   **Source File**: `Employee.js`
+*   **Collection Name**: `employees`
+*   **Description**: Staff members registered under a specific company/user.
+*   **Key Fields**:
+    *   `CompanyId`: References the parent user/company from the `users` collection.
+
+### 3. Property / Project
+*   **Source File**: `Project.js`
+*   **Collection Name**: `properties` (registered as `Property`)
+*   **Description**: A real estate project listing. Contains pricing parameters, coordinates, phases, and files.
+*   **Key Fields**:
+    *   `CompanyId`: References the owning User (`users` collection).
+    *   `buildings`: References an array of building ObjectIds belonging to the project.
+    *   `files`: Subdocument schema storing URLs and filenames for project documents.
+
+### 4. Building
+*   **Source File**: `Building.js`
+*   **Collection Name**: `buildings`
+*   **Description**: A building block within a Project.
+*   **Key Fields**:
+    *   `project_id`: References the parent `Property` model.
+    *   `flats`: References flat ObjectIds in this building.
+*   **Constraint**: Unique index on `{ project_id, buildingName }` prevents duplicate building names in the same project.
+
+### 5. Flat
+*   **Source File**: `Flat.js`
+*   **Collection Name**: `flats`
+*   **Description**: An individual flat/unit within a building.
+*   **Key Fields**:
+    *   `building_id`: References the parent `Building` model.
+*   **Constraint**: Unique index on `{ building_id, flat_number }` prevents duplicate flat numbers in the same building.
+
+### 6. Booking
+*   **Source File**: `Booking.js`
+*   **Collection Name**: `bookings`
+*   **Description**: A flat booking transaction made by a client.
+*   **Key Fields**:
+    *   `propertyId`, `buildingId`, `flatId`: Link the booking to the real estate inventory.
+    *   `companyId`: The company/User recording the booking.
+    *   `flatDetails`: Embedded snapshot of flat configuration at the time of booking.
+    *   `clientInfo`: Embedded details about applicants and KYC.
+    *   `charges`: Snapshot of various rates and development fees.
+
+### 7. Report
+*   **Source File**: `Report.js`
+*   **Collection Name**: `reports`
+*   **Description**: Reporting data generated for a Booking.
+*   **Key Fields**:
+    *   `bookingId`: Refers to the **string** `bookingId` field of a `Booking` document (rather than an ObjectId).
+
+### 8. Lead
+*   **Source File**: `lead.js`
+*   **Collection Name**: `leads`
+*   **Description**: A potential client who has shown interest in a property type.
+*   **Key Fields**:
+    *   `CompanyId`: References the owner company (`User`).
+    *   `callHistory` / `statusHistory`: Nested tracking structures recording client interaction logs.
+
+### 9. PersonalInfo
+*   **Source File**: Defined inline in `server.js:L130-255`
+*   **Collection Name**: `personalinfos`
+*   **Description**: Forms submitted by clients containing personal information. It runs parallel to the `Lead` model in `/api/personal-info` routing.
+*   **Key Fields**:
+    *   `CompanyId`: References the owner company (`User`).
+
+### 10. ScheduleCall
+*   **Source File**: `ScheduleCall.js`
+*   **Collection Name**: `scheduledcalls` (registered as `ScheduledCall`)
+*   **Description**: A schedule reminder for audio or video calls with a lead.
+*   **Key Fields**:
+    *   `leadId`: References the `PersonalInfo` model (representing the lead).
+    *   `createdBy`: References the User model.
+
+### 11. SMS
+*   **Source File**: `SMS.js`
+*   **Collection Name**: `sms`
+*   **Description**: SMS messages sent to/from leads using Twilio integrations.
+*   **Key Fields**:
+    *   `leadId`: References the `Lead` model (note: contrasts with `ScheduleCall` which references `PersonalInfo`).
+
+### 12. Message
+*   **Source File**: `Message.js`
+*   **Collection Name**: `messages`
+*   **Description**: Direct team messaging system.
+*   **Key Fields**:
+    *   `senderId` & `receiverId`: String-based IDs of the sender and receiver.
+
+### 13. Event
+*   **Source File**: `Event.js`
+*   **Collection Name**: `events`
+*   **Description**: Calendar events or meetings.
+*   **Key Fields**:
+    *   `createdBy`: References the creator user.
+    *   `CompanyId`: Stored during runtime routes to scope queries to the company workspace.
+
+---
+
+## ⚠️ Notes & Schema Anomalies
+
+1. **Reference Naming Discrepancies**:
+   * Some schemas reference `User` models using `ref: "User"` (e.g. `Event.js`, `Booking.js`, `lead.js`, `ScheduleCall.js`).
+   * Other schemas reference `User` models using `ref: "users"` (e.g. `Employee.js`, `Project.js`). Mongoose automatically registers model names, but mismatching case and pluralization in `ref` values can lead to populating bugs if not carefully handled.
+2. **Double Lead Schemas**:
+   * The codebase defines a standalone `Lead` model in `models/lead.js` and an inline `PersonalInfo` model in `server.js` that represents very similar data structures. `ScheduleCall` links to `PersonalInfo` while `SMS` links to `Lead`.
+3. **Redundant Client Schema**:
+   * An unused `Client` schema is declared inline in `server.js`. Actual client data for purchases is captured as embedded subdocuments (`clientInfo`, `charges`) inside the `Booking` schema.
+
+</script><script type="text/markdown" id="md2">
+# Proposed Reconstructed ER Diagram & Database Architecture
+
+This document presents an optimized, standardized, and clean database design for the CRM project. It resolves all redundant collections, naming style mismatches, schema bugs, and reference type inconsistencies identified in the original database code.
+
+---
+
+## 🛠️ Key Architectural Enhancements
+
+1. **Unified Lead Management**:
+   * Consolidated the `Lead` and `PersonalInfo` models into a single, comprehensive `Lead` model.
+   * Dropped the duplicate `personalinfos` collection. All features (call history, scheduled calls, and SMS messaging) now link back to the unified `Lead` schema.
+2. **Normalized Field Names (CamelCase)**:
+   * Replaced snake_case fields (`project_id`, `building_id`, `flat_number`, `number_of_floors`) with camelCase fields (`projectId`, `buildingId`, `flatNumber`, `numberOfFloors`) to align with JavaScript/Mongoose conventions.
+3. **Standardized Company References**:
+   * Unified all company/admin ownership fields to `companyId` (lowercased `c`).
+   * Standardized all user references to `ref: "User"` (singular and capitalized) instead of mixing `ref: "User"` and `ref: "users"`.
+4. **Stronger Relationships & Typing**:
+   * Linked `Booking` directly to `Lead` using `leadId: ObjectId`.
+   * Standardized `Report.bookingId` to use an `ObjectId` ref to `Booking` instead of a loose string ref.
+   * Explicitly added `companyId` to the `Event` schema to match its route-level usage.
+   * Defined `senderId` and `receiverId` in `Message` as ObjectIds mapping to the User collection.
+5. **Cleaned Redundant Schemas**:
+   * Removed the unused `Client` model from the code. Client booking snapshot properties remain nested inside `Booking` under `clientInfo` and `charges`.
+
+---
+
+## 📊 Reconstructed ER Diagram (Mermaid)
+
+```mermaid
+erDiagram
+    User ||--o{ Project : "owns (companyId)"
+    User ||--o{ Employee : "employs (companyId)"
+    User ||--o{ Lead : "manages (companyId)"
+    User ||--o{ Booking : "records (companyId)"
+    User ||--o{ Event : "creates (companyId)"
+    
+    Project ||--o{ Building : "contains (projectId)"
+    Project ||--o{ Booking : "has (projectId)"
+    
+    Building ||--o{ Flat : "contains (buildingId)"
+    Building ||--o{ Booking : "has (buildingId)"
+    
+    Flat ||--o{ Booking : "has (flatId)"
+    
+    Lead ||--o{ Booking : "makes (leadId)"
+    Lead ||--o{ ScheduleCall : "receives (leadId)"
+    Lead ||--o{ SMS : "receives_sends (leadId)"
+    
+    Booking ||--|| Report : "generates (bookingId)"
+    
+    User ||--o{ ScheduleCall : "schedules (createdBy)"
+    User ||--o{ SMS : "sends (senderId)"
+    User ||--o{ Message : "sends_receives (senderId / receiverId)"
+    User ||--o{ Event : "schedules (createdBy)"
+
+    User {
+        ObjectId _id PK
+        string username
+        string firstname
+        string lastname
+        string email
+        string phone
+        string companyType
+        string gst
+        string PanCard
+        string street
+        string city
+        string state
+        string pincode
+        string password
+        boolean terms
+        string role
+        string otp
+        date otpExpiry
+    }
+
+    Employee {
+        ObjectId _id PK
+        string firstname
+        string lastname
+        string email
+        string phone
+        string role
+        string username
+        string password
+        string otp
+        date otpExpiry
+        ObjectId companyId FK
+    }
+
+    Project {
+        ObjectId _id PK
+        string projectName
+        string propertyType
+        number areaOfLand
+        string projectAddress
+        date projectStartDate
+        date expectedCompletionDate
+        string geoTag
+        string typeOfBuilding
+        number numberOfBuildings
+        number numberOfPhases
+        number flatsPerFloor
+        number totalFloors
+        number fsi
+        number superBuiltUpArea
+        array_string unitTypes
+        array_string amenities
+        number currentASRRate
+        number parkingCharges
+        number societyFormationFees
+        number developmentCharges
+        number legalCharges
+        number maintenance
+        number stampDuty
+        number registrationCharges
+        number gstRate
+        number infrastructureCharges
+        string reraNumber
+        string bankAccountDetails
+        array_object files
+        ObjectId companyId FK
+    }
+
+    Building {
+        ObjectId _id PK
+        string buildingName
+        number numberOfFloors
+        ObjectId projectId FK
+    }
+
+    Flat {
+        ObjectId _id PK
+        string flatNumber
+        string type
+        number area
+        number price
+        ObjectId buildingId FK
+    }
+
+    Lead {
+        ObjectId _id PK
+        string firstName
+        string lastName
+        string phoneNumber
+        string email
+        string street
+        string area
+        string city
+        string typeOfUnits
+        string typeOfProject
+        string source
+        string typeOfLead
+        ObjectId companyId FK
+        date meetingScheduled
+        ObjectId interestedProperty FK
+        object calls
+        boolean isConfirmed
+        date confirmedAt
+        ObjectId confirmedBy FK
+        string notes
+        string nextSteps
+        string role
+        string username
+        date lastCallDate
+        date lastActivity
+        date nextFollowup
+        array_object callHistory
+        array_object statusHistory
+    }
+
+    Booking {
+        ObjectId _id PK
+        string bookingId
+        ObjectId projectId FK
+        ObjectId buildingId FK
+        ObjectId flatId FK
+        ObjectId leadId FK
+        object flatDetails
+        object clientInfo
+        object charges
+        string status
+        ObjectId companyId FK
+        date createdAt
+        date updatedAt
+    }
+
+    Report {
+        ObjectId _id PK
+        string reportId
+        ObjectId bookingId FK
+        object details
+        date createdAt
+    }
+
+    ScheduleCall {
+        ObjectId _id PK
+        ObjectId leadId FK
+        date dateTime
+        number duration
+        string callType
+        string notes
+        string reminder
+        string status
+        ObjectId createdBy FK
+        date createdAt
+    }
+
+    SMS {
+        ObjectId _id PK
+        string twilioSid
+        ObjectId senderId FK
+        string recipientPhone
+        string recipientName
+        string message
+        ObjectId leadId FK
+        string status
+        string direction
+        date sentAt
+        date deliveredAt
+        string errorCode
+        string errorMessage
+    }
+
+    Message {
+        ObjectId _id PK
+        ObjectId senderId FK
+        ObjectId receiverId FK
+        string text
+        date timestamp
+        boolean read
+    }
+
+    Event {
+        ObjectId _id PK
+        string id
+        string title
+        string start
+        string end
+        string color
+        ObjectId createdBy FK
+        ObjectId companyId FK
+    }
+```
+
+---
+
+## 💡 Why This Reconstruction is Better
+
+1. **High Performance Queries**: By standardizing all references as ObjectIds and unifying models, we can leverage indexing optimally and perform fast `.populate()` joins.
+2. **Data Consistency**: Having a single `Lead` schema prevents synchronization bugs where a phone call update affects a `PersonalInfo` record but leaves the corresponding `Lead` record stale.
+3. **Historical Audit Capability**: The `Booking` model links directly to the original customer via `leadId`, but maintains a copied snapshot of the flat pricing (`flatDetails`) and client parameters (`clientInfo`). If the flat rate changes or the lead details are updated in the future, the Booking contract record remains historically accurate.
+4. **Maintenance Ease**: Resolving the casing and pluralization inconsistencies in `ref` avoids developer confusion and unexpected nulls during Mongoose queries.
+
+</script><script type="text/markdown" id="md3">
+# System Design & MongoDB Analysis: CRM Platform at Scale
+
+This document provides a detailed breakdown of why MongoDB is used in modern web applications, why it was the ideal choice for this specific CRM project, and a system design architecture that scales to support high traffic and sudden spikes, detailed with real-world scenarios for each point.
+
+---
+
+## 1. Why MongoDB is Used (General Capabilities)
+
+MongoDB is a document-oriented, NoSQL database designed for high performance, high availability, and easy scalability. Here are the core reasons for its widespread adoption:
+
+### Dynamic & Flexible Schema (BSON Format)
+* **Description:** Stores data as JSON-like binary documents (BSON). Each document can have different fields, structures, and data types without database lock constraints.
+* **Real-Life Scenario:** 
+  Imagine the company decides to start capturing social media handles (e.g., WhatsApp Business numbers, Instagram handles, or Threads profiles) for Leads.
+  * **Relational Database (SQL):** You would have to execute an `ALTER TABLE leads ADD COLUMN instagram_handle VARCHAR(255)` migration. For a table with millions of leads, this can lock the database table, preventing sales agents from creating or modifying leads during the migration.
+  * **MongoDB (NoSQL):** You simply update your frontend and backend to start saving `{ instagramHandle: "@username" }` inside new lead documents. Legacy documents remain unchanged, there is no need for schema migrations, and there is zero database downtime.
+
+### Natural Data Modeling (Document Nesting)
+* **Description:** Allows embedding lists, objects, and nested structures directly within a single document, eliminating the performance overhead of database joins.
+* **Real-Life Scenario:** 
+  A sales representative opens a customer's profile on the CRM dashboard and needs to see the customer's phone call interaction logs.
+  * **Relational Database (SQL):** The backend must execute a `SELECT * FROM leads JOIN call_history ON leads.id = call_history.lead_id WHERE leads.id = ?` query. If a lead has 100 call records, the DB engine performs a join operation in memory. If 1,000 agents do this simultaneously, server RAM usage spikes.
+  * **MongoDB (NoSQL):** The lead and their `callHistory` array are stored in the *same* document on disk. The system performs a single key-value lookup and returns the entire record instantly without joining tables.
+
+### Built-in Horizontal Scalability (Sharding)
+* **Description:** Scales horizontally by distributing data across multiple physical partitions called shards.
+* **Real-Life Scenario:** 
+  During a major housing development launch, the database size spikes from 500,000 leads to 50,000,000 records, which exceeds the RAM and storage capacity of a single database server.
+  * **Relational Database (SQL):** You must purchase a larger, much more expensive server (vertical scaling) to handle the database, which has physical limits.
+  * **MongoDB (NoSQL):** The cluster administrator configures a **shard key** (e.g., `companyId`). MongoDB automatically distributes companies A-M to Shard Server 1 and N-Z to Shard Server 2. You scale capacity and write speeds horizontally using inexpensive hardware.
+
+### High Availability & Fault Tolerance (Replica Sets)
+* **Description:** Groups database nodes into replica sets (Primary-Secondary model) for automatic data redundancy and instant failover.
+* **Real-Life Scenario:** 
+  The primary database server in the cloud data center suffers a sudden hardware crash or power outage at 2:00 PM on a busy workday.
+  * **Relational Database (SQL):** Without a complex active-active setup, database access stops. Developers must manually trigger failover scripts or promote a read-replica, causing minutes or hours of application downtime.
+  * **MongoDB (NoSQL):** The remaining Secondary nodes in the replica set automatically detect the loss of the Primary node. Within 2 to 3 seconds, they hold a background election, promote a Secondary node to Primary, and the CRM backend reconnects seamlessly with no data loss and zero impact on sales agents.
+
+---
+
+## 2. Why MongoDB is the Best Option for This CRM Project
+
+By examining the codebase, we can tie the advantages of MongoDB directly to the CRM's models and functionalities:
+
+### A. Nested Lead History in `lead.js`
+* **Description:** Lead schema stores dynamic arrays like `callHistory` and `statusHistory` inside the Lead document itself.
+* **Real-Life Scenario:** 
+  A real estate agent reviews a prospect who has been contacted 5 times, changed status from "Warm" to "Confirmed", and has multiple follow-up notes.
+  * **How it works:** When the agent clicks the lead's profile, MongoDB performs one read lookup. The backend returns the entire document containing the `callHistory` array (date, duration, notes) and `statusHistory` array (status, changedAt, changedBy) directly to the React UI, displaying a complete audit log in under 50ms.
+
+### B. Complex Nested Bookings in `Booking.js`
+* **Description:** Houses structured, sub-object details like flat specifications, client info, and itemized service charges in one document.
+* **Real-Life Scenario:** 
+  An agent registers a property booking. They must record the customer info, the specific flat details (price, area, floor), and various charges (maintenance, car parking, society formation charges).
+  * **How it works:** When the booking form is submitted, the backend writes a single object containing `flatDetails`, `clientInfo`, and `charges` directly to MongoDB. This operation is **atomic**—meaning either the entire booking saves successfully or none of it does. You avoid the risk of saving a booking details row in SQL but failing to save the corresponding parking charges rows, which would result in orphaned or corrupted billing records.
+
+### C. Dynamic Lead Imports via Excel/CSV
+* **Description:** The backend package list in `package.json` includes `csvtojson` and `xlsx` to parse lead lists.
+* **Real-Life Scenario:** 
+  A marketing team purchases a lead list from a real estate expo. The spreadsheet has custom columns like `EventDiscountCoupon` and `PreferredLocationDescription` which do not exist in the standard CRM database fields.
+  * **How it works:** The user uploads the spreadsheet. The backend parses it directly to JSON and saves the documents into MongoDB. MongoDB accepts these additional custom key-value pairs without throwing errors. The sales reps can view and filter these custom fields immediately on their dashboard, without waiting for database engineers to update database tables.
+
+---
+
+## 3. High-Scale System Design Solution (Handling Traffic Spikes)
+
+To handle a large number of users and survive sudden spikes of traffic (e.g., major marketing campaigns, bulk SMS broadcasts, or property launching days), we must evolve the architecture beyond a single-node host.
+
+### 3.1 Architectural Diagram
+```mermaid
+graph TD
+    Client[Web & Mobile Clients] -->|HTTPS / WSS| CDN[Cloudflare / CloudFront CDN]
+    CDN -->|Static Assets cached| S3[AWS S3 Bucket / Cloudinary]
+    CDN -->|API requests| ALB[AWS Application Load Balancer]
+    
+    subgraph Compute Layer
+        ALB -->|Route traffic| ECS[AWS ECS Fargate Cluster]
+        ECS -->|Node App 1| Node1[Express Server Node 1]
+        ECS -->|Node App 2| Node2[Express Server Node 2]
+        ECS -->|Node App N| NodeN[Express Server Node N]
+    end
+    
+    subgraph Caching & Real-Time Layer
+        Node1 & Node2 & NodeN -->|Session Cache / Rate Limits| Redis[(Redis Cluster)]
+        Node1 & Node2 & NodeN -->|Socket.io PubSub| Redis
+    end
+
+    subgraph Messaging & Async Layer
+        Node1 & Node2 & NodeN -->|Push bulk tasks| SQS[AWS SQS Queues]
+        SQS -->|Consume tasks| Workers[Background Worker Nodes]
+        Workers -->|Bulk writes| MongoDB
+    end
+
+    subgraph Database Layer
+        Node1 & Node2 & NodeN -->|Read/Write| MongoDB[(MongoDB Atlas Multi-AZ Shard Cluster)]
+        Workers -->|Write| MongoDB
+        MongoDB -->|Primary - Writes| M_Primary[(Primary Node - AZ1)]
+        MongoDB -->|Secondary - Reads| M_Sec1[(Secondary Node - AZ2)]
+        MongoDB -->|Secondary - Reads| M_Sec2[(Secondary Node - AZ3)]
+    end
+```
+
+---
+
+### 3.2 System Components & Real-Life Traffic Scenarios
+
+#### A. Traffic Control & Asset Offloading (CDN & AWS S3/Cloudinary)
+* **Real-Life Scenario:** A developer launches a massive social media ad campaign for a new apartment building. 100,000 interested buyers click the landing page link at the same time to view property brochures and floor plans.
+* **How it works:** The Cloudflare/CloudFront CDN handles all incoming requests for the React frontend, caching style sheets, scripts, and heavy property PDF brochures. The actual Node.js Express server does not process these requests. Only active API submissions (e.g., "Request a Call Back" form submissions) bypass the CDN and hit the application server, saving bandwidth and processing power.
+
+#### B. Compute Auto-Scaling (ECS Fargate Containers)
+* **Real-Life Scenario:** At 9:00 AM on a Monday, 2,000 sales agents log into the CRM simultaneously, running dashboards, importing lists, and updating lead sheets, pushing the API servers' CPU usage to 95%.
+* **How it works:** AWS ECS Fargate registers the CPU surge. Within 60 seconds, it launches 4 new containers running your Express API server. The Application Load Balancer (ALB) begins distributing the incoming HTTP requests across the new containers, dropping the average container CPU load back to 40% and keeping API latency under 100 milliseconds.
+
+#### C. Asynchronous Task Processing (AWS SQS Queue)
+* **Real-Life Scenario:** A CRM admin uploads a spreadsheet containing 50,000 new leads and simultaneously clicks "Send SMS Blast" to alert them about a property sale.
+* **How it works:** Instead of processing 50,000 SMS requests synchronously inside Node's main thread (which would lock the application and cause timeout errors for other users), the API server registers the upload, drops the 50,000 messages as individual payloads onto an **AWS SQS Queue**, and immediately tells the admin: *"Your task is being processed in the background."* Dedicated background workers pull jobs from SQS and trigger them at a controlled rate, keeping the database and API servers completely responsive.
+
+#### D. Caching & Session Management (Redis Cluster)
+* **Real-Life Scenario:** A sales agent logs in, opens a lead sheet, and starts editing details. As the backend auto-scales, their subsequent requests are routed to a completely different API container.
+* **How it works:** Instead of storing session states in local API memory, user sessions and authentication JWTs are cached inside a fast, centralized **Redis Cluster** (retrieved in <1ms). When the agent's request hits Node Server 3, Server 3 validates the session token from Redis, allowing the user to navigate the application seamlessly without being logged out when the compute layer scales.
+
+#### E. Database Optimization (Replica Set Read-Splitting & Sharding)
+* **Real-Life Scenario:** A manager runs a complex monthly sales performance report scanning 5,000,000 leads and bookings, while hundreds of agents are actively typing and saving call logs.
+* **How it works:** 
+  * The Mongoose driver routes the manager's reporting query (read-only) to a Secondary replica database node using `readPreference: 'secondaryPreferred'`.
+  * The agents' call log writes are executed directly on the Primary database node. 
+  * This isolation ensures that a large, complex analytical query does not lock the database or slow down active sales transactions for agents on the phone.
+  * In addition, using `CompanyId` as a Shard Key ensures that all data for a specific company is located on a single database partition, avoiding slow scatter-gather queries across the database cluster.
+
+---
+
+## 4. Current Codebase System Design (The Current Architecture)
+
+The project is designed as a modular web application with distinct front-end and back-end layers. Here is how the parts cooperate:
+
+```
+                            [ React Front-End ]
+                                   │   ▲
+                     Axios HTTP    │   │  Socket.io WSS
+                    (REST APIs)    ▼   │  (Real-Time Alerts)
+                            [ Express Server ]
+                                   │
+               ┌───────────────────┼───────────────────┐
+               ▼                   ▼                   ▼
+      [ Auth Middleware ]   [ Router Mapping ]   [ Utility Modules ]
+               │                   │                   │
+               └─────────┬─────────┘                   │
+                         ▼                             │
+               [ Route Controllers ]                   │
+                         │                             │
+                         ▼                             ▼
+               [ Mongoose Models ]             [ SMS / Email APIs ]
+                         │
+                         ▼
+                  [ MongoDB DB ]
+```
+
+### A. The Front-End (Client Layer)
+* **Technology:** Built with React, Vite, and Tailwind CSS.
+* **Routing:** Managed via React Router, segregating administration dashboards, lead-boards, calendar controls, and booking screens.
+* **Backend Communication:** 
+  * **Axios API Client:** Sends structured HTTP requests (GET, POST, PUT, DELETE) to trigger backend transactions.
+  * **Socket.io Client:** Subscribes to real-time events to push instant user notifications or reflect database status alterations without manual page refreshes.
+
+### B. The Back-End (API & Service Layer)
+* **Technology:** Powered by Node.js, Express, and Socket.io.
+* **Entry Point (`server.js`):** Instantiates the Express app, coordinates HTTP/WebSocket connections, binds router pathways, and manages globally injected middleware (such as Helmet, Cors, HPP, and Body-Parser limits).
+* **Routes (`backEnd/routes/`):** Isolates incoming URL sub-paths and directs operations to their respective controller functions (e.g. `/api/leads` -> `leadsRoutes`).
+* **Middleware (`backEnd/middleware/`):** Validates authentication tokens (`auth.js` JWT check) and intercepts requests to ensure authorization compliance before reaching execution logic.
+* **Utilities (`backEnd/utility/`):** Provides central helper singletons:
+  * `socketHandler.js` managing active web socket feeds.
+  * `nodemailer.js` dispatching corporate emails.
+  * `emailService.js` hosting transactional email layouts.
+
+---
+
+## 5. Codebase Models Deep Dive (How Each Model Works)
+
+The data architecture is defined by 12 interrelated Mongoose models in `backEnd/models/`. They dictate how data is validated, cached, and interconnected:
+
+```mermaid
+classDiagram
+    class User {
+        ObjectId _id
+        String username
+        String email
+        ObjectId[] projects
+    }
+    class Employee {
+        ObjectId _id
+        String email
+        ObjectId CompanyId
+    }
+    class Property {
+        ObjectId _id
+        String projectName
+        ObjectId CompanyId
+        ObjectId[] buildings
+    }
+    class Building {
+        ObjectId _id
+        String buildingName
+        ObjectId project_id
+        ObjectId[] flats
+    }
+    class Flat {
+        ObjectId _id
+        String flat_number
+        ObjectId building_id
+    }
+    class Lead {
+        ObjectId _id
+        String email
+        ObjectId CompanyId
+        Array callHistory
+        Array statusHistory
+    }
+    class Booking {
+        ObjectId _id
+        String bookingId
+        ObjectId propertyId
+        ObjectId buildingId
+        ObjectId flatId
+        ObjectId companyId
+        Object flatDetails
+        Object charges
+    }
+    class ScheduleCall {
+        ObjectId _id
+        ObjectId leadId
+        Date dateTime
+        ObjectId createdBy
+    }
+    class SMS {
+        ObjectId _id
+        ObjectId leadId
+        String twilioSid
+    }
+    class Event {
+        ObjectId _id
+        String title
+        ObjectId createdBy
+    }
+    class Message {
+        ObjectId _id
+        String senderId
+        String receiverId
+    }
+    class Report {
+        ObjectId _id
+        String bookingId
+        Mixed details
+    }
+
+    User "1" --> "*" Property : owns
+    User "1" --> "*" Employee : employs
+    Property "1" --> "*" Building : contains
+    Building "1" --> "*" Flat : contains
+    Lead "1" --> "*" User : CompanyId
+    Booking "1" --> "1" Property : references
+    Booking "1" --> "1" Building : references
+    Booking "1" --> "1" Flat : references
+    Booking "1" --> "1" User : companyId
+    ScheduleCall "1" --> "1" Lead : leadId
+    SMS "1" --> "1" Lead : leadId
+    Event "1" --> "1" User : createdBy
+    Report "1" --> "1" Booking : references bookingId string
+```
+
+### 1. `User` (`User.js`)
+* **Role:** The principal tenant account, representing the real estate developer or company admin.
+* **How it works:** Stores system credentials, GST numbers, PAN details, and corporate addresses. It references the company's real estate projects via a `projects` array linking to `Property` models. All entities in the workspace ultimately tie back to a `User`'s primary company ID.
+
+### 2. `Employee` (`Employee.js`)
+* **Role:** A sales agent or platform administrator hired by the developer.
+* **How it works:** Links to the tenant using `CompanyId` (referencing the `User` model). Stores authorization roles, contact details, credentials, and OTP validation keys used for login verification. 
+
+### 3. `Property` (`Project.js`)
+* **Role:** A specific real estate construction development project.
+* **How it works:** Maps attributes of a property location (land area, address, completion dates, amenities, RERA certifications, and files). It tracks associated buildings via a references array of `buildings` (pointing to `Building` models) and relates back to the firm via `CompanyId`.
+
+### 4. `Building` (`Building.js`)
+* **Role:** An individual structure, wing, or tower constructed inside a development site.
+* **How it works:** References its parent project (`project_id` pointing to `Property`) and tracks a `flats` array pointing to `Flat` inventory models. It applies a compound unique index on `{ project_id, buildingName }` to ensure no tower is duplicated in the same project.
+
+### 5. `Flat` (`Flat.js`)
+* **Role:** A single inventory unit (apartment, row house, or plot) available for purchase.
+* **How it works:** Maps to a specific `Building` via `building_id`. Holds unit specifications (flat number, size category, area in sq. ft., base pricing). A unique index enforces `{ building_id, flat_number }` to verify that unit numbers cannot overlap inside the same building.
+
+### 6. `Lead` (`lead.js`)
+* **Role:** A potential customer.
+* **How it works:** Stores client contact info, location requirements (Studio, 3BHK, etc.), source (Social Media, Broker), status priority (Hot, Cold, Warm), and assignee associations. Embedded arrays like `callHistory` and `statusHistory` act as automated audit timelines, tracking sales efforts in real-time.
+
+### 7. `Booking` (`Booking.js`)
+* **Role:** A sales order documenting a finalized unit purchase.
+* **How it works:** Resolves relations by linking `propertyId`, `buildingId`, and `flatId` together under a client. It auto-generates a booking reference (`BK-YYYYMMDD-XXXX`) and captures billing arrays and flat descriptions (`flatDetails`, `charges`, `clientInfo`) in a single JSON document.
+
+### 8. `ScheduleCall` (`ScheduleCall.js`)
+* **Role:** An appointment scheduling tracker for callbacks.
+* **How it works:** Links to a customer (`leadId`) and logs the meeting parameters: scheduled time, duration in minutes, type (Video/Audio), agenda notes, status (scheduled, missed, completed), and the organizer (`createdBy`).
+
+### 9. `SMS` (`SMS.js`)
+* **Role:** A system message dispatcher log.
+* **How it works:** References a `Lead`. Stores Twilio identifiers (`twilioSid`), direction flags (`inbound`/`outbound`), dispatch statuses (`queued`, `sent`, `delivered`, `failed`), and Twilio API error metrics. Contains performance indices on `leadId` and `sentAt` for quick timeline rendering.
+
+### 10. `Event` (`Event.js`)
+* **Role:** A generic calendar agenda log for coordinating sales calls or site visits.
+* **How it works:** Stores start/end date-strings, visual color codes, action labels, and references the administrative creator (`createdBy`).
+
+### 11. `Message` (`Message.js`)
+* **Role:** A messaging logs container.
+* **How it works:** Logs text chats between app users (like agent-to-agent chats), tracking sender/receiver IDs, timestamps, and message read statuses.
+
+### 12. `Report` (`Report.js`)
+* **Role:** An analytics container for bookings.
+* **How it works:** Points to a booking using a string-based `bookingId`. Uses Mongoose's dynamic `Mixed` schema data type within its `details` field to accept any custom reporting structures (sales commission shares, tax logs, amortization schedules) without needing predefined tables.
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad:false, theme:'default' });
+  const out = document.getElementById('out'), btns = document.querySelectorAll('nav button');
+  function show(i) {
+    btns.forEach(b => b.setAttribute('aria-selected', b.dataset.i == i));
+    out.innerHTML = marked.parse(document.getElementById('md' + i).textContent);
+    out.querySelectorAll('code.language-mermaid').forEach(c => {
+      const d = document.createElement('div'); d.className = 'mermaid'; d.textContent = c.textContent;
+      c.parentElement.replaceWith(d);
+    });
+    mermaid.run({ nodes: out.querySelectorAll('.mermaid') });
+    history.replaceState(null, '', '#' + i);
+  }
+  btns.forEach(b => b.onclick = () => { show(b.dataset.i); scrollTo(0, 0); });
+  show(/^#[0-9]$/.test(location.hash) ? location.hash.slice(1) : 0);
+</script>
+</body>
+</html>
