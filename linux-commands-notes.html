@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>50 Linux Commands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f2f4f6; --surface:#fff; --ink:#16202a; --muted:#56636f; --line:#d8dfe6;
+  --accent:#0a6577; --accent-soft:#e1eff2;
+  --warn-bg:#fce8e8; --warn-ink:#93202a; --warn-line:#efbfc2;
+  --tip-bg:#fff2cc; --tip-ink:#714a00; --tip-line:#ecd38a;
+  --code-bg:#121a23; --code-ink:#e2e9f0; --code-com:#7e8ea0;
+  --f-head:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+  --accent:#5cc3d3; --accent-soft:#12303a;
+  --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+  --tip-bg:#2b230f; --tip-ink:#f1c66d; --tip-line:#5a4618;
+  --code-bg:#0a1016; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+  --accent:#5cc3d3; --accent-soft:#12303a;
+  --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+  --tip-bg:#2b230f; --tip-ink:#f1c66d; --tip-line:#5a4618;
+  --code-bg:#0a1016; color-scheme:dark;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body)}
+a{color:var(--accent)}
+main{max-width:860px;margin:0 auto;padding:28px 16px 72px}
+h1,h2,h3{font-family:var(--f-head);line-height:1.2}
+h1{font-size:2rem;margin:0 0 6px}
+h2{font-size:1.4rem;margin:40px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--accent)}
+h3{font-size:1.05rem;margin:22px 0 6px}
+.sub{color:var(--muted);margin:0 0 20px}
+.ts{font:500 .75rem var(--f-mono);color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+nav.toc{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+nav.toc ol{margin:0;padding-left:20px;columns:2;column-gap:24px}
+@media (max-width:600px){nav.toc ol{columns:1}}
+pre{position:relative;background:var(--code-bg);color:var(--code-ink);font:14px/1.55 var(--f-mono);padding:12px 14px;border-radius:8px;overflow-x:auto;margin:8px 0 14px}
+pre .c{color:var(--code-com)}
+pre button{position:absolute;top:6px;right:6px;font:12px var(--f-body);background:#26323f;color:#cfd8e2;border:0;border-radius:4px;padding:3px 8px;cursor:pointer;opacity:.75}
+pre button:hover{opacity:1}
+code{font-family:var(--f-mono);font-size:.92em}
+p code,li code,td code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:var(--surface);font-size:.95rem}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);font-family:var(--f-head)}
+.note{border-left:4px solid;border-radius:6px;padding:10px 14px;margin:12px 0}
+.tip{background:var(--tip-bg);color:var(--tip-ink);border-color:var(--tip-line)}
+.warn{background:var(--warn-bg);color:var(--warn-ink);border-color:var(--warn-line)}
+</style>
+</head>
+<body>
+<main>
+<h1>50 Linux Commands</h1>
+<p class="sub">Notes from <a href="https://youtu.be/l32UR9DcjLg">this video</a> (Hindi, ~40 min). Demo was on a fresh Ubuntu 22.04 LTS cloud VM (Linode, 1 GB RAM / 25 GB disk) logged in as <code>root</code> over SSH. Timestamps link to the moment in the video.</p>
+
+<nav class="toc"><ol>
+<li><a href="#connect">Connecting to the server</a></li>
+<li><a href="#nav">Navigation &amp; directories</a></li>
+<li><a href="#files">Files: create, copy, move, delete</a></li>
+<li><a href="#vim">Vim survival kit</a></li>
+<li><a href="#view">Viewing files &amp; help</a></li>
+<li><a href="#perm">Permissions &amp; ownership</a></li>
+<li><a href="#users">Users, sudo &amp; su</a></li>
+<li><a href="#archive">Archives &amp; compression</a></li>
+<li><a href="#remote">Remote copy (scp)</a></li>
+<li><a href="#net">Networking</a></li>
+<li><a href="#proc">Processes &amp; monitoring</a></li>
+<li><a href="#svc">Services</a></li>
+<li><a href="#disk">Disk &amp; filesystems</a></li>
+<li><a href="#sys">System info</a></li>
+<li><a href="#text">Text processing</a></li>
+<li><a href="#cheat">One-page cheat sheet</a></li>
+</ol></nav>
+
+<h2 id="connect">1. Connecting to the server <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=176">2:56</a></h2>
+<p>Why a cloud VM? You rent a slice of a physical machine in a provider's data centre (~$5/month) and control it entirely through the terminal. Give a new VM a minute to finish provisioning before logging in.</p>
+<pre><code>ssh root@&lt;server-ip&gt;        <span class="c"># first time: type "yes" to trust the host, then the password</span>
+ssh hari@&lt;server-ip&gt;        <span class="c"># log in as a different user</span></code></pre>
+<div class="note warn">Simple root passwords are fine only for throwaway demo machines. For anything real use a strong password, or better, SSH-key login.</div>
+
+<h2 id="nav">2. Navigation &amp; directories <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=288">4:48</a></h2>
+<pre><code>ls                  <span class="c"># list files/dirs in current directory</span>
+ls -lart            <span class="c"># long list, incl. hidden (.files), oldest first — shows permissions &amp; owner</span>
+pwd                 <span class="c"># print working directory, e.g. /root</span>
+cd /                <span class="c"># go to the root of the filesystem (like C:\ on Windows)</span>
+cd etc              <span class="c"># go into a folder (relative path)</span>
+cd ../              <span class="c"># go one level up</span>
+cd /var/lib         <span class="c"># jump straight there with an absolute path</span>
+mkdir hari          <span class="c"># make a directory</span>
+rmdir hari          <span class="c"># remove an EMPTY directory</span></code></pre>
+<div class="note tip"><b>Tab completion:</b> type the first few letters and press <kbd>Tab</kbd>. One match completes automatically; press <kbd>Tab</kbd> twice to list all candidates.</div>
+<p>Top-level folders under <code>/</code> you saw: <code>bin etc home lib lost+found mnt opt root tmp usr var</code> …</p>
+
+<h2 id="files">3. Files: create, copy, move, delete <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=676">11:16</a></h2>
+<pre><code>touch rohan.txt                 <span class="c"># create an empty file</span>
+cp main.py main_backup.py       <span class="c"># copy (take a backup before experimenting)</span>
+mv main_backup.py backup.py     <span class="c"># move to a new name in the same folder = RENAME</span>
+mv backup.py rohan/backup.py    <span class="c"># move into another folder (the terminal's drag-and-drop)</span>
+rm main.py                      <span class="c"># delete a file</span>
+rm -r rohan                     <span class="c"># delete a directory and everything in it</span></code></pre>
+<div class="note warn"><code>rm</code> on a directory fails ("is a directory") — you need <code>-r</code>. There is no recycle bin; deletes are permanent.</div>
+
+<h2 id="vim">4. Vim survival kit <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=554">9:14</a></h2>
+<pre><code>vim main.py         <span class="c"># open/create a file ("[New]" shown if it didn't exist)</span></code></pre>
+<div class="tbl"><table>
+<tr><th>Keys</th><th>What it does</th></tr>
+<tr><td><code>i</code></td><td>Enter INSERT mode (start typing)</td></tr>
+<tr><td><code>Esc</code></td><td>Leave insert mode (always press before a <code>:</code> command)</td></tr>
+<tr><td><code>:wq</code> + Enter</td><td>Save and quit</td></tr>
+<tr><td><code>:q!</code> + Enter</td><td>Quit and <b>discard</b> changes — rescues a file you messed up</td></tr>
+</table></div>
+
+<h2 id="view">5. Viewing files &amp; getting help <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=839">13:59</a></h2>
+<pre><code>cat rohan.txt       <span class="c"># print file contents (concatenate &amp; display)</span>
+man ls              <span class="c"># manual page for any command — press q to quit</span>
+echo "hello"        <span class="c"># print text or a variable, e.g. echo $HOME</span>
+history             <span class="c"># list commands you've run</span></code></pre>
+
+<h2 id="perm">6. Permissions &amp; ownership <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=962">16:02</a></h2>
+<p><code>ls -lart</code> shows something like <code>drwxr-xr-x 2 root root … hari</code>:</p>
+<div class="tbl"><table>
+<tr><th>Part</th><th>Meaning</th></tr>
+<tr><td><code>d</code></td><td>directory (<code>-</code> = regular file)</td></tr>
+<tr><td><code>rwx</code> <code>r-x</code> <code>r-x</code></td><td>permissions for <b>owner</b>, <b>group</b>, <b>others (public)</b></td></tr>
+<tr><td><code>r</code> / <code>w</code> / <code>x</code></td><td>read (4) / write (2) / e<b>x</b>ecute (1) — <code>x</code> is execute, not delete</td></tr>
+<tr><td><code>root root</code></td><td>owner user, owner group</td></tr>
+</table></div>
+<p>Add the numbers per group: <code>7</code>=rwx, <code>6</code>=rw-, <code>5</code>=r-x, <code>4</code>=r--. So <code>744</code> = owner rwx, group r, others r. (An online "chmod calculator" helps.)</p>
+<pre><code>chmod 744 hari                  <span class="c"># change permissions</span>
+chown www-data hari             <span class="c"># change owner user</span>
+chown www-data:www-data hari    <span class="c"># change owner user AND group (user:group)</span></code></pre>
+<div class="note warn"><code>chmod 777</code> gives everyone full access — dangerous, avoid it.</div>
+<p><code>www-data</code> is the web-server user that appears after installing Apache (<code>apt install apache2</code>).</p>
+
+<h2 id="users">7. Users, sudo &amp; su <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=1211">20:11</a></h2>
+<pre><code>apt update                      <span class="c"># refresh package lists (Ubuntu/Debian)</span>
+apt install apache2             <span class="c"># install a package</span>
+useradd hari                    <span class="c"># add a user (adduser hari = interactive, also makes /home/hari)</span>
+passwd hari                     <span class="c"># set/change that user's password</span>
+usermod -aG sudo hari           <span class="c"># give hari sudo rights</span>
+su hari                         <span class="c"># switch to user hari</span>
+exit                            <span class="c"># go back to the previous user</span>
+su root                         <span class="c"># switch back to root (asks root's password)</span>
+sudo &lt;command&gt;                  <span class="c"># run ONE command with root privileges</span></code></pre>
+<p><b>Why sudo instead of logging in as root?</b> Root can do anything. A normal user who must type <code>sudo</code> for dangerous commands gets an extra moment to think — fewer accidental disasters on a server.</p>
+
+<h2 id="archive">8. Archives &amp; compression <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=1371">22:51</a></h2>
+<div class="tbl"><table>
+<tr><th>tar flag</th><th>Meaning</th></tr>
+<tr><td><code>c</code></td><td>create an archive</td></tr>
+<tr><td><code>x</code></td><td>extract</td></tr>
+<tr><td><code>t</code></td><td>list contents</td></tr>
+<tr><td><code>v</code></td><td>verbose (show files)</td></tr>
+<tr><td><code>f</code></td><td>next argument is the archive filename</td></tr>
+<tr><td><code>z</code> / <code>j</code></td><td>compress with gzip / bzip2</td></tr>
+</table></div>
+<pre><code>tar -cvf rohan.tar rohan.txt .wget-hsts   <span class="c"># bundle files into rohan.tar (archive name comes FIRST)</span>
+tar -tvf rohan.tar                         <span class="c"># list what's inside</span>
+tar -xvf rohan.tar                         <span class="c"># extract</span>
+tar -czvf backup.tar.gz folder/            <span class="c"># create a gzip-compressed tarball</span>
+tar -xzvf backup.tar.gz                    <span class="c"># extract it</span>
+
+gzip hari.txt       <span class="c"># compress → hari.txt.gz (original replaced)</span>
+gunzip hari.txt.gz  <span class="c"># decompress → hari.txt</span></code></pre>
+<div class="note tip">In the video the first <code>tar</code> attempt failed because the archive name was missing — after <code>-f</code> always put the <i>output</i> name.</div>
+
+<h2 id="remote">9. Remote copy with scp <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=1600">26:40</a></h2>
+<pre><code><span class="c"># scp &lt;local-file&gt; &lt;user&gt;@&lt;ip&gt;:&lt;destination-path&gt;</span>
+scp secret.txt root@&lt;other-server-ip&gt;:/home     <span class="c"># asks the OTHER server's password</span>
+scp root@&lt;ip&gt;:/home/secret.txt .               <span class="c"># reverse: download to current dir</span>
+scp -r myfolder root@&lt;ip&gt;:/root                <span class="c"># copy a whole folder</span></code></pre>
+
+<h2 id="net">10. Networking <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=1684">28:04</a></h2>
+<pre><code>ping google.com     <span class="c"># test connectivity — Ctrl+C to stop</span>
+apt install net-tools   <span class="c"># needed for ifconfig / netstat / route on fresh Ubuntu</span>
+ifconfig            <span class="c"># show/configure network interfaces (modern: ip a)</span>
+netstat             <span class="c"># network connections &amp; traffic (modern: ss -tulpn)</span>
+route               <span class="c"># view/edit the routing table (modern: ip route)</span></code></pre>
+
+<h2 id="proc">11. Processes &amp; monitoring <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=930">15:30</a></h2>
+<pre><code>htop                <span class="c"># interactive monitor: CPU, RAM, processes; click columns to sort (presenter's favourite)</span>
+top                 <span class="c"># classic version of the same; q or Ctrl+C to quit</span>
+ps                  <span class="c"># processes in this terminal</span>
+ps aux              <span class="c"># every process, detailed</span>
+ps aux | grep sbin  <span class="c"># filter processes by name using a pipe</span>
+kill &lt;PID&gt;          <span class="c"># stop a process by its ID (find PID in top/ps)</span>
+kill -9 &lt;PID&gt;       <span class="c"># force-kill if it won't stop</span></code></pre>
+
+<h2 id="svc">12. Services <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=1771">29:31</a></h2>
+<pre><code>systemctl status apache2     <span class="c"># is the service running?</span>
+systemctl start apache2
+systemctl stop apache2
+systemctl restart apache2
+systemctl enable apache2     <span class="c"># start automatically on boot</span>
+
+service apache2 start        <span class="c"># older equivalent syntax</span>
+service apache2 restart</code></pre>
+
+<h2 id="disk">13. Disk &amp; filesystems <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=2020">33:40</a></h2>
+<pre><code>df -h               <span class="c"># free/used space per mounted disk (-h = human readable)</span>
+du -sh /var/log     <span class="c"># size of a specific file/folder</span>
+mount /dev/sdb1 /mnt    <span class="c"># attach a filesystem at a location</span>
+umount /mnt             <span class="c"># detach it</span></code></pre>
+
+<h2 id="sys">14. System info <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=2131">35:31</a></h2>
+<pre><code>date                <span class="c"># current date/time</span>
+whoami              <span class="c"># which user am I logged in as</span>
+which ls            <span class="c"># where a program is installed (/usr/bin/ls)</span>
+apt install finger
+finger hari         <span class="c"># details about a user</span>
+uname -a            <span class="c"># kernel / OS info (uname alone = just "Linux")</span>
+apt install plocate
+locate hari.txt     <span class="c"># find where a file is on disk</span></code></pre>
+
+<h2 id="text">15. Text processing <a class="ts" href="https://youtu.be/l32UR9DcjLg?t=2165">36:05</a></h2>
+<pre><code>ls | tee file.txt       <span class="c"># show output on screen AND write it to file.txt</span>
+sort hari.txt           <span class="c"># print lines sorted (a c b d → a b c d)</span>
+uniq hari.txt           <span class="c"># drop ADJACENT duplicate lines</span>
+sort hari.txt | uniq    <span class="c"># remove all duplicates (sort first!)</span>
+head hari.txt           <span class="c"># first 10 lines   (head -n 5 for 5)</span>
+tail hari.txt           <span class="c"># last 10 lines</span>
+tail -n 2 -f hari.txt   <span class="c"># last 2 lines, then keep watching live (logs!) — Ctrl+C to stop</span></code></pre>
+<div class="note tip"><code>uniq</code> only removes duplicates that sit next to each other — that's why the video's blank line survived. Pipe through <code>sort</code> first for true de-duplication.</div>
+
+<h2 id="cheat">16. One-page cheat sheet</h2>
+<div class="tbl"><table>
+<tr><th>Area</th><th>Commands</th></tr>
+<tr><td>Navigate</td><td><code>ls</code> <code>ls -lart</code> <code>pwd</code> <code>cd</code> <code>mkdir</code> <code>rmdir</code></td></tr>
+<tr><td>Files</td><td><code>touch</code> <code>cp</code> <code>mv</code> <code>rm</code> <code>rm -r</code> <code>cat</code> <code>vim</code></td></tr>
+<tr><td>Help</td><td><code>man</code> <code>history</code> <code>echo</code></td></tr>
+<tr><td>Permissions</td><td><code>chmod</code> <code>chown</code></td></tr>
+<tr><td>Users</td><td><code>useradd</code> <code>passwd</code> <code>su</code> <code>sudo</code> <code>whoami</code> <code>finger</code></td></tr>
+<tr><td>Packages</td><td><code>apt update</code> <code>apt install</code></td></tr>
+<tr><td>Archives</td><td><code>tar</code> <code>gzip</code> <code>gunzip</code></td></tr>
+<tr><td>Remote</td><td><code>ssh</code> <code>scp</code></td></tr>
+<tr><td>Network</td><td><code>ping</code> <code>ifconfig</code> <code>netstat</code> <code>route</code></td></tr>
+<tr><td>Processes</td><td><code>top</code> <code>htop</code> <code>ps</code> <code>grep</code> <code>kill</code></td></tr>
+<tr><td>Services</td><td><code>systemctl</code> <code>service</code></td></tr>
+<tr><td>Disk</td><td><code>df</code> <code>du</code> <code>mount</code> <code>umount</code></td></tr>
+<tr><td>System</td><td><code>date</code> <code>which</code> <code>uname</code> <code>locate</code></td></tr>
+<tr><td>Text</td><td><code>tee</code> <code>sort</code> <code>uniq</code> <code>head</code> <code>tail</code></td></tr>
+</table></div>
+</main>
+<script>
+document.querySelectorAll('pre').forEach(p=>{
+  const b=document.createElement('button');b.textContent='Copy';
+  b.onclick=()=>{navigator.clipboard.writeText(p.querySelector('code').innerText.replace(/\s+#.*$/gm,'')).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)})};
+  p.appendChild(b);
+});
+</script>
+</body>
+</html>

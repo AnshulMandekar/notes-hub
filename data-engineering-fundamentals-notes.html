@@ -1,0 +1,1123 @@
+<title>Data Engineering Fundamentals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a left rail listing the videos + one reading column; code, tables and diagrams scroll inside their own boxes */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --ink:#16202a; --muted:#56636f; --line:#d8dfe6;
+  --accent:#0a6577; --accent-soft:#e1eff2;
+  --iv-bg:#fff2cc; --iv-ink:#714a00; --iv-line:#ecd38a;
+  --warn-bg:#fce8e8; --warn-ink:#93202a; --warn-line:#efbfc2;
+  --extra-bg:#eaedfb; --extra-ink:#36429a; --extra-line:#cbd1f3;
+  --code-bg:#121a23; --code-ink:#e2e9f0; --code-muted:#8797a8; --code-line:#26323f;
+  --tk-kw:#7cc5ff; --tk-str:#9fe0b4; --tk-fn:#ffd47a; --tk-num:#f5a7c7; --tk-com:#7e8ea0; --tk-cls:#c8b5ff;
+  --f-head:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+    --accent:#5cc3d3; --accent-soft:#12303a;
+    --iv-bg:#2b230f; --iv-ink:#f1c66d; --iv-line:#5a4618;
+    --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+    --extra-bg:#191e3a; --extra-ink:#aab4f5; --extra-line:#323b70;
+    --code-bg:#0a1016; --code-line:#1f2a36;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+  --accent:#5cc3d3; --accent-soft:#12303a;
+  --iv-bg:#2b230f; --iv-ink:#f1c66d; --iv-line:#5a4618;
+  --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+  --extra-bg:#191e3a; --extra-ink:#aab4f5; --extra-line:#323b70;
+  --code-bg:#0a1016; --code-line:#1f2a36;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body)}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 72px}
+@media (min-width:1000px){.wrap{grid-template-columns:210px minmax(0,1fr);gap:48px;padding-inline:28px}}
+header.top{grid-column:1/-1;display:grid;gap:10px;max-width:820px}
+.kicker{font:500 12px/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font:700 clamp(32px,5vw,46px)/1.05 var(--f-head);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:0;max-width:66ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;color:var(--muted);margin-top:4px}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+nav.toc{min-width:0}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+nav.toc li{flex:0 0 auto}
+nav.toc a{display:grid;gap:1px;text-decoration:none;color:var(--ink);padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:14px;line-height:1.3}
+nav.toc a small{font:500 11px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.04em}
+nav.toc a:hover{border-color:var(--accent)}
+@media (min-width:1000px){
+  nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;max-height:calc(100vh - 40px);overflow-y:auto;padding-right:4px}
+  nav.toc ol{flex-direction:column;overflow:visible;gap:2px}
+  nav.toc a{border:0;background:none;padding:6px 10px;border-left:2px solid var(--line);border-radius:0}
+  nav.toc a:hover{border-left-color:var(--accent);background:var(--accent-soft)}
+}
+
+main{min-width:0;max-width:820px;display:grid;gap:56px}
+section.video{display:grid;gap:18px;min-width:0;scroll-margin-top:16px}
+.vhead{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.vhead .meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.vhead .meta a{letter-spacing:.02em;text-transform:none;font-family:var(--f-body);font-size:14px}
+h2{font:700 clamp(26px,3.6vw,34px)/1.12 var(--f-head);margin:0;text-wrap:balance}
+h3{font:600 20px/1.25 var(--f-head);margin:10px 0 0;text-wrap:balance}
+h4{font:600 16px/1.3 var(--f-body);margin:4px 0 0}
+p{margin:0;max-width:68ch}
+ul,ol.steps{margin:0;padding-left:1.25em;display:grid;gap:6px;max-width:70ch}
+li>ul{margin-top:6px}
+strong{font-weight:600}
+code{font:500 .88em/1 var(--f-mono);background:var(--accent-soft);color:var(--ink);padding:.12em .35em;border-radius:4px}
+.tl{font-size:15px;color:var(--muted)}
+
+.note{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;background:var(--surface)}
+.note .tag{justify-self:start;font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.note.iv{background:var(--iv-bg);border-color:var(--iv-line)}
+.note.iv .tag{background:var(--iv-ink);color:var(--iv-bg)}
+.note.gotcha{background:var(--warn-bg);border-color:var(--warn-line)}
+.note.gotcha .tag{background:var(--warn-ink);color:var(--warn-bg)}
+.note.extra{background:var(--extra-bg);border-color:var(--extra-line)}
+.note.extra .tag{background:var(--extra-ink);color:var(--extra-bg)}
+.note p,.note ul{max-width:none}
+.note code{background:color-mix(in srgb,var(--surface) 55%,transparent)}
+.pill{display:inline-block;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.pill.iv{background:var(--iv-ink);color:var(--iv-bg)}
+.pill.gotcha{background:var(--warn-ink);color:var(--warn-bg)}
+.pill.extra{background:var(--extra-ink);color:var(--extra-bg)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+
+figure.diagram{margin:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;display:grid;gap:8px;min-width:0}
+figure.diagram .scroll{overflow-x:auto}
+figure.diagram pre.mermaid{margin:0;background:none;text-align:center;font-family:var(--f-body)}
+figcaption{font-size:13.5px;color:var(--muted)}
+
+.code{border-radius:10px;overflow:hidden;background:var(--code-bg);border:1px solid var(--code-line);min-width:0}
+.code-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px 8px 14px;border-bottom:1px solid var(--code-line);font:500 12px/1.3 var(--f-mono);color:var(--code-muted)}
+.code-head .left{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.status{font:600 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid var(--code-line)}
+.status.ran{color:#9fe0b4;border-color:#2c5a40}
+.status.key{color:#ffd47a;border-color:#5c4a1c}
+.copy{font:500 12px/1 var(--f-mono);color:var(--code-ink);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:6px 9px;cursor:pointer}
+.copy:hover{border-color:var(--code-muted)}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;background:var(--code-bg)}
+.code pre code{font:13.5px/1.6 var(--f-mono);background:none;padding:0;color:var(--code-ink);white-space:pre;border-radius:0}
+.token.keyword,.token.boolean,.token.important{color:var(--tk-kw)}
+.token.string,.token.triple-quoted-string,.token.string-interpolation{color:var(--tk-str)}
+.token.interpolation{color:var(--code-ink)}
+.token.function,.token.decorator{color:var(--tk-fn)}
+.token.number{color:var(--tk-num)}
+.token.comment{color:var(--tk-com);font-style:italic}
+.token.class-name,.token.builtin{color:var(--tk-cls)}
+.token.operator,.token.punctuation{color:var(--code-muted)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card h4{margin:0}
+.card p{font-size:15px}
+
+.qa{display:grid;gap:10px;counter-reset:q}
+.qa .item{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px 16px;display:grid;gap:6px}
+.qa .q{font-weight:600;counter-increment:q}
+.qa .q::before{content:"Q" counter(q) "  ";font:600 12px/1 var(--f-mono);color:var(--accent);letter-spacing:.04em}
+.qa .a{color:var(--ink);max-width:none}
+.qa .src{font:500 11px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.04em}
+.qa.quiz .a{filter:blur(6px);cursor:pointer;user-select:none}
+.qa.quiz .item.show .a{filter:none;user-select:auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 14px/1 var(--f-body);color:var(--surface);background:var(--accent);border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+@media (prefers-reduced-motion:no-preference){.qa .a{transition:filter .2s}}
+footer{color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+<style>
+svg.d{display:block;width:100%;height:auto;min-width:560px;font:13px/1.2 var(--f-body)}
+svg.d text{fill:var(--ink)}
+svg.d .m{fill:var(--muted);font-size:11.5px}
+svg.d .t{font-weight:600}
+svg.d .b{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg.d .a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg.d .w{fill:var(--iv-bg);stroke:var(--iv-line);stroke-width:1.5}
+svg.d .x{fill:var(--extra-bg);stroke:var(--extra-line);stroke-width:1.5}
+svg.d .ln{stroke:var(--muted);stroke-width:1.5;fill:none;marker-end:url(#ah)}
+svg.d .ln2{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg.d .dash{stroke-dasharray:4 4}
+.ba .ba-step{display:grid;gap:6px;min-width:0}
+.ba .ba-label{justify-self:start;font:700 18px/1.2 var(--f-head);color:var(--accent)}
+.ba .ba-label.after{color:var(--iv-ink)}
+.ba .ba-arrow{font-size:14px;color:var(--muted);text-align:center;padding:2px 0}
+.ba th.hl{background:var(--iv-bg);color:var(--iv-ink);box-shadow:inset 0 -2px 0 var(--warn-ink)}
+.ba tr.old td{color:var(--muted)}
+.ba tr.new td{background:var(--accent-soft)}
+.ba td.chg{background:var(--iv-bg);color:var(--iv-ink);font-weight:600}
+.ba td{white-space:nowrap}
+.ts{font:500 12px/1 var(--f-mono);text-decoration:none;color:var(--accent);background:var(--accent-soft);padding:4px 7px;border-radius:6px;white-space:nowrap}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+</defs></svg>
+
+<div class="wrap">
+<header class="top">
+  <p class="kicker">Video notes · ~3 hours · beginner friendly</p>
+  <h1>Data Engineering Fundamentals</h1>
+  <p class="lede">Notes from the <a href="https://youtu.be/ZRz-7E-7X7c" target="_blank" rel="noopener">Data Engineering Masterclass</a> by Ansh Lamba. The video covers the basics, from "what is a data engineer" all the way to a full Azure cloud architecture. Every section starts with the simple idea, then shows the diagram, then the code.</p>
+  <div class="legend">
+    <span><span class="pill iv">Interview</span> likely interview question</span>
+    <span><span class="pill gotcha">Gotcha</span> common confusion</span>
+    <span><span class="pill extra">Extra</span> added by me, not in the video</span>
+    <span><span class="ts">0:00</span> jump to that point in the video</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+<ol>
+<li><a href="#s1"><small>01</small>What is DE?</a></li>
+<li><a href="#s2"><small>02</small>Three pillars</a></li>
+<li><a href="#s3"><small>03</small>Data production</a></li>
+<li><a href="#s4"><small>04</small>Upstream / downstream</a></li>
+<li><a href="#s5"><small>05</small>OLTP vs OLAP</a></li>
+<li><a href="#s6"><small>06</small>ETL pipelines</a></li>
+<li><a href="#s7"><small>07</small>Warehouse layers</a></li>
+<li><a href="#s8"><small>08</small>Incremental loading</a></li>
+<li><a href="#s9"><small>09</small>Dimensional modeling</a></li>
+<li><a href="#s10"><small>10</small>Slowly changing dims</a></li>
+<li><a href="#s11"><small>11</small>Data lake</a></li>
+<li><a href="#s12"><small>12</small>Lakehouse</a></li>
+<li><a href="#s13"><small>13</small>Row vs column files</a></li>
+<li><a href="#s14"><small>14</small>Delta format</a></li>
+<li><a href="#s15"><small>15</small>Big data tools</a></li>
+<li><a href="#s16"><small>16</small>Spark</a></li>
+<li><a href="#s17"><small>17</small>Cloud computing</a></li>
+<li><a href="#s18"><small>18</small>Medallion</a></li>
+<li><a href="#s19"><small>19</small>Azure end to end</a></li>
+<li><a href="#s20"><small>20</small>Interview Q&amp;A</a></li>
+</ol>
+</nav>
+
+<main>
+
+<!-- 1 -->
+<section class="video" id="s1">
+<div class="vhead"><div class="meta"><span>01</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=143" target="_blank" rel="noopener">2:23</a></div>
+<h2>What is data engineering?</h2></div>
+<p><strong>In one line:</strong> data engineering means taking <em>raw, messy</em> data, cleaning and shaping it, and handing it to the people who need it, as a clean <strong>data model</strong>.</p>
+<p>There are thousands of definitions online. Don't memorise one. Understand the journey:</p>
+<p style="font:600 18px/1.4 var(--f-head)">Raw data → Transformations → Serve to stakeholders</p>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span>
+<p>A data engineer is a <strong>chef</strong>. The raw vegetables (potato, onion, carrot) are the raw data. The chef cooks them (transformations) and serves a nice dish (a clean data model) to the customers (analysts, data scientists, managers). Nobody wants to eat a raw potato. Nobody wants to report on raw data either.</p></div>
+<h3>Why do companies need data engineers?</h3>
+<ul>
+<li>The amount of data is growing very fast, and that pushes up demand for data engineers too.</li>
+<li>Businesses want to make <strong>data-driven decisions</strong>. Someone has to prepare that data well. That's the data engineer.</li>
+<li>Tools come and go, but fundamentals stay the same. The video says about <strong>50% of DE interview questions</strong> come from these basics.</li>
+</ul>
+</section>
+
+<!-- 2 -->
+<section class="video" id="s2">
+<div class="vhead"><div class="meta"><span>02</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=506" target="_blank" rel="noopener">8:26</a></div>
+<h2>The workflow: three pillars</h2></div>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 150" role="img" aria-label="Data production, then data transformation, then data serving">
+<rect class="b" x="10" y="30" width="200" height="80" rx="10"/><text class="t" x="110" y="62" text-anchor="middle">1. Data production</text><text class="m" x="110" y="84" text-anchor="middle">data is generated + stored</text>
+<rect class="a" x="260" y="30" width="200" height="80" rx="10"/><text class="t" x="360" y="62" text-anchor="middle">2. Data transformation</text><text class="m" x="360" y="84" text-anchor="middle">clean, join, reshape (≈70–80%)</text>
+<rect class="b" x="510" y="30" width="200" height="80" rx="10"/><text class="t" x="610" y="62" text-anchor="middle">3. Data serving</text><text class="m" x="610" y="84" text-anchor="middle">data models for stakeholders</text>
+<path class="ln" d="M210 70H256"/><path class="ln" d="M460 70H506"/>
+<text class="m" x="110" y="135" text-anchor="middle">raw vegetables</text><text class="m" x="360" y="135" text-anchor="middle">cooking</text><text class="m" x="610" y="135" text-anchor="middle">plated dish</text>
+</svg></div>
+<figcaption>The data engineer owns step 2 and step 3. Step 1 belongs to other teams.</figcaption></figure>
+<div class="grid2">
+<div class="card"><h4>1. Data production</h4><p>Any activity that creates data: a CSV file, a database row, a Google search, a phone call, an Amazon click.</p></div>
+<div class="card"><h4>2. Data transformation</h4><p>Turning raw data into <strong>curated</strong> data. A data engineer spends most of their time (about 70–80%) here.</p></div>
+<div class="card"><h4>3. Data serving</h4><p>You can't hand over one giant pot of food. You serve plates: half plate, full plate. In the same way, you build <strong>data models</strong> that fit each consumer.</p></div>
+</div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"What are the three pillars of data engineering?"</strong> Data production, data transformation and data serving.</p></div>
+</section>
+
+<!-- 3 -->
+<section class="video" id="s3">
+<div class="vhead"><div class="meta"><span>03</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=867" target="_blank" rel="noopener">14:27</a></div>
+<h2>Data production &amp; where data is stored</h2></div>
+<p>Data is generated all the time. On Amazon, clicking an item, picking a quantity, choosing an address, paying, and getting the confirmation each create data. On Prime Video, searching for a movie, watching it and rating it also create data.</p>
+<ul>
+<li><strong>API</strong>: a connector that lets one application pull information from another. Data you fetch through an API also counts as data production.</li>
+<li>All of this data lands in a <strong>storage</strong> (a database). The data engineer reads from <em>that storage</em>, not from the clicks themselves. A chef only needs the ingredients in the kitchen and doesn't care who brought them.</li>
+</ul>
+<div class="tbl"><table>
+<thead><tr><th>Type</th><th>Data shape</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><td>SQL (relational)</td><td>Structured: tables, rows, columns, relationships</td><td>PostgreSQL, MySQL, SQL Server, Oracle</td></tr>
+<tr><td>NoSQL = <em>"Not only SQL"</em></td><td>Semi-structured or unstructured: JSON docs, key-value pairs</td><td>MongoDB, Cassandra, Cosmos DB <span class="pill extra">Extra</span></td></tr>
+</tbody></table></div>
+<div class="note gotcha"><span class="tag">Gotcha</span><p>NoSQL does <strong>not</strong> mean "no SQL". It means "<strong>not only</strong> SQL".</p></div>
+</section>
+
+<!-- 4 -->
+<section class="video" id="s4">
+<div class="vhead"><div class="meta"><span>04</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=1720" target="_blank" rel="noopener">28:40</a></div>
+<h2>Upstream &amp; downstream</h2></div>
+<p>Picture a river. Water flows from upstream to downstream, and you are standing in the middle. Data flows the same way.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 170" role="img" aria-label="Upstream teams send data to the data engineer, who serves downstream teams">
+<rect class="b" x="10" y="25" width="210" height="110" rx="10"/><text class="t" x="115" y="50" text-anchor="middle">UPSTREAM</text>
+<text x="115" y="76" text-anchor="middle">DBA (database admin)</text><text x="115" y="96" text-anchor="middle">Software / web developers</text><text class="m" x="115" y="118" text-anchor="middle">own the source systems</text>
+<rect class="a" x="265" y="45" width="190" height="70" rx="10"/><text class="t" x="360" y="76" text-anchor="middle">You: data engineer</text><text class="m" x="360" y="96" text-anchor="middle">sync both sides</text>
+<rect class="b" x="500" y="25" width="210" height="110" rx="10"/><text class="t" x="605" y="50" text-anchor="middle">DOWNSTREAM</text>
+<text x="605" y="76" text-anchor="middle">Data analysts</text><text x="605" y="96" text-anchor="middle">Data scientists</text><text x="605" y="116" text-anchor="middle">Analytics managers</text>
+<path class="ln" d="M220 80H261"/><path class="ln" d="M455 80H496"/>
+<text class="m" x="240" y="155" text-anchor="middle">gives you data</text><text class="m" x="478" y="155" text-anchor="middle">gives you requirements</text>
+</svg></div></figure>
+<ul>
+<li><strong>Upstream</strong> = whoever sends you data: DBAs, and in small companies sometimes software or web developers.</li>
+<li><strong>Downstream</strong> = whoever you serve data to: analysts, data scientists, managers.</li>
+<li>You get <strong>requirements</strong> from downstream and <strong>data</strong> from upstream. Keep a good working relationship with both sides. Sometimes you have to ask upstream to change something in the source for a project.</li>
+</ul>
+<div class="note gotcha"><span class="tag">Gotcha</span><p>"Downstream" says nothing about rank. Analysts are not "below" engineers. The word only describes which way the data flows.</p></div>
+</section>
+
+<!-- 5 -->
+<section class="video" id="s5">
+<div class="vhead"><div class="meta"><span>05</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=2086" target="_blank" rel="noopener">34:46</a></div>
+<h2>OLTP vs OLAP</h2></div>
+<p>Both are called "databases", which is why people mix them up. The easy way to remember: <strong>OLTP is built for writing. OLAP is built for reading.</strong></p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 190" role="img" aria-label="Apps write into OLTP; ETL moves data to OLAP; reports read from OLAP">
+<rect class="b" x="10" y="20" width="110" height="34" rx="8"/><text x="65" y="42" text-anchor="middle">Website</text>
+<rect class="b" x="10" y="68" width="110" height="34" rx="8"/><text x="65" y="90" text-anchor="middle">Mobile app</text>
+<rect class="b" x="10" y="116" width="110" height="34" rx="8"/><text x="65" y="138" text-anchor="middle">OTT / bank app</text>
+<path class="ln" d="M120 37L176 75"/><path class="ln" d="M120 85H176"/><path class="ln" d="M120 133L176 95"/>
+<rect class="w" x="180" y="45" width="150" height="80" rx="10"/><text class="t" x="255" y="75" text-anchor="middle">OLTP database</text><text class="m" x="255" y="95" text-anchor="middle">fast writes/updates</text><text class="m" x="255" y="111" text-anchor="middle">owned by DBA</text>
+<path class="ln" d="M330 85H406"/><text class="t" x="368" y="76" text-anchor="middle">ETL</text>
+<rect class="a" x="410" y="45" width="160" height="80" rx="10"/><text class="t" x="490" y="75" text-anchor="middle">OLAP = Warehouse</text><text class="m" x="490" y="95" text-anchor="middle">fast reads</text><text class="m" x="490" y="111" text-anchor="middle">owned by you (DE)</text>
+<path class="ln" d="M570 85H616"/>
+<rect class="b" x="620" y="55" width="90" height="60" rx="10"/><text x="665" y="90" text-anchor="middle">Reports</text>
+<text class="m" x="255" y="175" text-anchor="middle">normalization (1NF→3NF)</text><text class="m" x="490" y="175" text-anchor="middle">dimensional modeling</text>
+</svg></div>
+<figcaption>Reports never query the heavy OLTP database directly. They query the warehouse.</figcaption></figure>
+<div class="tbl"><table>
+<thead><tr><th></th><th>OLTP</th><th>OLAP</th></tr></thead>
+<tbody>
+<tr><td>Full form</td><td>Online <strong>Transactional</strong> Processing</td><td>Online <strong>Analytical</strong> Processing</td></tr>
+<tr><td>Also called</td><td>Transactional DB, source system</td><td><strong>Data warehouse</strong></td></tr>
+<tr><td>Optimised for</td><td>Writes &amp; updates (small, frequent)</td><td>Reads (large analytical queries)</td></tr>
+<tr><td>Modeling</td><td>Normalization (1NF, 2NF, 3NF)</td><td>Dimensional modeling (facts &amp; dims)</td></tr>
+<tr><td>Who owns it</td><td>DBA / software engineers</td><td>Data engineer</td></tr>
+<tr><td>Examples</td><td>PostgreSQL, MySQL, SQL Server, Oracle</td><td>Snowflake, Azure Synapse, Redshift, BigQuery, WhereScape RED</td></tr>
+</tbody></table></div>
+<h3>What normalization looks like (the OLTP side)</h3>
+<p>Normalization splits data into many small tables so that each fact is stored only once. That makes writes safe and quick. In practice people normalize up to <strong>3NF</strong>. Going further gets hard to manage.</p>
+<div class="code"><div class="code-head"><div class="left"><span>oltp_normalized.sql</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- OLTP: normalized (3NF). Many small tables, each fact stored once.
+CREATE TABLE customers (
+  customer_id INT PRIMARY KEY,
+  name        VARCHAR(100),
+  city_id     INT REFERENCES cities(city_id)   -- city stored once, in its own table
+);
+CREATE TABLE orders (
+  order_id    INT PRIMARY KEY,
+  customer_id INT REFERENCES customers(customer_id),
+  order_ts    TIMESTAMP
+);
+CREATE TABLE order_items (
+  order_id    INT REFERENCES orders(order_id),
+  product_id  INT REFERENCES products(product_id),
+  quantity    INT,
+  price       DECIMAL(10,2)
+);
+-- Each click / purchase = one small INSERT. Very fast.
+INSERT INTO orders VALUES (1001, 7, CURRENT_TIMESTAMP);</code></pre></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Why not run reports straight on the OLTP DB?"</strong> It holds a huge amount of row-by-row transactional data and it's tuned for writes. Heavy report queries would be slow, and they would also slow down the live application. So we copy the data into an OLAP warehouse that is modeled for reads.</p></div>
+</section>
+
+<!-- 6 -->
+<section class="video" id="s6">
+<div class="vhead"><div class="meta"><span>06</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=3057" target="_blank" rel="noopener">50:57</a></div>
+<h2>ETL &amp; data pipelines</h2></div>
+<p><strong>ETL = Extract → Transform → Load.</strong> It's how data moves from OLTP into OLAP.</p>
+<ul>
+<li><strong>Extract</strong>: pull data from the source.</li>
+<li><strong>Transform</strong>: clean it and reshape it.</li>
+<li><strong>Load</strong>: write it into the warehouse.</li>
+</ul>
+<p>The source keeps changing, maybe every hour, and you don't want to repeat this by hand every day. So you build an <strong>ETL pipeline</strong> that runs on its own.</p>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span><p>A water pipeline brings water from the dam to your tap. You don't walk to the dam with buckets. A data pipeline brings data from the source to the warehouse in the same automatic way.</p></div>
+<div class="code"><div class="code-head"><div class="left"><span>etl_pipeline.py</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">import pandas as pd
+from sqlalchemy import create_engine
+
+src = create_engine("postgresql://user:pass@oltp-host/shop")      # OLTP source
+dw  = create_engine("postgresql://user:pass@dw-host/warehouse")   # OLAP target
+
+def extract():
+    return pd.read_sql("SELECT * FROM orders", src)
+
+def transform(df):
+    df = df.dropna(subset=["customer_id"])          # drop junk rows
+    df["order_date"] = pd.to_datetime(df["order_ts"]).dt.date
+    df["amount"] = df["quantity"] * df["price"]
+    return df[["order_id", "customer_id", "order_date", "amount"]]
+
+def load(df):
+    df.to_sql("fact_orders", dw, if_exists="append", index=False)
+
+# A scheduler (cron / Airflow / Azure Data Factory) runs this every hour = a "pipeline"
+load(transform(extract()))</code></pre></div>
+<div class="note extra"><span class="tag">Extra</span><p><strong>ETL vs ELT:</strong> in ELT you load the raw data first and transform it later, inside the warehouse or lake. That's common on the cloud because storage and compute are cheap. The medallion architecture (section 18) is basically ELT.</p></div>
+</section>
+
+<!-- 7 -->
+<section class="video" id="s7">
+<div class="vhead"><div class="meta"><span>07</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=3300" target="_blank" rel="noopener">55:00</a></div>
+<h2>Data warehouse layers: staging &amp; core</h2></div>
+<p>Data doesn't jump straight from the source into the final model. It passes through <strong>layers</strong>. For now, think of a layer as a folder.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 200" role="img" aria-label="Source to staging layer to core layer">
+<rect class="w" x="10" y="50" width="150" height="80" rx="10"/><text class="t" x="85" y="85" text-anchor="middle">Source (OLTP)</text><text class="m" x="85" y="105" text-anchor="middle">Postgres / SQL Server</text>
+<path class="ln" d="M160 90H226"/><text class="m" x="193" y="80" text-anchor="middle">extract</text>
+<rect class="b" x="230" y="30" width="200" height="120" rx="10"/><text class="t" x="330" y="55" text-anchor="middle">STAGING layer</text><text class="m" x="330" y="73" text-anchor="middle">raw copy, no heavy logic</text>
+<rect class="x" x="245" y="88" width="80" height="46" rx="6"/><text x="285" y="108" text-anchor="middle" style="font-size:12px">Transient</text><text class="m" x="285" y="124" text-anchor="middle">wiped daily</text>
+<rect class="x" x="335" y="88" width="80" height="46" rx="6"/><text x="375" y="108" text-anchor="middle" style="font-size:12px">Persistent</text><text class="m" x="375" y="124" text-anchor="middle">keeps history</text>
+<path class="ln" d="M430 90H496"/><text class="m" x="463" y="80" text-anchor="middle">transform</text>
+<rect class="a" x="500" y="30" width="210" height="120" rx="10"/><text class="t" x="605" y="60" text-anchor="middle">CORE layer</text><text x="605" y="88" text-anchor="middle">Facts + Dimensions</text><text class="m" x="605" y="108" text-anchor="middle">dimensional model</text><text class="m" x="605" y="124" text-anchor="middle">what reports read</text>
+<text class="m" x="330" y="180" text-anchor="middle">~99% of real projects use transient staging</text>
+</svg></div></figure>
+<ul>
+<li><strong>Staging layer</strong>: dump the extracted data here first.</li>
+<li><strong>Core layer</strong>: transform the staged data into facts and dimensions.</li>
+<li><strong>Transient staging</strong>: temporary. After the core is built, staging is <strong>truncated</strong> and refilled with the next batch. About 99% of projects use this.</li>
+<li><strong>Persistent staging</strong>: keeps every batch so you have the full history. Rare, and only when the project needs it.</li>
+</ul>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Why have a staging layer at all?"</strong> If the transformations queried the source directly, they would slow down the live source system. So you copy the data once into staging, then do all the heavy work from there.</p></div>
+<div class="code"><div class="code-head"><div class="left"><span>transient_staging.sql</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- Each run: empty staging, reload it, then build core from it.
+TRUNCATE TABLE stg_orders;                       -- "transient" = wipe old batch
+
+INSERT INTO stg_orders                           -- Extract
+SELECT * FROM oltp.orders WHERE order_ts >= :batch_start;
+
+INSERT INTO core.fact_orders (order_id, customer_key, date_key, amount)   -- Transform + Load
+SELECT s.order_id, c.customer_key, CAST(FORMAT(s.order_ts,'yyyyMMdd') AS INT), s.quantity * s.price
+FROM stg_orders s
+JOIN core.dim_customer c ON c.customer_id = s.customer_id;</code></pre></div>
+</section>
+
+<!-- 8 -->
+<section class="video" id="s8">
+<div class="vhead"><div class="meta"><span>08</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=3663" target="_blank" rel="noopener">61:03</a></div>
+<h2>Incremental loading</h2></div>
+<p>People call this an "advanced" topic, but the idea is simple: <strong>only load the data that is new since the last run.</strong></p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 170" role="img" aria-label="Day 1 loads all history; day 2 loads only the new day">
+<text class="t" x="10" y="30">Day 1 run: full load</text>
+<rect class="a" x="10" y="42" width="560" height="34" rx="6"/><text x="290" y="64" text-anchor="middle">Jan 2023 → 1 Jan 2024 (all history)</text>
+<text class="t" x="10" y="110">Day 2 run: incremental</text>
+<rect class="b dash" x="10" y="122" width="560" height="34" rx="6"/><text class="m" x="290" y="144" text-anchor="middle">already loaded, so skip it (saves compute)</text>
+<rect class="w" x="575" y="122" width="135" height="34" rx="6"/><text x="642" y="144" text-anchor="middle">2 Jan 2024 only</text>
+<path class="ln2 dash" d="M572 30V165"/><text class="m" x="578" y="30">watermark</text>
+</svg></div>
+<figcaption>The "watermark" is the last date (or ID) you loaded. On the next run you fetch only rows after it.</figcaption></figure>
+<p>This is a working version using Python's built-in <code>sqlite3</code>. It keeps a <code>watermark</code> table that remembers how far it has loaded:</p>
+<div class="code"><div class="code-head"><div class="left"><span>incremental_load.py</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">import sqlite3
+db = sqlite3.connect(":memory:")
+db.executescript("""
+CREATE TABLE src_orders(order_id INT PRIMARY KEY, amount REAL, order_date TEXT);   -- source
+INSERT INTO src_orders VALUES (1,100,'2024-01-01'),(2,250,'2024-01-01');
+CREATE TABLE dw_orders(order_id INT PRIMARY KEY, amount REAL, order_date TEXT);    -- warehouse
+CREATE TABLE watermark(tbl TEXT PRIMARY KEY, last_date TEXT);                      -- bookmark
+INSERT INTO watermark VALUES ('orders','1900-01-01');
+""")
+
+def incremental_load():
+    last = db.execute("SELECT last_date FROM watermark WHERE tbl='orders'").fetchone()[0]
+    new = db.execute("SELECT * FROM src_orders WHERE order_date > ?", (last,)).fetchall()
+    db.executemany("INSERT INTO dw_orders VALUES (?,?,?)", new)
+    if new:   # move the bookmark forward
+        db.execute("UPDATE watermark SET last_date=? WHERE tbl='orders'", (max(r[2] for r in new),))
+    return len(new)
+
+assert incremental_load() == 2     # day 1: loads all history
+db.execute("INSERT INTO src_orders VALUES (3,75,'2024-01-02')")
+assert incremental_load() == 1     # day 2: loads ONLY the new row
+assert incremental_load() == 0     # nothing new, nothing loaded</code></pre></div>
+<div class="note gotcha"><span class="tag">Gotcha</span><p>A plain <code>date &gt; last_date</code> filter misses rows that arrive late or get <em>updated</em> after you loaded them. In real projects you use an <code>updated_at</code> column, or change data capture (CDC), and you <strong>upsert</strong> (MERGE) instead of a plain INSERT. <span class="pill extra">Extra</span></p></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"What is incremental loading and how would you implement it?"</strong> It means loading only new or changed data since the last successful run. You track a watermark (max date or ID) and filter the source by it. Then you append or merge into the target and move the watermark forward.</p></div>
+</section>
+
+<!-- 9 -->
+<section class="video" id="s9">
+<div class="vhead"><div class="meta"><span>09</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=3927" target="_blank" rel="noopener">65:07</a></div>
+<h2>Dimensional modeling: facts &amp; dimensions</h2></div>
+<p>This is how we model the <strong>warehouse</strong>. Split the data into two kinds of tables:</p>
+<div class="grid2">
+<div class="card"><h4>Fact table</h4><p>Holds the <strong>numbers</strong> (measures): price, bill, quantity, weight. It also holds the <strong>keys</strong> that link to the dimensions. It's the centre of the model.</p></div>
+<div class="card"><h4>Dimension table</h4><p>Holds the <strong>context</strong>, the descriptive text. <code>dim_customer</code> has name and address. <code>dim_product</code> has name and category. It's grouped by business entity.</p></div>
+</div>
+<p>Dimensions are <strong>denormalized</strong>: everything about a customer sits in one table, even if some values repeat. That means fewer joins, so reads are faster.</p>
+<div class="grid2">
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 360 260" style="min-width:300px" role="img" aria-label="Star schema: one fact table with four dimensions around it">
+<rect class="a" x="120" y="100" width="120" height="60" rx="8"/><text class="t" x="180" y="126" text-anchor="middle">fact_sales</text><text class="m" x="180" y="144" text-anchor="middle">qty, price, keys</text>
+<rect class="b" x="125" y="10" width="110" height="40" rx="8"/><text x="180" y="35" text-anchor="middle">dim_product</text>
+<rect class="b" x="125" y="210" width="110" height="40" rx="8"/><text x="180" y="235" text-anchor="middle">dim_date</text>
+<rect class="b" x="5" y="110" width="100" height="40" rx="8"/><text x="55" y="135" text-anchor="middle">dim_customer</text>
+<rect class="b" x="255" y="110" width="100" height="40" rx="8"/><text x="305" y="135" text-anchor="middle">dim_store</text>
+<path class="ln2" d="M180 50V100M180 160V210M105 130H120M240 130H255"/>
+</svg></div><figcaption><strong>Star schema</strong>: every dimension connects directly to the fact. It looks like a star. Used about 99% of the time because it's faster and easier to manage.</figcaption></figure>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 360 260" style="min-width:300px" role="img" aria-label="Snowflake schema: product dimension links to a category dimension">
+<rect class="a" x="120" y="110" width="120" height="60" rx="8"/><text class="t" x="180" y="136" text-anchor="middle">fact_sales</text><text class="m" x="180" y="154" text-anchor="middle">qty, price, keys</text>
+<rect class="b" x="125" y="50" width="110" height="36" rx="8"/><text x="180" y="73" text-anchor="middle">dim_product</text>
+<rect class="x" x="125" y="2" width="110" height="34" rx="8"/><text x="180" y="24" text-anchor="middle">dim_category</text>
+<rect class="b" x="5" y="122" width="100" height="36" rx="8"/><text x="55" y="145" text-anchor="middle">dim_customer</text>
+<rect class="x" x="5" y="200" width="100" height="34" rx="8"/><text x="55" y="222" text-anchor="middle">dim_city</text>
+<rect class="b" x="255" y="122" width="100" height="36" rx="8"/><text x="305" y="145" text-anchor="middle">dim_date</text>
+<path class="ln2" d="M180 36V50M180 86V110M105 140H120M240 140H255M55 158V200"/>
+</svg></div><figcaption><strong>Snowflake schema</strong>: dimensions are split into a <em>hierarchy</em> (product → category). It branches out like a snowflake. Harder to manage and needs more joins.</figcaption></figure>
+</div>
+<div class="code"><div class="code-head"><div class="left"><span>star_schema.sql</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- Dimensions: descriptive context
+CREATE TABLE dim_product (
+  product_key  INT PRIMARY KEY,      -- surrogate key (warehouse-owned)
+  product_id   INT,                  -- business key from source
+  product_name VARCHAR(100),
+  category     VARCHAR(50)           -- denormalized: no separate category table
+);
+CREATE TABLE dim_customer (
+  customer_key INT PRIMARY KEY,
+  customer_id  INT,
+  name VARCHAR(100), city VARCHAR(50), country VARCHAR(50)
+);
+CREATE TABLE dim_date (date_key INT PRIMARY KEY, full_date DATE, month INT, year INT);
+
+-- Fact: numbers + foreign keys
+CREATE TABLE fact_sales (
+  product_key  INT REFERENCES dim_product(product_key),
+  customer_key INT REFERENCES dim_customer(customer_key),
+  date_key     INT REFERENCES dim_date(date_key),
+  quantity     INT,
+  amount       DECIMAL(10,2)
+);
+
+-- A typical report query: one hop from fact to each dimension
+SELECT p.category, d.year, SUM(f.amount) AS revenue
+FROM fact_sales f
+JOIN dim_product p ON p.product_key = f.product_key
+JOIN dim_date    d ON d.date_key    = f.date_key
+GROUP BY p.category, d.year;</code></pre></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Star vs snowflake?"</strong> In a star schema, denormalized dimensions connect directly to the fact. It has fewer joins and faster queries, and it's the industry default. A snowflake schema normalizes the dimensions into hierarchies. That saves a bit of storage, but you pay with more joins and more complexity.</p></div>
+</section>
+
+<!-- 10 -->
+<section class="video" id="s10">
+<div class="vhead"><div class="meta"><span>10</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=4391" target="_blank" rel="noopener">73:11</a></div>
+<h2>Slowly Changing Dimensions (SCD)</h2></div>
+<p>The video ranks this among the top 3 most important topics. Dimension data <em>sometimes</em> changes in the source. The question is <strong>how your dimension handles that change.</strong></p>
+<p><strong>Scenario used throughout:</strong> product 3 "Comb" was in category <code>Clothing</code>. The source changes it to <code>Hair</code>.</p>
+<div class="tbl"><table>
+<thead><tr><th>Type</th><th>Nickname</th><th>What happens</th><th>Keeps history?</th></tr></thead>
+<tbody>
+<tr><td>SCD 0</td><td>Fixed</td><td>Dimension never changes. Ignore updates.</td><td>n/a</td></tr>
+<tr><td>SCD 1</td><td><strong>Upsert / overwrite</strong></td><td>Update the row in place. Insert new rows.</td><td>No. Used about 70–80% of the time.</td></tr>
+<tr><td>SCD 2</td><td>Full history</td><td>Close the old row (end date, flag=0) and insert a new row.</td><td>Yes, full history with dates</td></tr>
+<tr><td>SCD 3</td><td>Previous value</td><td>Keep a <code>previous_*</code> column next to <code>current_*</code>.</td><td>Only the one previous value</td></tr>
+</tbody></table></div>
+
+<h3>SCD Type 1: upsert (update + insert)</h3>
+<figure class="diagram ba">
+<div class="ba-step"><span class="ba-label">Before</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th class="hl">Prod_Cat</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td></tr>
+<tr><td>3</td><td>Comb</td><td>Clothing</td></tr>
+</tbody></table></div></div>
+<div class="ba-arrow" aria-hidden="true">↓ Comb's category changes to <strong>Hair</strong>, and a new product <strong>Shoes</strong> arrives</div>
+<div class="ba-step"><span class="ba-label after">After</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th>Prod_Cat</th><th>What happened</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td><td class="tl">updated (same value)</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td><td class="tl">updated (same value)</td></tr>
+<tr class="new"><td>3</td><td>Comb</td><td class="chg">Hair</td><td>UPDATE: overwritten</td></tr>
+<tr class="new"><td>4</td><td class="chg">Shoes</td><td class="chg">Footwear</td><td>INSERT: new row</td></tr>
+</tbody></table></div></div>
+<figcaption>No extra columns and no new rows for changes. The old value <strong>Clothing</strong> for Comb is <strong>overwritten</strong> and lost forever, so you keep no history. The 3 existing rows all get "updated" behind the scenes, but rows 1 and 2 look the same because their values didn't change.</figcaption>
+</figure>
+<div class="code"><div class="code-head"><div class="left"><span>scd1_upsert.py</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">db.executescript("""
+CREATE TABLE dim_product(product_id INT PRIMARY KEY, name TEXT, category TEXT);
+INSERT INTO dim_product VALUES (1,'Honey','Food'),(2,'Shirt','Clothing'),(3,'Comb','Clothing');
+""")
+incoming = [(3,'Comb','Hair'), (4,'Shoes','Footwear')]
+# UPSERT: insert, and if the key already exists, update instead
+db.executemany("""INSERT INTO dim_product VALUES (?,?,?)
+  ON CONFLICT(product_id) DO UPDATE SET name=excluded.name, category=excluded.category""", incoming)
+
+assert db.execute("SELECT category FROM dim_product WHERE product_id=3").fetchone()[0] == 'Hair'
+assert db.execute("SELECT COUNT(*) FROM dim_product").fetchone()[0] == 4</code></pre></div>
+<p>In a warehouse (SQL Server, Synapse, Databricks) you write the same thing with <code>MERGE</code>:</p>
+<div class="code"><div class="code-head"><div class="left"><span>scd1_merge.sql</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">MERGE INTO dim_product AS tgt
+USING stg_product      AS src
+  ON tgt.product_id = src.product_id
+WHEN MATCHED THEN
+  UPDATE SET tgt.name = src.name, tgt.category = src.category      -- overwrite
+WHEN NOT MATCHED THEN
+  INSERT (product_id, name, category) VALUES (src.product_id, src.name, src.category);</code></pre></div>
+<div class="note iv"><span class="tag">Interview</span><p>Interviewers often say "<strong>we need an upsert</strong>" instead of "SCD Type 1". When you hear <em>upsert</em>, think <strong>SCD 1</strong>.</p></div>
+
+<h3>SCD Type 2: keep the full history</h3>
+<p>Add three columns: <strong>start_date</strong>, <strong>end_date</strong> (or expiry date) and an <strong>is_current</strong> flag. When a value changes, you don't overwrite it. You <em>close</em> the old row and <em>insert</em> a new one. For rows that are still active, set the end date far in the future, like 3000-12-31.</p>
+<figure class="diagram ba">
+<div class="ba-step"><span class="ba-label">Before</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th>Prod_Cat</th><th class="hl">Eff_StartDate</th><th class="hl">Eff_ExpDate</th><th class="hl">InUse</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td><td>1/1/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td><td>1/1/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+<tr><td>3</td><td>Comb</td><td>Clothing</td><td>1/1/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+</tbody></table></div></div>
+<div class="ba-arrow" aria-hidden="true">↓ Comb's category changes to <strong>Hair</strong> on 1/2/2024</div>
+<div class="ba-step"><span class="ba-label after">After</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th>Prod_Cat</th><th>Eff_StartDate</th><th>Eff_ExpDate</th><th>InUse</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td><td>1/1/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td><td>1/1/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+<tr class="old"><td>3</td><td>Comb</td><td>Clothing</td><td>1/1/2024</td><td class="chg">1/2/2024</td><td class="chg">No</td></tr>
+<tr class="new"><td>4</td><td>Comb</td><td class="chg">Hair</td><td class="chg">1/2/2024</td><td>1/1/3000</td><td>Yes</td></tr>
+</tbody></table></div></div>
+<figcaption>The old Comb row is <strong>expired</strong>: its expiry date becomes 1/2/2024 and InUse becomes No. A <strong>new row</strong> is inserted with Hair. Both rows stay, so you keep the full history. The highlighted columns are the 3 extra ones that Type 2 adds.</figcaption>
+</figure>
+<div class="code"><div class="code-head"><div class="left"><span>scd2_history.py</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">db.executescript("""
+CREATE TABLE dim_product_h(sk INTEGER PRIMARY KEY AUTOINCREMENT, product_id INT, name TEXT,
+  category TEXT, start_date TEXT, end_date TEXT, is_current INT);
+INSERT INTO dim_product_h(product_id,name,category,start_date,end_date,is_current) VALUES
+ (1,'Honey','Food','2024-01-01','3000-12-31',1),
+ (2,'Shirt','Clothing','2024-01-01','3000-12-31',1),
+ (3,'Comb','Clothing','2024-01-01','3000-12-31',1);
+""")
+
+def scd2(pid, name, cat, day):
+    cur = db.execute("SELECT category FROM dim_product_h WHERE product_id=? AND is_current=1",
+                     (pid,)).fetchone()
+    if cur and cur[0] == cat:
+        return                                     # nothing changed
+    # 1) expire the current row
+    db.execute("UPDATE dim_product_h SET end_date=?, is_current=0 "
+               "WHERE product_id=? AND is_current=1", (day, pid))
+    # 2) insert the new version
+    db.execute("INSERT INTO dim_product_h(product_id,name,category,start_date,end_date,is_current) "
+               "VALUES (?,?,?,?,'3000-12-31',1)", (pid, name, cat, day))
+
+scd2(3, 'Comb', 'Hair', '2024-01-02')
+rows = db.execute("SELECT category,start_date,end_date,is_current FROM dim_product_h "
+                  "WHERE product_id=3 ORDER BY sk").fetchall()
+assert rows == [('Clothing','2024-01-01','2024-01-02',0), ('Hair','2024-01-02','3000-12-31',1)]</code></pre></div>
+<div class="note extra"><span class="tag">Extra</span><p>Because SCD 2 creates several rows per product, the fact table must link to the <strong>surrogate key</strong> (<code>sk</code>), not to <code>product_id</code>. That way, a sale from last year still points to "Clothing".</p></div>
+
+<h3>SCD Type 3: keep only the previous value</h3>
+<p>Cheaper than Type 2. There are no date columns, just one extra column.</p>
+<figure class="diagram ba">
+<div class="ba-step"><span class="ba-label">Before</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th>Prod_Cat</th><th class="hl">Prev_Prod_Cat</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td><td>Food</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td><td>Clothing</td></tr>
+<tr><td>3</td><td>Comb</td><td>Clothing</td><td>Clothing</td></tr>
+</tbody></table></div></div>
+<div class="ba-arrow" aria-hidden="true">↓ Comb's category changes to <strong>Hair</strong></div>
+<div class="ba-step"><span class="ba-label after">After</span>
+<div class="tbl"><table>
+<thead><tr><th>Product_ID</th><th>Name</th><th>Prod_Cat</th><th>Prev_Prod_Cat</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Honey</td><td>Food</td><td>Food</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td><td>Clothing</td></tr>
+<tr class="new"><td>3</td><td>Comb</td><td class="chg">Hair</td><td class="chg">Clothing</td></tr>
+</tbody></table></div></div>
+<figcaption>Still <strong>one row</strong> per product. The current value moves into <code>Prev_Prod_Cat</code> and the new value goes into <code>Prod_Cat</code>. If the value changes again, Clothing is lost, because only the last previous value is kept. Before any change, the previous value simply equals the current one.</figcaption>
+</figure>
+<div class="code"><div class="code-head"><div class="left"><span>scd3_previous.sql</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE TABLE dim_product3(product_id INT PRIMARY KEY, name TEXT,
+                          current_category TEXT, previous_category TEXT);
+INSERT INTO dim_product3 VALUES (3,'Comb','Clothing','Clothing');
+
+-- on change: shift current into previous, then set the new current
+UPDATE dim_product3
+SET previous_category = current_category,
+    current_category  = 'Hair'
+WHERE product_id = 3;
+-- result: current_category = 'Hair', previous_category = 'Clothing'</code></pre></div>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Remember</span><p><strong>0</strong> = no change · <strong>1</strong> = overwrite (upsert) · <strong>2</strong> = new row + dates (full history) · <strong>3</strong> = previous-value column</p></div>
+</section>
+
+<!-- 11 -->
+<section class="video" id="s11">
+<div class="vhead"><div class="meta"><span>11</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=5361" target="_blank" rel="noopener">89:21</a></div>
+<h2>Data lake</h2></div>
+<p>A data warehouse only handles <strong>structured</strong> data (tables). Data started growing very fast and arriving in every shape: JSON, CSV, images, logs. Forcing all of it into tables became too hard. A <strong>data lake</strong> stores data of <em>any</em> format, cheaply, in files.</p>
+<h3>The three shapes of data</h3>
+<div class="tbl"><table>
+<thead><tr><th>Type</th><th>What it means</th><th>Formats / examples</th><th>Stored in</th></tr></thead>
+<tbody>
+<tr><td>Structured</td><td>Fixed rows and columns, and the schema is defined first</td><td>SQL tables (MySQL, Postgres), Excel sheets</td><td>Warehouse <em>and</em> lake</td></tr>
+<tr><td>Semi-structured</td><td>Has some structure (keys, tags, headers), but no fixed table schema. Fields can vary from record to record.</td><td><strong>JSON</strong>, <strong>CSV</strong>, <strong>XML</strong>, <strong>Avro</strong>, Parquet/ORC (self-describing files), YAML, log files</td><td>Lake</td></tr>
+<tr><td>Unstructured</td><td>No predefined structure at all</td><td>Images, videos, audio, PDFs, emails, free text</td><td>Lake</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-head"><div class="left"><span>semi_structured.json</span><span class="status">Example</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-json">[
+  {"order_id": 1, "customer": "Asha", "items": [{"sku": "A1", "qty": 2}]},
+  {"order_id": 2, "customer": "Ravi", "coupon": "DIWALI10"}
+]</code></pre></div>
+<p class="tl">Both records are orders, but the second one has a <code>coupon</code> field and no <code>items</code> list. A rigid SQL table can't hold that easily. A data lake stores it as it is. That's what "semi-structured" means.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span><p>The video calls <strong>CSV</strong> semi-structured. Some books call CSV "structured", because it's really rows and columns. In interviews, the safe answer is <strong>"JSON, XML and CSV are semi-structured formats"</strong>, and if asked, you can mention that CSV is a borderline case.</p></div>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Data warehouse</th><th>Data lake</th></tr></thead>
+<tbody>
+<tr><td>Data format</td><td>Structured only</td><td>Structured + semi-structured (CSV, JSON) + unstructured</td></tr>
+<tr><td>Schema</td><td><strong>Schema-on-write</strong>: define the table first (DDL), then insert</td><td><strong>Schema-on-read</strong>: store raw files first, define the schema later</td></tr>
+<tr><td>Cost</td><td>Expensive storage</td><td><strong>Very cheap</strong> storage. This is the main reason businesses moved.</td></tr>
+<tr><td>Used for</td><td>BI reporting</td><td>Big data processing, ML, reporting, IoT</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-head"><div class="left"><span>schema_on_write_vs_read.py</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python"># Schema-on-WRITE (warehouse): the table must exist before data goes in
+#   CREATE TABLE orders(order_id INT, amount DECIMAL);  then INSERT ...
+
+# Schema-on-READ (lake): files are dumped as-is; schema is applied when you read
+df = spark.read.json("abfss://raw@mylake.dfs.core.windows.net/orders/2024/01/")
+df.printSchema()          # Spark infers the structure only now, at read time</code></pre></div>
+</section>
+
+<!-- 12 -->
+<section class="video" id="s12">
+<div class="vhead"><div class="meta"><span>12</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=5723" target="_blank" rel="noopener">95:23</a></div>
+<h2>Lakehouse = data lake + data warehouse</h2></div>
+<p>So should you throw away everything you learned about warehouses? <strong>No.</strong> A lakehouse takes the best part of each:</p>
+<ul>
+<li>From the <strong>lake</strong>: cheap storage for any file format.</li>
+<li>From the <strong>warehouse</strong>: tables, dimensional models and fast SQL reporting.</li>
+</ul>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 900 430" style="min-width:760px" role="img" aria-label="Data warehouse plus data lake equals data lakehouse. Warehouse: structured data, ETL, warehouse, BI and reports. Lake: all data types into a lake, part goes through ETL to a warehouse for BI, and data science and ML read the lake directly. Lakehouse: all data into a lake with a metadata and governance layer on top that serves BI, reports, data science and ML.">
+<!-- panels -->
+<rect x="5" y="5" width="280" height="420" rx="12" style="fill:var(--bg);stroke:var(--line)"/>
+<rect x="320" y="5" width="295" height="420" rx="12" style="fill:var(--bg);stroke:var(--line)"/>
+<rect x="650" y="5" width="245" height="420" rx="12" style="fill:var(--accent-soft);stroke:var(--accent)"/>
+<text x="302" y="222" text-anchor="middle" style="font:700 30px var(--f-head);fill:var(--warn-ink)">+</text>
+<text x="633" y="222" text-anchor="middle" style="font:700 30px var(--f-head);fill:var(--warn-ink)">=</text>
+
+<!-- 1. Warehouse -->
+<text class="t" x="145" y="32" text-anchor="middle" style="font-size:16px">Data Ware<tspan style="fill:var(--warn-ink)">house</tspan></text>
+<rect class="b" x="40" y="50" width="90" height="34" rx="7"/><text x="85" y="72" text-anchor="middle">BI</text>
+<rect class="b" x="160" y="50" width="90" height="34" rx="7"/><text x="205" y="72" text-anchor="middle">Reports</text>
+<path class="ln" d="M85 140V88M205 140V88"/>
+<rect class="a" x="50" y="140" width="190" height="44" rx="8"/><text class="t" x="145" y="167" text-anchor="middle">Data warehouse</text>
+<path class="ln" d="M145 240V188"/>
+<rect class="w" x="95" y="240" width="100" height="40" rx="8"/><text x="145" y="265" text-anchor="middle">ETL</text>
+<path class="ln" d="M145 330V284"/>
+<rect class="b" x="40" y="330" width="210" height="40" rx="8"/><text x="145" y="355" text-anchor="middle">Structured data only</text>
+<text class="m" x="145" y="400" text-anchor="middle">great for BI · costly · tables only</text>
+
+<!-- 2. Lake -->
+<text class="t" x="467" y="32" text-anchor="middle" style="font-size:16px">Data <tspan style="fill:var(--warn-ink)">Lake</tspan></text>
+<rect class="b" x="330" y="50" width="50" height="34" rx="7"/><text x="355" y="72" text-anchor="middle" style="font-size:12px">BI</text>
+<rect class="b" x="386" y="50" width="62" height="34" rx="7"/><text x="417" y="72" text-anchor="middle" style="font-size:12px">Reports</text>
+<rect class="b" x="456" y="50" width="78" height="34" rx="7"/><text x="495" y="72" text-anchor="middle" style="font-size:12px">Data science</text>
+<rect class="b" x="542" y="50" width="64" height="34" rx="7"/><text x="574" y="72" text-anchor="middle" style="font-size:12px">ML</text>
+<path class="ln" d="M355 140V88M417 140V88"/>
+<rect class="a" x="330" y="140" width="120" height="40" rx="8"/><text class="t" x="390" y="165" text-anchor="middle">Warehouse</text>
+<path class="ln" d="M450 160H480V88"/>
+<path class="ln" d="M390 205V184"/>
+<rect class="w" x="350" y="205" width="80" height="32" rx="7"/><text x="390" y="226" text-anchor="middle">ETL</text>
+<path class="ln" d="M390 262V241"/>
+<path class="ln" d="M515 262V88M574 262V88"/>
+<rect class="x" x="330" y="262" width="276" height="40" rx="8"/><text class="t" x="468" y="287" text-anchor="middle">Data lake (cheap files)</text>
+<path class="ln" d="M468 330V306"/>
+<rect class="b" x="330" y="330" width="276" height="40" rx="8"/><text x="468" y="348" text-anchor="middle" style="font-size:12px">Structured + semi-structured</text><text x="468" y="363" text-anchor="middle" style="font-size:12px">+ unstructured</text>
+<text class="m" x="468" y="400" text-anchor="middle">cheap · any format · but 2 systems, 2 copies</text>
+
+<!-- 3. Lakehouse -->
+<text class="t" x="772" y="32" text-anchor="middle" style="font-size:16px">Data Lakehouse</text>
+<rect class="b" x="658" y="50" width="44" height="34" rx="7"/><text x="680" y="72" text-anchor="middle" style="font-size:12px">BI</text>
+<rect class="b" x="707" y="50" width="60" height="34" rx="7"/><text x="737" y="72" text-anchor="middle" style="font-size:12px">Reports</text>
+<rect class="b" x="772" y="50" width="62" height="34" rx="7"/><text x="803" y="66" text-anchor="middle" style="font-size:11px">Data</text><text x="803" y="79" text-anchor="middle" style="font-size:11px">science</text>
+<rect class="b" x="839" y="50" width="48" height="34" rx="7"/><text x="863" y="72" text-anchor="middle" style="font-size:12px">ML</text>
+<path class="ln2" d="M772 140V104M680 104H863"/>
+<path class="ln" d="M680 104V88M737 104V88M803 104V88M863 104V88"/>
+<rect class="a" x="662" y="140" width="221" height="64" rx="8"/><text class="t" x="772" y="162" text-anchor="middle">Metadata &amp; governance layer</text><text class="m" x="772" y="180" text-anchor="middle">tables · schema · ACID (e.g. Delta)</text><text class="m" x="772" y="195" text-anchor="middle">ETL runs here</text>
+<rect class="x" x="662" y="204" width="221" height="40" rx="0"/><text class="t" x="772" y="229" text-anchor="middle">Data lake (cheap files)</text>
+<path class="ln" d="M772 330V248"/>
+<rect class="b" x="662" y="330" width="221" height="40" rx="8"/><text x="772" y="348" text-anchor="middle" style="font-size:12px">Structured + semi-structured</text><text x="772" y="363" text-anchor="middle" style="font-size:12px">+ unstructured</text>
+<text class="m" x="772" y="400" text-anchor="middle">one copy · one platform · serves all</text>
+</svg></div>
+<figcaption>Read each panel from bottom to top. <strong>Warehouse</strong>: only structured data, cleaned by ETL, and good for BI. <strong>Lake</strong>: stores every kind of data cheaply. A part of it is still copied into a separate warehouse for BI, while data science and ML read the lake directly. That means two systems and two copies. <strong>Lakehouse</strong>: just one lake, with a metadata layer on top that turns the files into tables. BI, reports, data science and ML all read from the same place. Warehouse + Lake = Lake<em>house</em>.</figcaption></figure>
+<p>The trick is a <strong>metadata layer</strong> (also called the abstraction or logical layer). It sits on top of the files in the lake and makes them look and behave like tables.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 230" role="img" aria-label="Lakehouse: files in a data lake, a metadata layer on top, and SQL / BI / ML on top of that">
+<rect class="b" x="60" y="10" width="160" height="40" rx="8"/><text x="140" y="35" text-anchor="middle">Power BI reports</text>
+<rect class="b" x="280" y="10" width="160" height="40" rx="8"/><text x="360" y="35" text-anchor="middle">SQL analysts</text>
+<rect class="b" x="500" y="10" width="160" height="40" rx="8"/><text x="580" y="35" text-anchor="middle">Data scientists</text>
+<path class="ln" d="M140 92V54M360 92V54M580 92V54"/>
+<rect class="a" x="40" y="95" width="640" height="54" rx="10"/><text class="t" x="360" y="118" text-anchor="middle">Metadata / table layer (e.g. Delta Lake)</text><text class="m" x="360" y="137" text-anchor="middle">schema · facts &amp; dims · SCD · ETL · ACID, all the warehouse ideas live here</text>
+<rect class="w" x="40" y="165" width="640" height="54" rx="10"/><text class="t" x="360" y="188" text-anchor="middle">Data lake storage (cheap files)</text><text class="m" x="360" y="207" text-anchor="middle">Parquet · CSV · JSON files</text>
+</svg></div>
+<figcaption>Same techniques as before (dimensional modeling, SCD, incremental loads). The only change is that the data now lives in lake files instead of database tables.</figcaption></figure>
+<div class="code"><div class="code-head"><div class="left"><span>lakehouse_sql.sql</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- Databricks / Spark SQL: a "table" whose data is really files in the lake
+CREATE TABLE gold.dim_product
+USING DELTA
+LOCATION 'abfss://gold@mylake.dfs.core.windows.net/dim_product';
+
+-- Analysts query it with normal SQL, unaware it's files underneath
+SELECT category, COUNT(*) FROM gold.dim_product GROUP BY category;</code></pre></div>
+</section>
+
+<!-- 13 -->
+<section class="video" id="s13">
+<div class="vhead"><div class="meta"><span>13</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=5966" target="_blank" rel="noopener">99:26</a></div>
+<h2>File formats: row-based vs column-based</h2></div>
+<p>The difference is <strong>how the data is laid out on disk</strong>.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 200" role="img" aria-label="Row-based writes record by record; column-based writes column by column">
+<text class="t" x="10" y="22">Table</text>
+<rect class="b" x="10" y="32" width="200" height="90" rx="8"/>
+<text x="25" y="56">1 · Honey · Food</text><text x="25" y="80">2 · Shirt · Clothing</text><text x="25" y="104">3 · Comb · Clothing</text>
+<text class="t" x="250" y="22">Row-based on disk (CSV, Avro)</text>
+<rect class="w" x="250" y="32" width="460" height="34" rx="6"/><text x="262" y="54" style="font-size:12px">[1, Honey, Food] [2, Shirt, Clothing] [3, Comb, Clothing]</text>
+<text class="m" x="250" y="84">good for writes &amp; updates, so OLTP</text>
+<text class="t" x="250" y="118">Column-based on disk (Parquet, ORC)</text>
+<rect class="a" x="250" y="128" width="460" height="34" rx="6"/><text x="262" y="150" style="font-size:12px">[1, 2, 3] [Honey, Shirt, Comb] [Food, Clothing, Clothing]</text>
+<text class="m" x="250" y="182">good for reads of a few columns, so OLAP / big data</text>
+</svg></div></figure>
+<ul>
+<li><strong>Row-based</strong> (CSV, Avro): writes record by record, so adding or updating a row is easy. Use it on the <strong>OLTP</strong> side.</li>
+<li><strong>Column-based</strong> (Parquet, ORC): writes column by column. <code>SELECT product_id FROM dim_product</code> reads one block and doesn't jump over every row. Use it for <strong>OLAP and big data</strong>.</li>
+</ul>
+<div class="code"><div class="code-head"><div class="left"><span>row_vs_column.py</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">rows = [(1,'Honey','Food'), (2,'Shirt','Clothing'), (3,'Comb','Clothing')]
+
+row_layout = [v for r in rows for v in r]             # how CSV lays it on disk
+col_layout = [v for col in zip(*rows) for v in col]   # how Parquet lays it on disk
+
+print(row_layout)  # [1, 'Honey', 'Food', 2, 'Shirt', 'Clothing', 3, 'Comb', 'Clothing']
+print(col_layout)  # [1, 2, 3, 'Honey', 'Shirt', 'Comb', 'Food', 'Clothing', 'Clothing']
+# Reading just "product_id": the column layout gives it as ONE contiguous chunk [1,2,3]</code></pre></div>
+<div class="code"><div class="code-head"><div class="left"><span>csv_to_parquet.py</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">import pandas as pd                        # needs: pip install pandas pyarrow
+df = pd.read_csv("products.csv")
+df.to_parquet("products.parquet")          # columnar + compressed, usually much smaller
+pd.read_parquet("products.parquet", columns=["product_id"])   # reads only that column</code></pre></div>
+<div class="note extra"><span class="tag">Extra</span><p>Columnar files also <strong>compress</strong> much better, because the values in one column look alike (<code>Clothing, Clothing, …</code>). That's another reason Parquet is the default in big data.</p></div>
+</section>
+
+<!-- 14 -->
+<section class="video" id="s14">
+<div class="vhead"><div class="meta"><span>14</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=6572" target="_blank" rel="noopener">109:32</a></div>
+<h2>Delta format (Delta Lake)</h2></div>
+<p><strong>Delta is an open table format built on top of Parquet.</strong> The data itself is still stored as Parquet files. Delta adds a <strong>transaction log</strong> folder (<code>_delta_log/</code>) full of JSON files, and each JSON file records one change made to the table.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 210" role="img" aria-label="Delta table: parquet files plus a _delta_log of JSON commits, enabling versions">
+<rect class="b" x="10" y="20" width="300" height="170" rx="10"/><text class="t" x="160" y="44" text-anchor="middle">my_table/  (a Delta table)</text>
+<rect class="w" x="25" y="60" width="270" height="50" rx="6"/><text x="160" y="82" text-anchor="middle">part-0001.parquet, part-0002.parquet …</text><text class="m" x="160" y="100" text-anchor="middle">the actual data</text>
+<rect class="a" x="25" y="122" width="270" height="56" rx="6"/><text class="t" x="160" y="144" text-anchor="middle">_delta_log/</text><text class="m" x="160" y="164" text-anchor="middle">000.json  001.json  002.json …</text>
+<path class="ln" d="M310 150H356"/>
+<rect class="b" x="360" y="30" width="105" height="44" rx="8"/><text x="412" y="50" text-anchor="middle">v0</text><text class="m" x="412" y="66" text-anchor="middle">create</text>
+<rect class="b" x="480" y="30" width="105" height="44" rx="8"/><text x="532" y="50" text-anchor="middle">v1</text><text class="m" x="532" y="66" text-anchor="middle">UPDATE</text>
+<rect class="x" x="600" y="30" width="110" height="44" rx="8"/><text x="655" y="50" text-anchor="middle">v2</text><text class="m" x="655" y="66" text-anchor="middle">DELETE (oops)</text>
+<path class="ln" d="M465 52H476M585 52H596"/>
+<path class="ln dash" d="M655 78C655 120 532 120 532 80"/><text class="m" x="595" y="130" text-anchor="middle">time travel back to v1</text>
+<text class="t" x="360" y="165">Superpowers:</text><text class="m" x="360" y="185">versioning / time travel · schema evolution · ACID</text>
+</svg></div></figure>
+<div class="grid2">
+<div class="card"><h4>1. Time travel / versioning</h4><p>Every write creates a new version. Deleted something by mistake? Go back to an older version.</p></div>
+<div class="card"><h4>2. Schema evolution</h4><p>The source adds a 6th column? Delta can add it to the table instead of failing.</p></div>
+<div class="card"><h4>3. ACID transactions</h4><p><strong>A</strong>tomicity, <strong>C</strong>onsistency, <strong>I</strong>solation, <strong>D</strong>urability. These are database-grade guarantees on cheap lake storage.</p></div>
+</div>
+<div class="code"><div class="code-head"><div class="left"><span>delta_demo.py (PySpark + Delta)</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python"># Works out of the box on Databricks. Locally: pip install delta-spark
+path = "/tmp/delta/products"
+
+df = spark.createDataFrame([(1,"Honey","Food"), (2,"Shirt","Clothing"), (3,"Comb","Clothing")],
+                           ["product_id", "name", "category"])
+df.write.format("delta").mode("overwrite").save(path)                 # version 0
+
+spark.sql(f"UPDATE delta.`{path}` SET category='Hair' WHERE product_id=3")   # version 1
+spark.sql(f"DELETE FROM delta.`{path}` WHERE product_id=1")                  # version 2 (mistake!)
+
+# See every version recorded in _delta_log
+spark.sql(f"DESCRIBE HISTORY delta.`{path}`").select("version", "operation").show()
+
+# TIME TRAVEL: read the table as it was at version 1
+spark.read.format("delta").option("versionAsOf", 1).load(path).show()
+
+# Restore it
+spark.sql(f"RESTORE TABLE delta.`{path}` TO VERSION AS OF 1")
+
+# SCHEMA EVOLUTION: append data that has a new column
+new = spark.createDataFrame([(4,"Shoes","Footwear",999.0)], ["product_id","name","category","price"])
+new.write.format("delta").mode("append").option("mergeSchema", "true").save(path)</code></pre></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Delta vs Parquet?"</strong> Delta <em>is</em> Parquet files plus a JSON transaction log. The log adds ACID transactions, time travel and schema evolution, and it supports MERGE, UPDATE and DELETE on lake data.</p></div>
+</section>
+
+<!-- 15 -->
+<section class="video" id="s15">
+<div class="vhead"><div class="meta"><span>15</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=7303" target="_blank" rel="noopener">121:43</a></div>
+<h2>Big data &amp; big data frameworks</h2></div>
+<p>"Big data" just means a very large volume of data. Today almost all data is big, so the word "big" is slowly becoming unnecessary.</p>
+<div class="tbl"><table>
+<thead><tr><th>Framework</th><th>Job in one line</th></tr></thead>
+<tbody>
+<tr><td>Apache Kafka</td><td><strong>Streaming</strong>: real-time big data (events flowing every second)</td></tr>
+<tr><td>Apache Airflow</td><td><strong>Orchestration</strong>: runs many pipelines in the right order, like a music conductor</td></tr>
+<tr><td>Apache Hive</td><td>SQL on big data: external tables and databases over files</td></tr>
+<tr><td>Apache Spark ⭐</td><td><strong>Distributed processing</strong>: the centre of modern data engineering</td></tr>
+<tr><td>Databricks</td><td>A <strong>management layer for Spark</strong>: it runs and manages the clusters for you</td></tr>
+</tbody></table></div>
+<div class="code"><div class="code-head"><div class="left"><span>airflow_dag.py (orchestration)</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+
+with DAG("daily_sales", start_date=datetime(2024, 1, 1), schedule="@daily", catchup=False) as dag:
+    extract   = PythonOperator(task_id="extract",   python_callable=lambda: print("extract"))
+    transform = PythonOperator(task_id="transform", python_callable=lambda: print("transform"))
+    load      = PythonOperator(task_id="load",      python_callable=lambda: print("load"))
+
+    extract >> transform >> load      # the ORDER is what orchestration is about</code></pre></div>
+</section>
+
+<!-- 16 -->
+<section class="video" id="s16">
+<div class="vhead"><div class="meta"><span>16</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=7545" target="_blank" rel="noopener">125:45</a></div>
+<h2>Distributed computing with Apache Spark</h2></div>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span><p>Picture the 20 computers in your college lab joined into one super-computer. Or picture a professor giving you an assignment: you split it into pieces, hand them to 10 friends, and they finish it far faster than you would alone. That's <strong>distributed computing</strong>. A group of machines working together is called a <strong>cluster</strong>.</p></div>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 240" role="img" aria-label="Spark cluster: you submit a job to the driver node, which splits work across worker nodes">
+<rect class="b" x="10" y="95" width="100" height="50" rx="10"/><text x="60" y="125" text-anchor="middle">You (job)</text>
+<path class="ln" d="M110 120H176"/><text class="m" x="143" y="110" text-anchor="middle">submit</text>
+<rect class="b dash" x="180" y="10" width="530" height="220" rx="12"/><text class="m" x="200" y="30">CLUSTER</text>
+<rect class="a" x="200" y="85" width="150" height="70" rx="10"/><text class="t" x="275" y="115" text-anchor="middle">Driver node</text><text class="m" x="275" y="135" text-anchor="middle">the brain: plans &amp; assigns</text>
+<rect class="w" x="460" y="35" width="220" height="44" rx="8"/><text x="570" y="62" text-anchor="middle">Worker node 1: does the work</text>
+<rect class="w" x="460" y="98" width="220" height="44" rx="8"/><text x="570" y="125" text-anchor="middle">Worker node 2: does the work</text>
+<rect class="w" x="460" y="161" width="220" height="44" rx="8"/><text x="570" y="188" text-anchor="middle">Worker node 3: does the work</text>
+<path class="ln" d="M350 110L456 60M350 120H456M350 130L456 180"/>
+</svg></div>
+<figcaption>Node = machine = computer. There is exactly <strong>one driver</strong>. It does no data work itself, it only orchestrates. The <strong>workers</strong> run the transformations in parallel.</figcaption></figure>
+<div class="code"><div class="code-head"><div class="left"><span>spark_basics.py</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">from pyspark.sql import SparkSession, functions as F   # pip install pyspark
+
+spark = SparkSession.builder.appName("sales").getOrCreate()   # this program is the DRIVER
+
+df = spark.read.parquet("data/sales/")      # the data is split into partitions
+print(df.rdd.getNumPartitions())            # each partition can go to a different worker
+
+result = (df.filter(F.col("amount") > 0)    # transformations are LAZY: just a plan
+            .groupBy("category")
+            .agg(F.sum("amount").alias("revenue")))
+
+result.show()   # ACTION: now the driver sends tasks to workers, they compute in parallel</code></pre></div>
+<div class="note extra"><span class="tag">Extra</span><p>Spark is <strong>lazy</strong>. <code>filter</code> and <code>groupBy</code> only build a plan. Nothing runs until an <em>action</em> such as <code>show()</code>, <code>count()</code> or <code>write</code>. This comes up in interviews as "transformations vs actions".</p></div>
+</section>
+
+<!-- 17 -->
+<section class="video" id="s17">
+<div class="vhead"><div class="meta"><span>17</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=7908" target="_blank" rel="noopener">131:48</a></div>
+<h2>Cloud computing</h2></div>
+<p>The video says about 90% of data now lives in the cloud. Only sensitive data stays on-premise.</p>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span><p>Your company needs 100 computers, sometimes only 40, and 200 during the festive season. Buying computers for the peak is wasteful and slow. A cloud provider has <em>thousands</em> of computers and says: <strong>"rent them from me, pay only for what you use, and get 200 more in minutes."</strong> The provider handles security and hardware. You reach it all over the internet.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Provider</th><th>Owner</th><th>Data lake service</th><th>Warehouse</th></tr></thead>
+<tbody>
+<tr><td>Azure</td><td>Microsoft</td><td>ADLS Gen2</td><td>Synapse Analytics / Fabric</td></tr>
+<tr><td>AWS</td><td>Amazon</td><td>S3</td><td>Redshift</td></tr>
+<tr><td>GCP</td><td>Google</td><td>Google Cloud Storage</td><td>BigQuery</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Why cloud:</strong> cheap storage, you pay only for what you use, it scales on demand, and the provider handles security.</li>
+<li><strong>Advice from the video:</strong> master <em>one</em> cloud. The services are the same across clouds, just renamed. The presenter recommends Azure because of its growth and Microsoft Fabric, and because the free account comes with $200 credit for 30 days.</li>
+</ul>
+</section>
+
+<!-- 18 -->
+<section class="video" id="s18">
+<div class="vhead"><div class="meta"><span>18</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=8391" target="_blank" rel="noopener">139:51</a></div>
+<h2>Medallion architecture (bronze → silver → gold)</h2></div>
+<p>This is the modern cloud version of staging → core. The layers are named after medals, and the data gets cleaner at each step.</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 720 190" role="img" aria-label="Batch and streaming sources into bronze, then silver, then gold, then consumers">
+<rect class="b" x="10" y="40" width="90" height="36" rx="8"/><text x="55" y="63" text-anchor="middle">Batch</text>
+<rect class="b" x="10" y="100" width="90" height="36" rx="8"/><text x="55" y="123" text-anchor="middle">Streaming</text>
+<path class="ln" d="M100 58L136 80M100 118L136 96"/>
+<rect x="140" y="30" width="150" height="120" rx="10" style="fill:#cd7f32;fill-opacity:.18;stroke:#cd7f32;stroke-width:1.5"/><text class="t" x="215" y="60" text-anchor="middle">BRONZE</text><text class="m" x="215" y="82" text-anchor="middle">raw / landing zone</text><text class="m" x="215" y="100" text-anchor="middle">NO changes at all</text><text class="m" x="215" y="118" text-anchor="middle">as-is from source</text>
+<path class="ln" d="M290 90H316"/>
+<rect x="320" y="30" width="150" height="120" rx="10" style="fill:#9aa4ad;fill-opacity:.22;stroke:#8a949d;stroke-width:1.5"/><text class="t" x="395" y="60" text-anchor="middle">SILVER</text><text class="m" x="395" y="82" text-anchor="middle">cleaned, transformed</text><text class="m" x="395" y="100" text-anchor="middle">schema enforced</text><text class="m" x="395" y="118" text-anchor="middle">/ evolved</text>
+<path class="ln" d="M470 90H496"/>
+<rect x="500" y="30" width="120" height="120" rx="10" style="fill:#e0b000;fill-opacity:.2;stroke:#c99a00;stroke-width:1.5"/><text class="t" x="560" y="60" text-anchor="middle">GOLD</text><text class="m" x="560" y="82" text-anchor="middle">facts &amp; dims,</text><text class="m" x="560" y="100" text-anchor="middle">aggregates</text><text class="m" x="560" y="118" text-anchor="middle">ready to serve</text>
+<path class="ln" d="M620 90H646"/>
+<text x="652" y="78" style="font-size:12px">BI / DA</text><text x="652" y="108" style="font-size:12px">DS / ML</text>
+<text class="m" x="380" y="178" text-anchor="middle">bronze ≈ staging · silver + gold ≈ core</text>
+</svg></div></figure>
+<div class="code"><div class="code-head"><div class="left"><span>medallion.py (Databricks / PySpark)</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">from pyspark.sql import functions as F
+lake = "abfss://{layer}@mylake.dfs.core.windows.net/orders"
+
+# BRONZE: land raw data exactly as received (rule #1: no changes)
+raw = spark.read.json("abfss://landing@mylake.dfs.core.windows.net/orders/")
+raw.write.format("delta").mode("append").save(lake.format(layer="bronze"))
+
+# SILVER: clean + fix types + dedupe
+bronze = spark.read.format("delta").load(lake.format(layer="bronze"))
+silver = (bronze.dropDuplicates(["order_id"])
+                .filter(F.col("customer_id").isNotNull())
+                .withColumn("order_date", F.to_date("order_ts"))
+                .withColumn("amount", F.col("quantity") * F.col("price")))
+silver.write.format("delta").mode("overwrite").option("mergeSchema", "true") \
+      .save(lake.format(layer="silver"))
+
+# GOLD: business-ready model / aggregate for Power BI
+gold = silver.groupBy("order_date").agg(F.sum("amount").alias("daily_revenue"))
+gold.write.format("delta").mode("overwrite").save(lake.format(layer="gold"))</code></pre></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Explain medallion architecture."</strong> Bronze holds the raw data, untouched. Silver holds cleaned and conformed data. Gold holds business-level models (facts, dimensions, aggregates) for downstream users. One benefit: if a transformation has a bug, you can rebuild silver and gold from bronze without going back to the source.</p></div>
+</section>
+
+<!-- 19 -->
+<section class="video" id="s19">
+<div class="vhead"><div class="meta"><span>19</span><a class="ts" href="https://youtu.be/ZRz-7E-7X7c?t=8754" target="_blank" rel="noopener">145:54</a></div>
+<h2>Azure services &amp; the end-to-end architecture</h2></div>
+<div class="tbl"><table>
+<thead><tr><th>Azure service</th><th>What it does</th><th>Generic concept</th></tr></thead>
+<tbody>
+<tr><td>Event Hubs</td><td>Takes in continuous streaming data (IoT, clicks)</td><td>Streaming ingest (like Kafka)</td></tr>
+<tr><td>Azure SQL DB</td><td>Managed SQL Server in the cloud, same SQL (DDL, DML, TCL, DCL)</td><td>OLTP database</td></tr>
+<tr><td>ADLS Gen2</td><td>Data lake inside a <em>storage account</em>, with a <strong>hierarchical namespace</strong> (containers → folders → sub-folders)</td><td>Data lake</td></tr>
+<tr><td>Data Factory (ADF)</td><td>Low-code ETL: lots of connectors, moves data, orchestrates pipelines</td><td>ETL / orchestration</td></tr>
+<tr><td>Databricks</td><td>Managed Spark clusters for transformations</td><td>Processing (Spark)</td></tr>
+<tr><td>Synapse Analytics</td><td>Cloud data warehouse: facts &amp; dimensions</td><td>OLAP (≈ Snowflake, Redshift, BigQuery)</td></tr>
+<tr><td>Power BI</td><td>Dashboards &amp; KPIs, with native Azure connectors</td><td>Reporting</td></tr>
+<tr><td>Purview</td><td>Data governance &amp; catalog (run by the governance team)</td><td>Governance</td></tr>
+<tr><td>Azure DevOps</td><td>CI/CD: promotes code through Dev → QA → Prod</td><td>Deployment</td></tr>
+<tr><td>Key Vault</td><td>Stores secrets (passwords, keys) safely</td><td>Secrets</td></tr>
+<tr><td>Entra ID</td><td>Directory of all users in the organisation (formerly Azure AD)</td><td>Identity</td></tr>
+<tr><td>Azure Monitor / Cost Mgmt</td><td>Watch pipelines for failures; track monthly bills</td><td>Ops</td></tr>
+</tbody></table></div>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 260" style="min-width:640px" role="img" aria-label="IoT to Event Hubs, Data Factory to bronze in ADLS, Databricks to silver, Synapse gold, Power BI and data science">
+<rect class="b" x="5" y="40" width="80" height="40" rx="8"/><text x="45" y="65" text-anchor="middle">IoT / apps</text>
+<rect class="b" x="5" y="120" width="80" height="40" rx="8"/><text x="45" y="145" text-anchor="middle">SQL DB</text>
+<path class="ln" d="M85 60H106"/>
+<rect class="b" x="110" y="40" width="90" height="40" rx="8"/><text x="155" y="65" text-anchor="middle">Event Hubs</text>
+<path class="ln" d="M200 60L226 90M85 140L226 110"/>
+<rect class="a" x="230" y="80" width="90" height="40" rx="8"/><text x="275" y="105" text-anchor="middle">Data Factory</text>
+<path class="ln" d="M320 100H346"/>
+<rect class="b dash" x="350" y="20" width="250" height="160" rx="12"/><text class="m" x="475" y="38" text-anchor="middle">ADLS Gen2 (data lake)</text>
+<rect x="362" y="50" width="70" height="44" rx="6" style="fill:#cd7f32;fill-opacity:.18;stroke:#cd7f32"/><text x="397" y="77" text-anchor="middle">Bronze</text>
+<rect x="440" y="50" width="70" height="44" rx="6" style="fill:#9aa4ad;fill-opacity:.22;stroke:#8a949d"/><text x="475" y="77" text-anchor="middle">Silver</text>
+<rect x="518" y="50" width="70" height="44" rx="6" style="fill:#e0b000;fill-opacity:.2;stroke:#c99a00"/><text x="553" y="77" text-anchor="middle">Gold</text>
+<path class="ln" d="M432 72H436M510 72H514"/>
+<rect class="w" x="400" y="125" width="70" height="36" rx="6"/><text x="435" y="148" text-anchor="middle" style="font-size:12px">Databricks</text>
+<rect class="w" x="490" y="125" width="80" height="36" rx="6"/><text x="530" y="148" text-anchor="middle" style="font-size:12px">Synapse</text>
+<path class="ln2 dash" d="M435 125L436 96M530 125L553 96"/>
+<path class="ln" d="M600 60H636M600 130H636"/>
+<rect class="b" x="640" y="40" width="110" height="40" rx="8"/><text x="695" y="65" text-anchor="middle">Power BI → mgr</text>
+<rect class="b" x="640" y="110" width="110" height="40" rx="8"/><text x="695" y="135" text-anchor="middle">Data science</text>
+<rect class="x" x="110" y="205" width="640" height="40" rx="8"/><text x="430" y="230" text-anchor="middle" style="font-size:12px">Across everything: Key Vault · Entra ID · DevOps (CI/CD) · Purview · Monitor · Cost Management</text>
+</svg></div>
+<figcaption>The full journey, simplified: source (OLTP) → ETL → lake layers → warehouse (OLAP) → Power BI report → decision maker.</figcaption></figure>
+<div class="code"><div class="code-head"><div class="left"><span>read_adls_from_databricks.py</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python"># Get the secret from Key Vault (via a Databricks secret scope). Never hard-code keys.
+key = dbutils.secrets.get(scope="kv-scope", key="adls-key")
+spark.conf.set("fs.azure.account.key.mylake.dfs.core.windows.net", key)
+
+# Hierarchical namespace = real folders: container / year / month
+df = spark.read.parquet("abfss://bronze@mylake.dfs.core.windows.net/orders/2024/01/")
+df.show(5)</code></pre></div>
+</section>
+
+<!-- 20 -->
+<section class="video" id="s20">
+<div class="vhead"><div class="meta"><span>20</span><span>Revision</span></div>
+<h2>Interview Q&amp;A</h2></div>
+<div class="toolbar"><button class="btn" id="quizToggle" type="button" aria-pressed="false">Hide answers (quiz mode)</button><span id="quizHint" class="tl" hidden>Click an answer to reveal it.</span></div>
+<div class="qa" id="qa">
+<div class="item"><p class="q">What are the three pillars of data engineering?</p><p class="a">Data production (generation and storage), data transformation, and data serving (data models for stakeholders).</p></div>
+<div class="item"><p class="q">Who are your upstream and downstream teams?</p><p class="a">Upstream sends you data: DBAs and software developers. Downstream consumes your data and gives you requirements: data analysts, data scientists, analytics managers.</p></div>
+<div class="item"><p class="q">OLTP vs OLAP?</p><p class="a">OLTP is transactional, tuned for writes and updates, normalized (up to 3NF), and owned by the DBA. OLAP is the data warehouse, tuned for reads, dimensionally modeled, and owned by the data engineer.</p></div>
+<div class="item"><p class="q">Why do we need a staging layer? Transient vs persistent?</p><p class="a">Staging stops heavy transformations from querying (and slowing down) the source. Transient staging is truncated every run (about 99% of cases). Persistent staging keeps history.</p></div>
+<div class="item"><p class="q">What is incremental loading?</p><p class="a">Loading only the data that is new or changed since the last run. You track a watermark (last date or ID), filter the source by it, then append or merge into the target. This saves compute and time.</p></div>
+<div class="item"><p class="q">Fact vs dimension table?</p><p class="a">A fact table holds numeric measures (price, quantity) and foreign keys. A dimension table holds descriptive context (customer, product, date), grouped by entity and denormalized.</p></div>
+<div class="item"><p class="q">Star vs snowflake schema, and which is used more?</p><p class="a">Star: dimensions link directly to the fact. Snowflake: dimensions are normalized into hierarchies. Star is used most of the time because it's faster, has fewer joins, and is easier to manage.</p></div>
+<div class="item"><p class="q">Interviewer says "we need an upsert". Which SCD?</p><p class="a">SCD Type 1: update the row if it exists, insert it if it doesn't. No history is kept.</p></div>
+<div class="item"><p class="q">How do you design SCD Type 2?</p><p class="a">Add start_date, end_date and an is_current flag. On a change, expire the old row (set end_date, flag = 0) and insert a new row (end_date far in the future, flag = 1). Use surrogate keys.</p></div>
+<div class="item"><p class="q">SCD 2 vs SCD 3?</p><p class="a">SCD 2 keeps the full history with dates, one row per version. SCD 3 keeps only the previous value in an extra column. It's cheaper but has limited history.</p></div>
+<div class="item"><p class="q">Data lake vs data warehouse?</p><p class="a">A lake stores any format (structured, semi-structured, unstructured) using schema-on-read, and storage is very cheap. A warehouse stores structured data only, with schema-on-write, and costs more.</p></div>
+<div class="item"><p class="q">What is a lakehouse?</p><p class="a">Data lake storage plus a metadata/table layer (such as Delta) on top. You get warehouse features (tables, SQL, dimensional models, ACID) on cheap lake files.</p></div>
+<div class="item"><p class="q">Row-based vs column-based file formats?</p><p class="a">Row-based (CSV, Avro) stores record by record. It's good for writes, so it suits OLTP. Column-based (Parquet, ORC) stores column by column. It's good for analytical reads and compression, so it suits OLAP and big data.</p></div>
+<div class="item"><p class="q">What does Delta Lake add on top of Parquet?</p><p class="a">A transaction log (<code>_delta_log</code> JSON files) that adds ACID transactions, versioning and time travel, schema evolution, and UPDATE, DELETE and MERGE support.</p></div>
+<div class="item"><p class="q">Explain Spark architecture.</p><p class="a">A cluster has one driver node (the brain: it plans and assigns tasks) and many worker nodes (they run the tasks on data partitions in parallel). Databricks manages these clusters for you.</p></div>
+<div class="item"><p class="q">Explain medallion architecture.</p><p class="a">Bronze holds raw data with no changes. Silver holds cleaned, transformed data with the schema enforced. Gold holds business-ready facts, dimensions and aggregates for BI and data science.</p></div>
+<div class="item"><p class="q">Which Azure service stores streaming data? Which is the ETL tool? Which is the warehouse?</p><p class="a">Streaming: Event Hubs. ETL: Azure Data Factory. Warehouse: Azure Synapse Analytics. Lake: ADLS Gen2. Processing: Databricks. Secrets: Key Vault.</p></div>
+</div>
+</section>
+
+<footer>
+<p>Made from the video's auto-generated English transcript. All code is my own illustration of the ideas in the video. Snippets marked "Ran" were executed with Python 3.14's built-in <code>sqlite3</code> and pass their <code>assert</code> checks. "Not run" snippets need Spark, Databricks, Airflow or a real database. Boxes marked "Extra" are additions that are not in the video.</p>
+</footer>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+document.querySelectorAll(".code").forEach(function (box) {
+  var btn = box.querySelector(".copy");
+  var code = box.querySelector("pre code");
+  if (!btn || !code) return;
+  btn.addEventListener("click", function () {
+    var text = code.textContent;
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1400); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Press Ctrl+C";
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+});
+if (window.Prism) Prism.highlightAll();
+
+var qa = document.getElementById("qa");
+var toggle = document.getElementById("quizToggle");
+var hint = document.getElementById("quizHint");
+toggle.addEventListener("click", function () {
+  var on = !qa.classList.contains("quiz");
+  qa.classList.toggle("quiz", on);
+  qa.querySelectorAll(".item").forEach(function (i) { i.classList.remove("show"); });
+  toggle.textContent = on ? "Show all answers" : "Hide answers (quiz mode)";
+  toggle.setAttribute("aria-pressed", on ? "true" : "false");
+  hint.hidden = !on;
+});
+qa.addEventListener("click", function (e) {
+  var a = e.target.closest(".a");
+  if (a && qa.classList.contains("quiz")) a.parentElement.classList.toggle("show");
+});
+</script>

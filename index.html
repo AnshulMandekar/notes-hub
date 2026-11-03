@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Notes Hub</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#636b76; --border:#e2e5ea; --accent:#3b6ef5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14161a; --card:#1d2026; --text:#e8eaee; --muted:#9aa2ad; --border:#2c3038; --accent:#7c9dff; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  .sub { color:var(--muted); margin:0 0 20px; }
+  input { width:100%; padding:12px 14px; font:inherit; color:inherit; background:var(--card); border:1px solid var(--border); border-radius:10px; margin-bottom:28px; }
+  input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:28px 0 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px; }
+  a.card { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; transition:transform .12s, border-color .12s; }
+  a.card:hover, a.card:focus-visible { transform:translateY(-2px); border-color:var(--accent); }
+  .icon { font-size:26px; }
+  .card h3 { margin:8px 0 4px; font-size:17px; }
+  .card p { margin:0; color:var(--muted); font-size:14px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Notes Hub</h1>
+  <p class="sub">Click a card to open the notes.</p>
+  <input id="q" type="search" placeholder="Search notes… (e.g. java, rag, linux)" aria-label="Search notes" autofocus>
+
+  <section>
+    <h2>Backend &amp; Frontend</h2>
+    <div class="grid">
+      <a class="card" href="nodejs-interview-notes.html"><div class="icon">🟩</div><h3>Node.js</h3><p>Node.js interview questions</p></a>
+      <a class="card" href="java-interview-questions-notes.html"><div class="icon">☕</div><h3>Java Interview</h3><p>Java interview questions</p></a>
+      <a class="card" href="java-oop-notes.html"><div class="icon">🧱</div><h3>Java OOP</h3><p>Object-oriented programming in Java</p></a>
+      <a class="card" href="react-interview-notes.html"><div class="icon">⚛️</div><h3>React.js</h3><p>React.js interview questions</p></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Generative AI</h2>
+    <div class="grid">
+      <a class="card" href="LangChain%20Fundamentals%20Notes.html"><div class="icon">🔗</div><h3>LangChain Fundamentals</h3><p>Full notes (detailed version)</p></a>
+      <a class="card" href="langchain-notes.html"><div class="icon">🔗</div><h3>LangChain Notes</h3><p>LangChain fundamentals (compact version)</p></a>
+      <a class="card" href="langchain-rag-agents-notes.html"><div class="icon">📚</div><h3>LangChain RAG &amp; Agents</h3><p>Retrieval-augmented generation and agents</p></a>
+      <a class="card" href="langgraph-notes.html"><div class="icon">🕸️</div><h3>Agentic AI &amp; LangGraph</h3><p>Agents, graphs and state</p></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Data</h2>
+    <div class="grid">
+      <a class="card" href="data-engineering-fundamentals-notes.html"><div class="icon">🛠️</div><h3>Data Engineering</h3><p>Data engineering fundamentals</p></a>
+      <a class="card" href="data-warehousing-notes.html"><div class="icon">🏛️</div><h3>Data Warehousing</h3><p>Data warehousing guide</p></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tools</h2>
+    <div class="grid">
+      <a class="card" href="linux-commands-notes.html"><div class="icon">🐧</div><h3>Linux Commands</h3><p>50 essential Linux commands</p></a>
+    </div>
+  </section>
+</main>
+<script>
+  // Filter cards by text; hide sections with no matches.
+  document.getElementById('q').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('section').forEach(s => {
+      let any = false;
+      s.querySelectorAll('.card').forEach(c => {
+        const hit = c.textContent.toLowerCase().includes(q);
+        c.classList.toggle('hidden', !hit);
+        any ||= hit;
+      });
+      s.classList.toggle('hidden', !any);
+    });
+  });
+</script>
+</body>
+</html>

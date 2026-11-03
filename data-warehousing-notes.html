@@ -1,0 +1,898 @@
+<title>Data Warehousing Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a left rail listing the videos + one reading column; code, tables and diagrams scroll inside their own boxes */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --ink:#16202a; --muted:#56636f; --line:#d8dfe6;
+  --accent:#0a6577; --accent-soft:#e1eff2;
+  --iv-bg:#fff2cc; --iv-ink:#714a00; --iv-line:#ecd38a;
+  --warn-bg:#fce8e8; --warn-ink:#93202a; --warn-line:#efbfc2;
+  --extra-bg:#eaedfb; --extra-ink:#36429a; --extra-line:#cbd1f3;
+  --code-bg:#121a23; --code-ink:#e2e9f0; --code-muted:#8797a8; --code-line:#26323f;
+  --tk-kw:#7cc5ff; --tk-str:#9fe0b4; --tk-fn:#ffd47a; --tk-num:#f5a7c7; --tk-com:#7e8ea0; --tk-cls:#c8b5ff;
+  --f-head:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+    --accent:#5cc3d3; --accent-soft:#12303a;
+    --iv-bg:#2b230f; --iv-ink:#f1c66d; --iv-line:#5a4618;
+    --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+    --extra-bg:#191e3a; --extra-ink:#aab4f5; --extra-line:#323b70;
+    --code-bg:#0a1016; --code-line:#1f2a36;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1318; --surface:#141c24; --ink:#e2e8ee; --muted:#93a0ad; --line:#26313d;
+  --accent:#5cc3d3; --accent-soft:#12303a;
+  --iv-bg:#2b230f; --iv-ink:#f1c66d; --iv-line:#5a4618;
+  --warn-bg:#2d1418; --warn-ink:#f29ca1; --warn-line:#5a2730;
+  --extra-bg:#191e3a; --extra-ink:#aab4f5; --extra-line:#323b70;
+  --code-bg:#0a1016; --code-line:#1f2a36;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.62 var(--f-body)}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 72px}
+@media (min-width:1000px){.wrap{grid-template-columns:210px minmax(0,1fr);gap:48px;padding-inline:28px}}
+header.top{grid-column:1/-1;display:grid;gap:10px;max-width:820px}
+.kicker{font:500 12px/1.4 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0}
+h1{font:700 clamp(32px,5vw,46px)/1.05 var(--f-head);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:0;max-width:66ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;color:var(--muted);margin-top:4px}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+nav.toc{min-width:0}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+nav.toc li{flex:0 0 auto}
+nav.toc a{display:grid;gap:1px;text-decoration:none;color:var(--ink);padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:14px;line-height:1.3}
+nav.toc a small{font:500 11px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.04em}
+nav.toc a:hover{border-color:var(--accent)}
+@media (min-width:1000px){
+  nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;max-height:calc(100vh - 40px);overflow-y:auto;padding-right:4px}
+  nav.toc ol{flex-direction:column;overflow:visible;gap:2px}
+  nav.toc a{border:0;background:none;padding:6px 10px;border-left:2px solid var(--line);border-radius:0}
+  nav.toc a:hover{border-left-color:var(--accent);background:var(--accent-soft)}
+}
+
+main{min-width:0;max-width:820px;display:grid;gap:56px}
+section.video{display:grid;gap:18px;min-width:0;scroll-margin-top:16px}
+.vhead{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.vhead .meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.vhead .meta a{letter-spacing:.02em;text-transform:none;font-family:var(--f-body);font-size:14px}
+h2{font:700 clamp(26px,3.6vw,34px)/1.12 var(--f-head);margin:0;text-wrap:balance}
+h3{font:600 20px/1.25 var(--f-head);margin:10px 0 0;text-wrap:balance}
+h4{font:600 16px/1.3 var(--f-body);margin:4px 0 0}
+p{margin:0;max-width:68ch}
+ul,ol.steps{margin:0;padding-left:1.25em;display:grid;gap:6px;max-width:70ch}
+li>ul{margin-top:6px}
+strong{font-weight:600}
+code{font:500 .88em/1 var(--f-mono);background:var(--accent-soft);color:var(--ink);padding:.12em .35em;border-radius:4px}
+.tl{font-size:15px;color:var(--muted)}
+
+.note{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;background:var(--surface)}
+.note .tag{justify-self:start;font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.note.iv{background:var(--iv-bg);border-color:var(--iv-line)}
+.note.iv .tag{background:var(--iv-ink);color:var(--iv-bg)}
+.note.gotcha{background:var(--warn-bg);border-color:var(--warn-line)}
+.note.gotcha .tag{background:var(--warn-ink);color:var(--warn-bg)}
+.note.extra{background:var(--extra-bg);border-color:var(--extra-line)}
+.note.extra .tag{background:var(--extra-ink);color:var(--extra-bg)}
+.note p,.note ul{max-width:none}
+.note code{background:color-mix(in srgb,var(--surface) 55%,transparent)}
+.pill{display:inline-block;font:600 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.pill.iv{background:var(--iv-ink);color:var(--iv-bg)}
+.pill.gotcha{background:var(--warn-ink);color:var(--warn-bg)}
+.pill.extra{background:var(--extra-ink);color:var(--extra-bg)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600}
+
+figure.diagram{margin:0;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;display:grid;gap:8px;min-width:0}
+figure.diagram .scroll{overflow-x:auto}
+figure.diagram pre.mermaid{margin:0;background:none;text-align:center;font-family:var(--f-body)}
+figcaption{font-size:13.5px;color:var(--muted)}
+
+.code{border-radius:10px;overflow:hidden;background:var(--code-bg);border:1px solid var(--code-line);min-width:0}
+.code-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px 8px 14px;border-bottom:1px solid var(--code-line);font:500 12px/1.3 var(--f-mono);color:var(--code-muted)}
+.code-head .left{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.status{font:600 10.5px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:999px;border:1px solid var(--code-line)}
+.status.ran{color:#9fe0b4;border-color:#2c5a40}
+.status.key{color:#ffd47a;border-color:#5c4a1c}
+.copy{font:500 12px/1 var(--f-mono);color:var(--code-ink);background:transparent;border:1px solid var(--code-line);border-radius:6px;padding:6px 9px;cursor:pointer}
+.copy:hover{border-color:var(--code-muted)}
+.code pre{margin:0;padding:14px 16px;overflow-x:auto;background:var(--code-bg)}
+.code pre code{font:13.5px/1.6 var(--f-mono);background:none;padding:0;color:var(--code-ink);white-space:pre;border-radius:0}
+.token.keyword,.token.boolean,.token.important{color:var(--tk-kw)}
+.token.string,.token.triple-quoted-string,.token.string-interpolation{color:var(--tk-str)}
+.token.interpolation{color:var(--code-ink)}
+.token.function,.token.decorator{color:var(--tk-fn)}
+.token.number{color:var(--tk-num)}
+.token.comment{color:var(--tk-com);font-style:italic}
+.token.class-name,.token.builtin{color:var(--tk-cls)}
+.token.operator,.token.punctuation{color:var(--code-muted)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card h4{margin:0}
+.card p{font-size:15px}
+
+.qa{display:grid;gap:10px;counter-reset:q}
+.qa .item{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:12px 16px;display:grid;gap:6px}
+.qa .q{font-weight:600;counter-increment:q}
+.qa .q::before{content:"Q" counter(q) "  ";font:600 12px/1 var(--f-mono);color:var(--accent);letter-spacing:.04em}
+.qa .a{color:var(--ink);max-width:none}
+.qa .src{font:500 11px/1.3 var(--f-mono);color:var(--muted);letter-spacing:.04em}
+.qa.quiz .a{filter:blur(6px);cursor:pointer;user-select:none}
+.qa.quiz .item.show .a{filter:none;user-select:auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:600 14px/1 var(--f-body);color:var(--surface);background:var(--accent);border:0;border-radius:8px;padding:10px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+@media (prefers-reduced-motion:no-preference){.qa .a{transition:filter .2s}}
+footer{color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:18px}
+</style>
+<style>
+svg.d{display:block;width:100%;height:auto;min-width:560px;font:13px/1.2 var(--f-body)}
+svg.d text{fill:var(--ink)}
+svg.d .m{fill:var(--muted);font-size:11.5px}
+svg.d .t{font-weight:600}
+svg.d .b{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg.d .a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+svg.d .w{fill:var(--iv-bg);stroke:var(--iv-line);stroke-width:1.5}
+svg.d .x{fill:var(--extra-bg);stroke:var(--extra-line);stroke-width:1.5}
+svg.d .ln{stroke:var(--muted);stroke-width:1.5;fill:none;marker-end:url(#ah)}
+svg.d .ln2{stroke:var(--muted);stroke-width:1.5;fill:none}
+svg.d .dash{stroke-dasharray:4 4}
+.ba .ba-step{display:grid;gap:6px;min-width:0}
+.ba .ba-label{justify-self:start;font:700 18px/1.2 var(--f-head);color:var(--accent)}
+.ba .ba-label.after{color:var(--iv-ink)}
+.ba .ba-arrow{font-size:14px;color:var(--muted);text-align:center;padding:2px 0}
+.ba th.hl{background:var(--iv-bg);color:var(--iv-ink);box-shadow:inset 0 -2px 0 var(--warn-ink)}
+.ba tr.old td{color:var(--muted)}
+.ba tr.new td{background:var(--accent-soft)}
+.ba td.chg{background:var(--iv-bg);color:var(--iv-ink);font-weight:600}
+.ba td{white-space:nowrap}
+.ts{font:500 12px/1 var(--f-mono);text-decoration:none;color:var(--accent);background:var(--accent-soft);padding:4px 7px;border-radius:6px;white-space:nowrap}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+</defs></svg>
+
+
+<div class="wrap">
+<header class="top">
+  <p class="kicker">Video notes · ~3 hours 15 min · beginner friendly</p>
+  <h1>Data Warehousing: The Ultimate Guide</h1>
+  <p class="lede">Notes from <a href="https://youtu.be/HKcEyHF1U00" target="_blank" rel="noopener">Data Warehouse – The Ultimate Guide</a> by Ansh Lamba. It's a condensed, hands-on version of Kimball's <em>The Data Warehouse Toolkit</em>. It covers ETL layers, incremental loading with CDC, dimensional modelling (star and snowflake), the types of fact and dimension tables, and slowly changing dimensions. Everything is built in Spark SQL on Databricks Community Edition. Each section gives the simple idea first, then a diagram, then the code.</p>
+  <div class="legend">
+    <span><span class="pill iv">Interview</span> likely interview question</span>
+    <span><span class="pill gotcha">Gotcha</span> common mistake</span>
+    <span><span class="pill extra">Extra</span> added by me, not in the video</span>
+    <span><span class="ts">0:00</span> jump to that point in the video</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+<ol>
+<li><a href="#s1"><small>01</small>What is a DW?</a></li>
+<li><a href="#s2"><small>02</small>Database vs DW</a></li>
+<li><a href="#s3"><small>03</small>ETL &amp; layers</a></li>
+<li><a href="#s4"><small>04</small>Incremental &amp; CDC</a></li>
+<li><a href="#s5"><small>05</small>Hands-on: incremental</a></li>
+<li><a href="#s6"><small>06</small>Data modeling</a></li>
+<li><a href="#s7"><small>07</small>Facts &amp; dimensions</a></li>
+<li><a href="#s8"><small>08</small>Star vs snowflake</a></li>
+<li><a href="#s9"><small>09</small>Build dimensions</a></li>
+<li><a href="#s10"><small>10</small>Build the fact</a></li>
+<li><a href="#s11"><small>11</small>Fact table types</a></li>
+<li><a href="#s12"><small>12</small>Dimension types</a></li>
+<li><a href="#s13"><small>13</small>SCD types</a></li>
+<li><a href="#s14"><small>14</small>Hands-on: SCD 1</a></li>
+<li><a href="#s15"><small>15</small>Interview Q&amp;A</a></li>
+</ol>
+</nav>
+
+<main>
+
+<!-- 1 -->
+<section class="video" id="s1">
+<div class="vhead"><div class="meta"><span>01</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=420" target="_blank" rel="noopener">7:00</a></div>
+<h2>What is a data warehouse?</h2></div>
+<p><strong>In one line:</strong> a data warehouse is the <strong>one central place</strong> where a company keeps all its data (sales, transactions, budget, marketing, HR) so people can analyse it.</p>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span>
+<p>Think of the suitcase you pack for a holiday. Formal clothes, casual clothes, shoes and socks all go into one bag. A data warehouse is that bag for a company's data. Everything is in one place, so you always know where to look.</p></div>
+<h3>Why it matters</h3>
+<ul>
+<li>Almost every data engineering job description asks for "experience building data warehouses".</li>
+<li>Many people know the <em>tools</em> (Azure, AWS, GCP, Databricks) but get stuck when asked about <strong>data warehousing and data modelling</strong>. That's the gap this video fills.</li>
+<li>Tools can speed up the work, but every warehouse design depends on the business. You can't automate that thinking, which makes it a skill AI won't easily replace.</li>
+</ul>
+</section>
+
+<!-- 2 -->
+<section class="video" id="s2">
+<div class="vhead"><div class="meta"><span>02</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=660" target="_blank" rel="noopener">11:00</a></div>
+<h2>Database vs data warehouse</h2></div>
+<p>MySQL, PostgreSQL and SQL Server are <strong>DBMS</strong> (database management systems). You can keep a normal database <em>or</em> a data warehouse inside them. So the difference isn't the software. <strong>The difference is how data arrives and how it's stored.</strong></p>
+
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 230" role="img" aria-label="Source apps write to a database in real time. ETL copies data in bulk once a day into the data warehouse, which analysts query.">
+<rect class="b" x="10" y="80" width="120" height="60" rx="8"/><text x="70" y="106" text-anchor="middle" class="t">Apps / APIs</text><text x="70" y="124" text-anchor="middle" class="m">website, payments</text>
+<path class="ln" d="M130 110 H200"/><text x="165" y="100" text-anchor="middle" class="m">every ms</text>
+<rect class="a" x="200" y="70" width="160" height="80" rx="8"/><text x="280" y="100" text-anchor="middle" class="t">Database (OLTP)</text><text x="280" y="118" text-anchor="middle" class="m">small transactions</text><text x="280" y="134" text-anchor="middle" class="m">near real time · busy</text>
+<path class="ln" d="M360 110 H460"/><text x="410" y="96" text-anchor="middle" class="t">ETL</text><text x="410" y="130" text-anchor="middle" class="m">bulk, daily 9 PM</text>
+<rect class="w" x="460" y="70" width="160" height="80" rx="8"/><text x="540" y="100" text-anchor="middle" class="t">Data warehouse</text><text x="540" y="118" text-anchor="middle" class="m">all history, static</text><text x="540" y="134" text-anchor="middle" class="m">"built to be disturbed"</text>
+<path class="ln" d="M620 110 H660"/>
+<rect class="b" x="660" y="70" width="90" height="80" rx="8"/><text x="705" y="100" text-anchor="middle" class="t">Users</text><text x="705" y="118" text-anchor="middle" class="m">BI, analysts,</text><text x="705" y="134" text-anchor="middle" class="m">data science</text>
+<text x="280" y="180" text-anchor="middle" class="m">❌ don't run reports here</text>
+<text x="540" y="180" text-anchor="middle" class="m">✅ run heavy queries here</text>
+</svg></div>
+<figcaption>The database is busy inserting live data, so reports run against the warehouse instead.</figcaption></figure>
+
+<h3>Why not just report from the database?</h3>
+<p>The database's SQL engine is busy inserting new transactions every few milliseconds. If you also run heavy report queries on it (joins, window functions, aggregations), both jobs slow down. A dashboard could take an hour to refresh. So we copy the data to a warehouse and run the reports there.</p>
+<h3>But doesn't copying the data also put load on the database?</h3>
+<p>Very little, because ETL only does a plain bulk read with <strong>no transformations at the source</strong>. Something like "give me everything up to 9 PM", once a day. The next day it asks "give me everything <em>after</em> yesterday 9 PM". The warehouse is like a <strong>big brother</strong> that keeps collecting new data from the database.</p>
+
+<div class="tbl"><table>
+<tr><th></th><th>Database</th><th>Data warehouse</th></tr>
+<tr><td>Data arrives</td><td>Constantly, in small transactions</td><td>In bulk batches (e.g. daily)</td></tr>
+<tr><td>Freshness</td><td>Near real time</td><td>Up to the last load ("static")</td></tr>
+<tr><td>Main job</td><td>Record transactions fast</td><td>Answer analytical queries</td></tr>
+<tr><td>Who queries it</td><td>The application</td><td>Analysts, BI, data scientists</td></tr>
+</table></div>
+
+<h3>Data warehousing (the verb)</h3>
+<p><strong>Data warehousing</strong> is the <em>process</em> of pulling data from databases and storing it in the warehouse in the right shape. Anyone can run ETL with drag-and-drop tools these days. The real value of a data engineer is knowing <strong>how to structure</strong> the data. That's the architecture and the fundamentals.</p>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Is a data warehouse a different software from a database?"</strong> No. Both store tables of rows and columns, and both can live in the same DBMS. The difference is the workload: OLTP databases take small writes all the time, while a warehouse takes bulk loads and serves analytical reads.</p></div>
+</section>
+
+<!-- 3 -->
+<section class="video" id="s3">
+<div class="vhead"><div class="meta"><span>03</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=1560" target="_blank" rel="noopener">26:00</a></div>
+<h2>ETL and the warehouse layers: staging, core, data marts</h2></div>
+<p><strong>ETL = Extract → Transform → Load.</strong> We don't copy the database straight into the final tables. The warehouse has <strong>two layers</strong> inside it:</p>
+
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 780 250" role="img" aria-label="Database to staging layer (raw copy, E), transform (T), core layer (curated, L), then data marts for Finance and HR.">
+<rect class="b" x="10" y="95" width="110" height="60" rx="8"/><text x="65" y="122" text-anchor="middle" class="t">Database</text><text x="65" y="140" text-anchor="middle" class="m">source</text>
+<path class="ln" d="M120 125 H180"/><text x="150" y="115" text-anchor="middle" class="t">E</text>
+<rect x="175" y="30" width="430" height="190" rx="12" fill="none" stroke="var(--line)" stroke-dasharray="6 5" stroke-width="1.5"/>
+<text x="390" y="52" text-anchor="middle" class="m">DATA WAREHOUSE</text>
+<rect class="a" x="190" y="85" width="150" height="80" rx="8"/><text x="265" y="113" text-anchor="middle" class="t">Staging layer</text><text x="265" y="131" text-anchor="middle" class="m">raw, as-is copy</text><text x="265" y="147" text-anchor="middle" class="m">no transformations</text>
+<path class="ln" d="M340 125 H440"/><text x="390" y="115" text-anchor="middle" class="t">T</text><text x="390" y="143" text-anchor="middle" class="m">clean, add cols,</text><text x="390" y="157" text-anchor="middle" class="m">aggregate</text>
+<rect class="w" x="440" y="85" width="150" height="80" rx="8"/><text x="515" y="113" text-anchor="middle" class="t">Core layer</text><text x="515" y="131" text-anchor="middle" class="m">curated data</text><text x="515" y="147" text-anchor="middle" class="m">exposed to users</text>
+<path class="ln" d="M590 110 L650 70"/><path class="ln" d="M590 140 L650 180"/>
+<text x="620" y="128" text-anchor="middle" class="t">L</text>
+<rect class="x" x="650" y="40" width="120" height="55" rx="8"/><text x="710" y="64" text-anchor="middle" class="t">Finance mart</text><text x="710" y="82" text-anchor="middle" class="m">subset</text>
+<rect class="x" x="650" y="155" width="120" height="55" rx="8"/><text x="710" y="179" text-anchor="middle" class="t">HR mart</text><text x="710" y="197" text-anchor="middle" class="m">subset</text>
+</svg></div>
+<figcaption>Extract into staging, transform, load into core, then cut domain-specific data marts out of core.</figcaption></figure>
+
+<div class="grid2">
+<div class="card"><h4>Staging layer</h4><p>A raw, as-is copy of the source with no transformation. We read the source quickly and leave it alone so the busy database isn't loaded.</p></div>
+<div class="card"><h4>Core layer</h4><p>Curated (transformed) data. This is the layer analysts, data scientists and BI developers actually query.</p></div>
+<div class="card"><h4>Data mart</h4><p>A <strong>subset</strong> of the warehouse for one business area, like Finance or HR. The Finance team doesn't need access to the whole company's data, only its own slice.</p></div>
+</div>
+</section>
+
+<!-- 4 -->
+<section class="video" id="s4">
+<div class="vhead"><div class="meta"><span>04</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=1980" target="_blank" rel="noopener">33:00</a></div>
+<h2>Incremental loading and CDC</h2></div>
+<p><strong>The problem:</strong> on day 1 you load all the rows (the <strong>initial load</strong>). On day 2 the source has 3 new rows. Do you reprocess everything? No, the old rows are already in the warehouse. <strong>Incremental loading</strong> means you only load the new rows.</p>
+<p><strong>How:</strong> with <strong>CDC (Change Data Capture)</strong>. After each load, save the <strong>maximum date</strong> you've seen (often called the <em>watermark</em>). On the next run, only read the rows after it.</p>
+
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 210" role="img" aria-label="Day 1 initial load reads all rows and saves max date 2000-04-01. Day 2 reads only rows with date greater than that.">
+<text x="20" y="30" class="t">Day 1: initial load</text>
+<rect class="a" x="20" y="42" width="60" height="28" rx="4"/><text x="50" y="61" text-anchor="middle" class="m">01-01</text>
+<rect class="a" x="85" y="42" width="60" height="28" rx="4"/><text x="115" y="61" text-anchor="middle" class="m">02-01</text>
+<rect class="a" x="150" y="42" width="60" height="28" rx="4"/><text x="180" y="61" text-anchor="middle" class="m">03-01</text>
+<rect class="a" x="215" y="42" width="60" height="28" rx="4"/><text x="245" y="61" text-anchor="middle" class="m">04-01</text>
+<path class="ln" d="M280 56 H360"/>
+<rect class="w" x="360" y="38" width="200" height="36" rx="6"/><text x="460" y="61" text-anchor="middle" class="t">save max date = 04-01</text>
+<text x="20" y="120" class="t">Day 2: incremental load</text>
+<rect class="b" x="20" y="132" width="60" height="28" rx="4"/><text x="50" y="151" text-anchor="middle" class="m">01-01</text>
+<rect class="b" x="85" y="132" width="60" height="28" rx="4"/><text x="115" y="151" text-anchor="middle" class="m">02-01</text>
+<rect class="b" x="150" y="132" width="60" height="28" rx="4"/><text x="180" y="151" text-anchor="middle" class="m">03-01</text>
+<rect class="b" x="215" y="132" width="60" height="28" rx="4"/><text x="245" y="151" text-anchor="middle" class="m">04-01</text>
+<rect class="x" x="290" y="132" width="60" height="28" rx="4"/><text x="320" y="151" text-anchor="middle" class="m">06-01</text>
+<rect class="x" x="355" y="132" width="60" height="28" rx="4"/><text x="385" y="151" text-anchor="middle" class="m">06-03</text>
+<rect class="x" x="420" y="132" width="60" height="28" rx="4"/><text x="450" y="151" text-anchor="middle" class="m">07-01</text>
+<path class="ln2 dash" d="M283 125 V170"/>
+<text x="385" y="190" text-anchor="middle" class="m">only these: WHERE date &gt; '04-01'</text>
+<text x="150" y="190" text-anchor="middle" class="m">skipped (already loaded)</text>
+</svg></div>
+<figcaption>The saved max date is the dividing line. Everything after it is new.</figcaption></figure>
+
+<div class="code"><div class="code-head"><div class="left"><span>CDC idea · SQL</span><span class="status key">Key idea</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- Day 1 (initial load)
+SELECT * FROM source_table;                    -- then store MAX(date) somewhere
+
+-- Day 2+ (incremental load)
+SELECT * FROM source_table
+WHERE  date_col &gt; '&lt;last saved max date&gt;';      -- only new rows</code></pre></div>
+
+<h3>Truncate the staging layer on every run</h3>
+<p>If staging still holds yesterday's rows, the next step will reprocess them. So we usually <strong>empty (truncate) staging before every load</strong>. That gives two kinds of staging:</p>
+<div class="grid2">
+<div class="card"><h4>Transient staging (~90% of cases)</h4><p>Truncated on every run. It holds only the current batch.</p></div>
+<div class="card"><h4>Persistent staging (rare)</h4><p>Keeps the history. Use it when the business needs a raw history of every load.</p></div>
+</div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"How do you load only new data?"</strong> Incremental loading with CDC. Keep a watermark (the max timestamp or ID loaded so far), filter the source with <code>WHERE col &gt; watermark</code>, then move the watermark forward after a successful load.</p></div>
+</section>
+
+<!-- 5 -->
+<section class="video" id="s5">
+<div class="vhead"><div class="meta"><span>05</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=2640" target="_blank" rel="noopener">44:00</a></div>
+<h2>Hands-on: an incremental pipeline in Spark SQL</h2></div>
+<p><strong>Setup:</strong> Databricks <strong>Community Edition</strong> (free). Search "Databricks Community Edition", sign up, then go to <em>Workspace → Create → Notebook</em>. Click <em>Connect → Create, attach and run</em> to start a free cluster. It shuts down after about 20 idle minutes, and recreating it wipes your databases. Set the default cell language to <strong>SQL</strong> (or type <code>%sql</code> at the top of a cell), and use <code>%md</code> for headings.</p>
+<p><strong>Spark SQL is just SQL.</strong> You don't need to know Spark. The Catalog tab works like the table tree in MySQL Workbench: <em>metastore → catalog → database → table</em>.</p>
+
+<h3>Step 1: source database and warehouse database</h3>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · Databricks</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE DATABASE sales;              -- pretend OLTP source
+-- sales.orders: order_id, order_date, customer_id, customer_name, customer_email,
+--   product_id, product_name, product_category, region_id, region_name, country,
+--   quantity, unit_price, total_amount   (10 rows, one per day)
+
+CREATE DATABASE sales_dwh;          -- the warehouse</code></pre></div>
+
+<h3>Step 2: staging, transformation view, core</h3>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · initial load</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- STAGING: raw copy (initial load = everything)
+CREATE TABLE sales_dwh.stg_sales AS
+SELECT * FROM sales.orders;
+
+-- TRANSFORMATION: a VIEW stores only the query, not the data
+CREATE VIEW sales_dwh.trans_sales AS
+SELECT * FROM sales_dwh.stg_sales
+WHERE  quantity IS NOT NULL;        -- example cleaning rule
+
+-- CORE: the curated table users query
+CREATE TABLE sales_dwh.core_sales AS
+SELECT * FROM sales_dwh.trans_sales;</code></pre></div>
+
+<h3>Step 3: next day, 5 new rows arrive</h3>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · incremental run</span><span class="status key">Key idea</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- STAGING: CREATE OR REPLACE = truncate + reload, only new rows (CDC)
+CREATE OR REPLACE TABLE sales_dwh.stg_sales AS
+SELECT * FROM sales.orders
+WHERE  order_date &gt; '2024-02-10';   -- last max date loaded
+
+-- the view trans_sales now shows just the 5 new rows automatically
+
+-- CORE: never replace it, APPEND to it
+INSERT INTO sales_dwh.core_sales
+SELECT * FROM sales_dwh.trans_sales;</code></pre></div>
+<div class="note gotcha"><span class="tag">Gotcha</span><p>Truncate the <strong>staging</strong> table, but <strong>never</strong> the core table. If you ran <code>CREATE OR REPLACE</code> on core, you'd lose the first 10 rows. Core grows with <code>INSERT INTO</code> (or <code>MERGE</code>).</p></div>
+<div class="note extra"><span class="tag">Extra</span><p>The video hard-codes <code>'2024-02-10'</code>. In real pipelines the watermark lives in a small control table, and you read it with <code>WHERE order_date &gt; (SELECT last_date FROM watermark)</code>, then update it after the load. The runnable check at the bottom of this page does exactly this.</p></div>
+<p>The core table here is still "one big table". The real serving layer is a <strong>dimensional model</strong> (facts and dimensions), which comes next.</p>
+</section>
+
+<!-- 6 -->
+<section class="video" id="s6">
+<div class="vhead"><div class="meta"><span>06</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=4680" target="_blank" rel="noopener">78:00</a></div>
+<h2>Data modeling</h2></div>
+<p><strong>Why not serve one big table?</strong> Real tables can have <strong>200+ columns</strong>. They're hard for the business to understand, reports on them are hard to maintain, and they repeat the same data over and over (redundancy), which costs storage. <strong>Data modelling</strong> is the process of giving the data a structure.</p>
+
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 170" role="img" aria-label="Three levels: conceptual (what entities exist), logical (how they connect: keys, ER, normalization or dimensional), physical (real tables with constraints).">
+<rect class="b" x="10" y="30" width="220" height="110" rx="10"/><text x="120" y="58" text-anchor="middle" class="t">1. Conceptual</text><text x="120" y="82" text-anchor="middle" class="m">high-level business needs</text><text x="120" y="100" text-anchor="middle" class="m">"we have Customers,</text><text x="120" y="116" text-anchor="middle" class="m">Sales, Products"</text>
+<path class="ln" d="M230 85 H270"/>
+<rect class="a" x="270" y="30" width="220" height="110" rx="10"/><text x="380" y="58" text-anchor="middle" class="t">2. Logical</text><text x="380" y="82" text-anchor="middle" class="m">how tables connect,</text><text x="380" y="100" text-anchor="middle" class="m">joining keys, attributes</text><text x="380" y="116" text-anchor="middle" class="m">ER / normalization / dimensional</text>
+<path class="ln" d="M490 85 H530"/>
+<rect class="w" x="530" y="30" width="220" height="110" rx="10"/><text x="640" y="58" text-anchor="middle" class="t">3. Physical</text><text x="640" y="82" text-anchor="middle" class="m">real tables in a database</text><text x="640" y="100" text-anchor="middle" class="m">data types, primary keys,</text><text x="640" y="116" text-anchor="middle" class="m">constraints</text>
+</svg></div>
+<figcaption>Each level adds detail: what exists, then how it connects, then how it's actually built.</figcaption></figure>
+
+<div class="note iv"><span class="tag">Interview</span><p><strong>"Normalization or dimensional modelling?"</strong> DBAs normalise OLTP databases (1NF, 2NF, 3NF) to avoid update anomalies. Data engineers building warehouses use <strong>dimensional modelling</strong> (facts and dimensions), which is a kind of <em>logical</em> data model built for fast, simple analytics.</p></div>
+</section>
+
+<!-- 7 -->
+<section class="video" id="s7">
+<div class="vhead"><div class="meta"><span>07</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=5100" target="_blank" rel="noopener">85:00</a></div>
+<h2>Dimensional modelling: fact tables and dimension tables</h2></div>
+<p>Take the one big table and split it into <strong>one fact table</strong> in the middle and <strong>several dimension tables</strong> around it.</p>
+<div class="grid2">
+<div class="card"><h4>Fact table = the numbers</h4>
+<ul>
+<li>Holds the <strong>measures</strong>, the numbers you can add up: quantity, price, revenue, cost.</li>
+<li>Holds the <strong>foreign keys</strong> that point to each dimension.</li>
+<li>Sits at the <strong>most granular level</strong>: 1 source row = 1 fact row. No aggregation.</li>
+</ul></div>
+<div class="card"><h4>Dimension table = the context</h4>
+<ul>
+<li>Holds descriptive <strong>text and context</strong>: who, what, where, when.</li>
+<li><strong>No measures.</strong> (Keys are numbers too, but they aren't values you'd add up.)</li>
+<li>One table per context: <code>dim_customers</code>, <code>dim_products</code>, <code>dim_region</code>, <code>dim_date</code>.</li>
+</ul></div>
+</div>
+<p><strong>How to read it:</strong> "Revenue <em>by customer</em>" means you join the fact to <code>dim_customers</code>. "Revenue <em>by month</em>" means you join it to <code>dim_date</code>. The fact table supplies the number, and the dimension supplies the "by what".</p>
+<div class="note"><span class="tag" style="background:var(--accent);color:var(--surface)">Simple analogy</span>
+<p>A shop receipt is a fact: "2 × item #202 for $40". The product catalogue (item #202 = Shirt, Clothing) is a dimension. You don't print the full product description on every receipt line. You print the code and look up the details when you need them.</p></div>
+<div class="note iv"><span class="tag">Interview</span><p><strong>"What's the relationship between a fact and a dimension?"</strong> <strong>Many-to-one.</strong> Many fact rows point to one dimension row, because a dimension stores each customer or product only once (distinct), while the fact table repeats them on every order.</p></div>
+</section>
+
+<!-- 8 -->
+<section class="video" id="s8">
+<div class="vhead"><div class="meta"><span>08</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=5820" target="_blank" rel="noopener">97:00</a></div>
+<h2>Star schema vs snowflake schema</h2></div>
+<p>Once you've chosen a dimensional model, you pick a <strong>schema</strong> (its logical shape).</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 780 260" role="img" aria-label="Star schema: fact in the middle with four dimensions directly attached. Snowflake schema: same, but dim_category hangs off dim_products, so it reaches the fact only indirectly.">
+<text x="190" y="22" text-anchor="middle" class="t">Star schema</text>
+<rect class="w" x="140" y="110" width="100" height="44" rx="8"/><text x="190" y="137" text-anchor="middle" class="t">fact_sales</text>
+<rect class="a" x="20" y="40" width="110" height="36" rx="6"/><text x="75" y="63" text-anchor="middle">dim_customers</text>
+<rect class="a" x="250" y="40" width="110" height="36" rx="6"/><text x="305" y="63" text-anchor="middle">dim_products</text>
+<rect class="a" x="20" y="190" width="110" height="36" rx="6"/><text x="75" y="213" text-anchor="middle">dim_region</text>
+<rect class="a" x="250" y="190" width="110" height="36" rx="6"/><text x="305" y="213" text-anchor="middle">dim_date</text>
+<path class="ln2" d="M100 76 L160 110 M280 76 L220 110 M100 190 L160 154 M280 190 L220 154"/>
+<path class="ln2" d="M390 20 V250" style="stroke:var(--line)"/>
+<text x="590" y="22" text-anchor="middle" class="t">Snowflake schema</text>
+<rect class="w" x="530" y="110" width="100" height="44" rx="8"/><text x="580" y="137" text-anchor="middle" class="t">fact_sales</text>
+<rect class="a" x="410" y="40" width="110" height="36" rx="6"/><text x="465" y="63" text-anchor="middle">dim_customers</text>
+<rect class="a" x="640" y="100" width="110" height="36" rx="6"/><text x="695" y="123" text-anchor="middle">dim_products</text>
+<rect class="x" x="640" y="30" width="110" height="36" rx="6"/><text x="695" y="53" text-anchor="middle">dim_category</text>
+<rect class="a" x="410" y="190" width="110" height="36" rx="6"/><text x="465" y="213" text-anchor="middle">dim_region</text>
+<rect class="a" x="640" y="190" width="110" height="36" rx="6"/><text x="695" y="213" text-anchor="middle">dim_date</text>
+<path class="ln2" d="M490 76 L550 110 M640 122 L630 128 M490 190 L550 154 M670 190 L610 154 M695 66 V100"/>
+<text x="760" y="88" text-anchor="end" class="m">hierarchy</text>
+</svg></div>
+<figcaption>Snowflake = a dimension hangs off another dimension (here category → product), so it reaches the fact only indirectly.</figcaption></figure>
+<div class="tbl"><table>
+<tr><th></th><th>Star</th><th>Snowflake</th></tr>
+<tr><td>Shape</td><td>1 fact plus dimensions, all joined <strong>directly</strong></td><td>Some dimensions joined through <strong>other dimensions</strong> (a hierarchy)</td></tr>
+<tr><td>Joins per query</td><td>Fewer</td><td>More</td></tr>
+<tr><td>Maintenance</td><td>Easy</td><td>Harder</td></tr>
+<tr><td>Usage</td><td>~90–99% of real projects</td><td>Only when you really need it</td></tr>
+</table></div>
+<p><strong>Turning a snowflake into a star:</strong> join the child dimension into its parent (e.g. copy the category columns into <code>dim_products</code>). Every dimension then links straight to the fact.</p>
+</section>
+
+<!-- 9 -->
+<section class="video" id="s9">
+<div class="vhead"><div class="meta"><span>09</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=6240" target="_blank" rel="noopener">104:00</a></div>
+<h2>Hands-on: building dimensions with surrogate keys</h2></div>
+<p><strong>Always build the dimensions first.</strong> The fact table needs their keys, so they have to exist before it.</p>
+<h3>Pick the columns: one context = one dimension</h3>
+<div class="tbl"><table>
+<tr><th>Source columns</th><th>Dimension</th></tr>
+<tr><td>customer_id, customer_name, customer_email</td><td><code>dim_customers</code></td></tr>
+<tr><td>product_id, product_name, product_category</td><td><code>dim_products</code></td></tr>
+<tr><td>region_id, region_name, country</td><td><code>dim_region</code></td></tr>
+<tr><td>order_date</td><td><code>dim_date</code></td></tr>
+<tr><td>order_id (nothing else describes it)</td><td>stays in the fact (a <em>degenerate dimension</em>, see section 12)</td></tr>
+</table></div>
+<h3>What is a surrogate key?</h3>
+<p><code>customer_id = 101</code> means something to the business, so it's a <strong>business key</strong>. A <strong>surrogate key</strong> is a meaningless number (1, 2, 3, …) that the warehouse generates and uses for joins. You create it with <code>ROW_NUMBER()</code> in SQL, or <code>monotonically_increasing_id()</code> in PySpark.</p>
+
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · dim_customers</span><span class="status key">Key idea</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- 1) empty table with a proper schema
+CREATE TABLE order_dwh.dim_customers (
+  customer_id        INT,
+  dim_customers_key  INT,      -- surrogate key
+  customer_name      STRING,
+  customer_email     STRING
+);
+
+-- 2) view: DISTINCT first (in a subquery), THEN number the rows
+CREATE OR REPLACE VIEW order_dwh.view_dim_customers AS
+SELECT t.customer_id,
+       ROW_NUMBER() OVER (ORDER BY t.customer_id) AS dim_customers_key,
+       t.customer_name,
+       t.customer_email
+FROM (
+  SELECT DISTINCT customer_id, customer_name, customer_email
+  FROM order_dwh.trans_sales
+) t;
+
+-- 3) load
+INSERT INTO order_dwh.dim_customers
+SELECT * FROM order_dwh.view_dim_customers;     -- 10 orders → 7 customers</code></pre></div>
+
+<div class="note gotcha"><span class="tag">Gotcha (shown live in the video)</span><p>Writing <code>SELECT DISTINCT ..., ROW_NUMBER() OVER (...)</code> in a <strong>single</strong> SELECT gives you 10 rows, not 7. ROW_NUMBER runs first and makes every row unique, so DISTINCT has nothing left to remove. Do the DISTINCT in a subquery, then add ROW_NUMBER outside it.</p></div>
+
+<p>Repeat the same pattern for the other dimensions:</p>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · other dimensions</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE OR REPLACE VIEW order_dwh.view_dim_products AS
+SELECT t.*, ROW_NUMBER() OVER (ORDER BY t.product_id) AS dim_products_key
+FROM (SELECT DISTINCT product_id, product_name, product_category
+      FROM order_dwh.trans_sales) t;                       -- 9 products
+
+CREATE OR REPLACE VIEW order_dwh.view_dim_region AS
+SELECT t.*, ROW_NUMBER() OVER (ORDER BY t.region_id) AS dim_region_key
+FROM (SELECT DISTINCT region_id, region_name, country
+      FROM order_dwh.trans_sales) t;                       -- 8 rows
+
+CREATE OR REPLACE VIEW order_dwh.view_dim_date AS
+SELECT t.*, ROW_NUMBER() OVER (ORDER BY t.order_date) AS dim_date_key
+FROM (SELECT DISTINCT order_date FROM order_dwh.trans_sales) t;
+-- DISTINCT on dates still matters: tomorrow there may be many orders per day</code></pre></div>
+<p><code>product_category</code> repeats across products, which makes it a natural <strong>snowflake candidate</strong>: you could split it into a <code>dim_category</code> table. Keeping it inside <code>dim_products</code> keeps the model a star.</p>
+</section>
+
+<!-- 10 -->
+<section class="video" id="s10">
+<div class="vhead"><div class="meta"><span>10</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=7920" target="_blank" rel="noopener">132:00</a></div>
+<h2>Hands-on: building the fact table (the key lookup)</h2></div>
+<p>Keep the order ID and the numeric columns. Replace every block of context columns with that dimension's <strong>surrogate key</strong>, which you fetch with a <code>LEFT JOIN</code> on the business key.</p>
+
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 200" role="img" aria-label="trans_sales left-joined to each dimension on its business key. Context columns are swapped for surrogate keys in fact_sales.">
+<rect class="b" x="10" y="20" width="200" height="160" rx="8"/><text x="110" y="42" text-anchor="middle" class="t">trans_sales (big table)</text>
+<text x="25" y="66" class="m">order_id, quantity, unit_price, total</text>
+<text x="25" y="88" class="m">customer_id, name, email</text>
+<text x="25" y="110" class="m">product_id, name, category</text>
+<text x="25" y="132" class="m">region_id, region_name, country</text>
+<text x="25" y="154" class="m">order_date</text>
+<path class="ln" d="M210 100 H300"/><text x="255" y="90" text-anchor="middle" class="t">LEFT JOIN</text><text x="255" y="118" text-anchor="middle" class="m">on business keys</text>
+<rect class="a" x="300" y="20" width="160" height="34" rx="6"/><text x="380" y="42" text-anchor="middle">dim_customers</text>
+<rect class="a" x="300" y="62" width="160" height="34" rx="6"/><text x="380" y="84" text-anchor="middle">dim_products</text>
+<rect class="a" x="300" y="104" width="160" height="34" rx="6"/><text x="380" y="126" text-anchor="middle">dim_region (on country!)</text>
+<rect class="a" x="300" y="146" width="160" height="34" rx="6"/><text x="380" y="168" text-anchor="middle">dim_date</text>
+<path class="ln" d="M460 100 H530"/>
+<rect class="w" x="530" y="20" width="220" height="160" rx="8"/><text x="640" y="42" text-anchor="middle" class="t">fact_sales</text>
+<text x="545" y="66" class="m">order_id, quantity, unit_price, total</text>
+<text x="545" y="88" class="m">dim_customers_key</text>
+<text x="545" y="110" class="m">dim_products_key</text>
+<text x="545" y="132" class="m">dim_region_key</text>
+<text x="545" y="154" class="m">dim_date_key</text>
+</svg></div>
+<figcaption>Each group of context columns turns into one integer key.</figcaption></figure>
+
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · fact_sales</span><span class="status key">Key idea</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE TABLE order_dwh.fact_sales (
+  order_id INT, quantity DECIMAL, unit_price DECIMAL, total_amount DECIMAL,
+  dim_customers_key INT, dim_products_key INT, dim_region_key INT, dim_date_key INT
+);
+
+INSERT INTO order_dwh.fact_sales
+SELECT f.order_id, f.quantity, f.unit_price, f.total_amount,
+       dc.dim_customers_key,
+       dp.dim_products_key,
+       dr.dim_region_key,
+       dd.dim_date_key
+FROM order_dwh.trans_sales f
+LEFT JOIN order_dwh.dim_customers dc ON f.customer_id = dc.customer_id
+LEFT JOIN order_dwh.dim_products  dp ON f.product_id  = dp.product_id
+LEFT JOIN order_dwh.dim_region    dr ON f.country     = dr.country      -- not region_id!
+LEFT JOIN order_dwh.dim_date      dd ON f.order_date  = dd.order_date;</code></pre></div>
+
+<div class="note gotcha"><span class="tag">Gotcha (shown live in the video)</span><p>Joining <code>dim_region</code> on <code>region_id</code> blew the fact up from <strong>10 rows to 26</strong>. Region 301 (North America) holds <em>two</em> countries, USA and Canada, so the dimension has two rows for region 301 and every matching order got duplicated. Join on the column that is <strong>unique in the dimension</strong>, which here is <code>country</code>, the most granular one.</p>
+<p><strong>Rule:</strong> after you build a fact, check that <code>COUNT(*)</code> still equals the source row count. If it's higher, a join is fanning out.</p></div>
+
+<h3>Using the model</h3>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · a typical report query</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">SELECT p.product_category, SUM(f.total_amount) AS revenue
+FROM   order_dwh.fact_sales f
+JOIN   order_dwh.dim_products p ON f.dim_products_key = p.dim_products_key
+GROUP  BY p.product_category;</code></pre></div>
+</section>
+
+<!-- 11 -->
+<section class="video" id="s11">
+<div class="vhead"><div class="meta"><span>11</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=8940" target="_blank" rel="noopener">149:00</a></div>
+<h2>Types of fact tables</h2></div>
+<div class="tbl"><table>
+<tr><th>Type</th><th>One row means…</th><th>Example</th></tr>
+<tr><td>Transactional (granular)</td><td>1 transaction. The most common type, and the one we built.</td><td>Each order line</td></tr>
+<tr><td>Periodic snapshot</td><td>Many transactions <strong>aggregated over a period</strong> (daily, weekly, monthly). Used more now that data is huge.</td><td>Sales per store per month</td></tr>
+<tr><td>Accumulating snapshot</td><td>The <strong>whole journey</strong> of one process. It has many date columns, filled in as each step happens.</td><td>An order from placed to delivered</td></tr>
+</table></div>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 120" role="img" aria-label="Accumulating fact row: order date, confirmation, seller confirmation, dispatch, collection, delivery date, all in one row.">
+<text x="10" y="22" class="t">Accumulating fact: one row per order</text>
+<g>
+<rect class="w" x="10" y="40" width="95" height="50" rx="6"/><text x="57" y="62" text-anchor="middle" class="m">order_id</text><text x="57" y="80" text-anchor="middle">5001</text>
+<rect class="a" x="115" y="40" width="95" height="50" rx="6"/><text x="162" y="62" text-anchor="middle" class="m">order_date</text><text x="162" y="80" text-anchor="middle">Mar 1</text>
+<rect class="a" x="220" y="40" width="95" height="50" rx="6"/><text x="267" y="62" text-anchor="middle" class="m">confirmed</text><text x="267" y="80" text-anchor="middle">Mar 1</text>
+<rect class="a" x="325" y="40" width="105" height="50" rx="6"/><text x="377" y="62" text-anchor="middle" class="m">seller_confirm</text><text x="377" y="80" text-anchor="middle">Mar 2</text>
+<rect class="a" x="440" y="40" width="95" height="50" rx="6"/><text x="487" y="62" text-anchor="middle" class="m">dispatched</text><text x="487" y="80" text-anchor="middle">Mar 3</text>
+<rect class="a" x="545" y="40" width="95" height="50" rx="6"/><text x="592" y="62" text-anchor="middle" class="m">collected</text><text x="592" y="80" text-anchor="middle">Mar 4</text>
+<rect class="b" x="650" y="40" width="100" height="50" rx="6"/><text x="700" y="62" text-anchor="middle" class="m">delivered</text><text x="700" y="80" text-anchor="middle">(null yet)</text>
+</g></svg></div>
+<figcaption>The row gets <em>updated</em> as each milestone happens. Used in e-commerce, logistics and manufacturing.</figcaption></figure>
+<div class="code"><div class="code-head"><div class="left"><span>SQL · periodic snapshot from a transactional fact</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE TABLE fact_sales_monthly AS
+SELECT date_trunc('month', d.order_date) AS month,
+       f.dim_products_key,
+       SUM(f.quantity)     AS units,
+       SUM(f.total_amount) AS revenue
+FROM   fact_sales f JOIN dim_date d ON f.dim_date_key = d.dim_date_key
+GROUP  BY 1, 2;          -- one row = one product's month</code></pre></div>
+</section>
+
+<!-- 12 -->
+<section class="video" id="s12">
+<div class="vhead"><div class="meta"><span>12</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=9420" target="_blank" rel="noopener">157:00</a></div>
+<h2>Types of dimension tables</h2></div>
+<p>Don't mix these up with <em>slowly changing</em> dimensions. That's a separate topic (next section).</p>
+
+<h3>1. Conformed dimension</h3>
+<p>One dimension <strong>shared by more than one fact table</strong>. <code>dim_products</code> is the same whether you're looking at orders or cancellations.</p>
+<h3>2. Role-playing dimension</h3>
+<p>One dimension used in <strong>several roles</strong> by the same fact. <code>dim_date</code> can be the <em>order date</em> (the active relationship) and also the <em>cancel date</em> (an inactive one, in Power BI terms).</p>
+<figure class="diagram"><div class="scroll">
+<svg class="d" viewBox="0 0 760 170" role="img" aria-label="Conformed: dim_products shared by fact_orders and fact_cancelled. Role-playing: dim_date linked to fact_orders twice, via order_date and cancel_date.">
+<text x="180" y="20" text-anchor="middle" class="t">Conformed</text>
+<rect class="a" x="120" y="65" width="120" height="40" rx="6"/><text x="180" y="90" text-anchor="middle">dim_products</text>
+<rect class="w" x="10" y="120" width="120" height="36" rx="6"/><text x="70" y="143" text-anchor="middle">fact_orders</text>
+<rect class="w" x="230" y="120" width="120" height="36" rx="6"/><text x="290" y="143" text-anchor="middle">fact_cancelled</text>
+<path class="ln2" d="M150 105 L90 120 M210 105 L270 120"/>
+<path class="ln2" d="M380 15 V165" style="stroke:var(--line)"/>
+<text x="570" y="20" text-anchor="middle" class="t">Role-playing</text>
+<rect class="w" x="420" y="55" width="140" height="70" rx="6"/><text x="490" y="80" text-anchor="middle">fact_orders</text><text x="490" y="98" text-anchor="middle" class="m">order_date</text><text x="490" y="114" text-anchor="middle" class="m">cancel_date</text>
+<rect class="a" x="640" y="70" width="110" height="40" rx="6"/><text x="695" y="95" text-anchor="middle">dim_date</text>
+<path class="ln2" d="M560 94 L640 84"/><text x="600" y="76" text-anchor="middle" class="m">active</text>
+<path class="ln2 dash" d="M560 110 L640 100"/><text x="600" y="132" text-anchor="middle" class="m">inactive</text>
+</svg></div></figure>
+<div class="code"><div class="code-head"><div class="left"><span>SQL · role-playing date via aliases</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">SELECT od.order_date, cd.order_date AS cancel_date, f.order_id
+FROM   fact_orders f
+JOIN   dim_date od ON f.order_date_key  = od.dim_date_key   -- role: order date
+LEFT JOIN dim_date cd ON f.cancel_date_key = cd.dim_date_key; -- role: cancel date</code></pre></div>
+
+<h3>3. Junk dimension</h3>
+<p>The video describes it as a dimension with only a handful of rows (for example 2 countries in 1 continent, or flag-like values).</p>
+<div class="note extra"><span class="tag">Extra: Kimball's exact definition</span><p>In Kimball's book, a junk dimension <strong>gathers several low-cardinality flags</strong> (is_gift, payment_type, is_promo…) into <strong>one</strong> small table, usually every possible combination. That way the fact needs one key instead of lots of tiny dimensions or flag columns. Use this definition in interviews.</p></div>
+
+<h3>4. Degenerate dimension</h3>
+<p>A key that has <strong>no other descriptive columns</strong>, such as <code>order_id</code>. A dimension built from it would hold only one column, so it stays in the fact table as is. That's exactly what we did with <code>order_id</code> in section 10.</p>
+<div class="note iv"><span class="tag">Interview</span><p>A common question: <strong>"Role-playing vs junk vs degenerate?"</strong> Role-playing means one dimension used in many roles. Junk means many small flags combined into one dimension. Degenerate means a dimension key with no dimension table, kept in the fact.</p></div>
+</section>
+
+<!-- 13 -->
+<section class="video" id="s13">
+<div class="vhead"><div class="meta"><span>13</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=10080" target="_blank" rel="noopener">168:00</a></div>
+<h2>Slowly Changing Dimensions (SCD)</h2></div>
+<p><strong>The problem:</strong> dimension values change over time. A product gets renamed or moves to a new category, and new products launch. You can't rebuild the whole dimension every time. SCD types are the standard ways to handle these changes.</p>
+<p>Types 4, 5 and 6 exist but are rarely used, much like normal forms beyond 3NF. In practice you need <strong>types 0 to 2</strong>, plus awareness of type 3.</p>
+
+<div class="tbl"><table>
+<tr><th>Type</th><th>What happens on a change</th><th>History?</th></tr>
+<tr><td>SCD 0</td><td>Nothing. Values never change.</td><td>—</td></tr>
+<tr><td>SCD 1</td><td><strong>Upsert</strong> (update + insert): overwrite the old value, and insert rows for new IDs.</td><td>No</td></tr>
+<tr><td>SCD 2</td><td>Expire the old row and insert a new version, tracked with <code>start_date</code>, <code>end_date</code> and <code>is_current</code>.</td><td>Full</td></tr>
+<tr><td>SCD 3</td><td>Add a <code>previous_value</code> column.</td><td>Only the last value</td></tr>
+</table></div>
+
+<p>Example: product 3 "Comb" moves from <strong>Clothing</strong> to <strong>Hair care</strong>.</p>
+<div class="grid2 ba">
+<div class="ba-step"><span class="ba-label">SCD 1</span>
+<div class="tbl"><table>
+<tr><th>id</th><th>name</th><th class="hl">category</th></tr>
+<tr><td>1</td><td>Honey</td><td>Food</td></tr>
+<tr><td>2</td><td>Shirt</td><td>Clothing</td></tr>
+<tr><td>3</td><td>Comb</td><td class="chg">Hair care</td></tr>
+</table></div><p class="tl">The old value is simply overwritten.</p></div>
+<div class="ba-step"><span class="ba-label after">SCD 3</span>
+<div class="tbl"><table>
+<tr><th>id</th><th>category</th><th class="hl">prev_category</th></tr>
+<tr><td>1</td><td>Food</td><td>Food</td></tr>
+<tr><td>2</td><td>Clothing</td><td>Clothing</td></tr>
+<tr><td>3</td><td class="chg">Hair care</td><td>Clothing</td></tr>
+</table></div><p class="tl">Only one step of history is kept.</p></div>
+</div>
+<div class="ba-step ba"><span class="ba-label after">SCD 2</span>
+<div class="tbl"><table>
+<tr><th>id</th><th>category</th><th>start_date</th><th>end_date</th><th>is_current</th></tr>
+<tr><td>1</td><td>Food</td><td>2024-01-01</td><td>3000-12-31</td><td>Y</td></tr>
+<tr><td>2</td><td>Clothing</td><td>2024-01-01</td><td>3000-12-31</td><td>Y</td></tr>
+<tr class="old"><td>3</td><td>Clothing</td><td>2024-01-01</td><td class="chg">2024-01-02</td><td class="chg">N</td></tr>
+<tr class="new"><td>3</td><td>Hair care</td><td>2024-01-02</td><td>3000-12-31</td><td>Y</td></tr>
+</table></div><p class="tl">The far-future end date (3000-12-31) means "still active". The old row is closed, and a new row becomes current.</p></div>
+
+<div class="note iv"><span class="tag">Interview</span><p><strong>"When would you use SCD 2?"</strong> When the business needs to report <em>as of a point in time</em>. For example, Finance wants last year's sales under the category the product had <em>last year</em>. SCD 1 would rewrite history into the new category.</p></div>
+
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL / Delta · SCD 2</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">-- (Extra: the video explains SCD 2 conceptually; this is one standard way to code it)
+-- 1) expire current rows whose tracked column changed
+MERGE INTO dim_products_scd2 AS t
+USING view_dim_products      AS s
+ON  t.product_id = s.product_id AND t.is_current = 'Y'
+WHEN MATCHED AND t.product_category &lt;&gt; s.product_category THEN
+  UPDATE SET t.end_date = current_date(), t.is_current = 'N';
+
+-- 2) insert a new current version for changed rows and brand-new IDs
+INSERT INTO dim_products_scd2
+SELECT s.product_id, s.product_name, s.product_category,
+       current_date() AS start_date, DATE '3000-12-31' AS end_date, 'Y' AS is_current
+FROM   view_dim_products s
+LEFT JOIN dim_products_scd2 t
+       ON t.product_id = s.product_id AND t.is_current = 'Y'
+WHERE  t.product_id IS NULL;      -- no current row = new or just expired</code></pre></div>
+</section>
+
+<!-- 14 -->
+<section class="video" id="s14">
+<div class="vhead"><div class="meta"><span>14</span><a class="ts" href="https://youtu.be/HKcEyHF1U00?t=10740" target="_blank" rel="noopener">179:00</a></div>
+<h2>Hands-on: SCD Type 1 with MERGE</h2></div>
+<p><strong>Rule:</strong> if the ID already exists, <strong>update</strong> it. If it's new, <strong>insert</strong> it. In Spark SQL (Delta tables), one <code>MERGE</code> statement does both.</p>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · initial load</span><span class="status">Not run</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE DATABASE sales_scd;
+-- sales_scd.orders : same 10-row source as before
+
+CREATE TABLE sales_scd.dim_products (
+  product_id INT, product_name STRING, product_category STRING
+);
+
+CREATE OR REPLACE VIEW sales_scd.view_dim_products AS
+SELECT DISTINCT product_id, product_name, product_category
+FROM   sales_scd.orders;
+
+INSERT INTO sales_scd.dim_products
+SELECT * FROM sales_scd.view_dim_products;          -- 9 products</code></pre></div>
+
+<p><strong>Next day</strong>, two new orders arrive. One renames product 201 from "Laptop" to "Gaming Laptop", and one is for a brand-new product 230, "Earpods". The view gets the CDC filter so it only reads those two rows:</p>
+<div class="code"><div class="code-head"><div class="left"><span>Spark SQL · MERGE = upsert</span><span class="status key">Key idea</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-sql">CREATE OR REPLACE VIEW sales_scd.view_dim_products AS
+SELECT DISTINCT product_id, product_name, product_category
+FROM   sales_scd.orders
+WHERE  order_date &gt; '2024-02-10';                  -- incremental (CDC)
+
+MERGE INTO sales_scd.dim_products     AS target
+USING      sales_scd.view_dim_products AS source
+ON         target.product_id = source.product_id
+WHEN MATCHED     THEN UPDATE SET *                  -- existing id → overwrite
+WHEN NOT MATCHED THEN INSERT *;                     -- new id → insert</code></pre></div>
+<p><strong>Result:</strong> the dimension has <strong>10</strong> rows, not 11. Product 201 now reads "Gaming Laptop", and product 230 was added.</p>
+<div class="note gotcha"><span class="tag">Gotcha</span><p><code>INSERT INTO dim SELECT * FROM orders</code> fails with a column count or "duplicate column" error. Select only the dimension's own columns (through the view), never <code>*</code> from the big source table.</p></div>
+</section>
+
+<!-- 15 -->
+<section class="video" id="s15">
+<div class="vhead"><div class="meta"><span>15</span><span>Revision</span></div>
+<h2>Interview Q&amp;A</h2></div>
+<div class="toolbar"><button class="btn" id="quizToggle" type="button" aria-pressed="false">Hide answers (quiz mode)</button><span class="tl" id="quizHint" hidden>Click an answer to reveal it.</span></div>
+<div class="qa" id="qa">
+<div class="item"><p class="q">Database vs data warehouse?</p><p class="a">Same kind of storage (tables). A database is OLTP: small, constant, real-time writes. A warehouse is loaded in bulk batches and serves heavy analytical reads, so reports don't slow down the live system.</p></div>
+<div class="item"><p class="q">What are the staging and core layers?</p><p class="a">Staging is a raw, as-is copy of the source (usually transient, truncated each run). Core is the transformed, curated data that users query. Data marts are domain subsets of core.</p></div>
+<div class="item"><p class="q">Transient vs persistent staging?</p><p class="a">Transient is truncated every load and holds only the current batch (about 90% of cases). Persistent keeps the history of every load.</p></div>
+<div class="item"><p class="q">What is incremental loading and CDC?</p><p class="a">Loading only new or changed rows. Store a watermark (the max date or ID loaded), read <code>WHERE col &gt; watermark</code>, then move the watermark forward.</p></div>
+<div class="item"><p class="q">Conceptual vs logical vs physical model?</p><p class="a">Conceptual: which entities exist. Logical: how they relate (keys, attributes; ER, normalisation or dimensional). Physical: actual tables with data types and constraints.</p></div>
+<div class="item"><p class="q">Fact vs dimension?</p><p class="a">A fact holds additive measures plus foreign keys, at the finest grain. A dimension holds descriptive context, one table per context, with distinct rows. Fact to dimension is many-to-one.</p></div>
+<div class="item"><p class="q">Which do you build first, dimensions or the fact?</p><p class="a">Dimensions. The fact needs their surrogate keys.</p></div>
+<div class="item"><p class="q">What is a surrogate key and why use it?</p><p class="a">A meaningless warehouse-generated integer (ROW_NUMBER, an identity column, monotonically_increasing_id). It decouples the model from source business keys and makes SCD 2 possible, because the same business key can have several versions.</p></div>
+<div class="item"><p class="q">Star vs snowflake?</p><p class="a">Star: every dimension joins the fact directly (the common choice). Snowflake: dimensions are normalised into hierarchies, so some reach the fact indirectly. That means more joins and harder maintenance.</p></div>
+<div class="item"><p class="q">Your fact table has more rows than the source. Why?</p><p class="a">A join is fanning out because the join key isn't unique in the dimension (as with region_id vs country in the video). Join on the dimension's unique grain.</p></div>
+<div class="item"><p class="q">Types of fact tables?</p><p class="a">Transactional (1 row = 1 transaction), periodic snapshot (1 row = an aggregate over a period), accumulating snapshot (1 row = one process with many milestone dates).</p></div>
+<div class="item"><p class="q">Conformed, role-playing, junk, degenerate?</p><p class="a">Conformed: shared by several facts. Role-playing: one dimension used in several roles (order date, cancel date). Junk: low-cardinality flags grouped into one dimension. Degenerate: a key like order_id kept in the fact with no dimension table.</p></div>
+<div class="item"><p class="q">SCD 1 vs SCD 2 vs SCD 3?</p><p class="a">SCD 1 overwrites (upsert, no history). SCD 2 adds a new row version with start date, end date and a current flag (full history). SCD 3 adds a previous-value column (one step of history).</p></div>
+<div class="item"><p class="q">How do you implement SCD 1 in Spark SQL?</p><p class="a"><code>MERGE INTO dim USING src ON key WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *</code>.</p></div>
+</div>
+
+<h3>Runnable check of all the core logic</h3>
+<p>Plain Python with the built-in <code>sqlite3</code> module, so nothing needs installing. It covers incremental loading with a watermark, DISTINCT before ROW_NUMBER, the fact key lookup without fan-out, SCD 1 upsert and SCD 2 versioning. Run it with <code>python check.py</code>. It prints <code>all checks passed</code>.</p>
+<div class="code"><div class="code-head"><div class="left"><span>Python · sqlite3</span><span class="status ran">Ran</span></div><button class="copy" type="button">Copy</button></div>
+<pre><code class="language-python">import sqlite3
+db = sqlite3.connect(":memory:")
+q = lambda s: db.execute(s).fetchall()
+db.executescript("""
+CREATE TABLE orders(order_id INT, order_date TEXT, customer_id INT, customer_name TEXT,
+  product_id INT, product_name TEXT, category TEXT, region TEXT, country TEXT, quantity INT, total REAL);
+INSERT INTO orders VALUES
+ (1,'2024-02-01',101,'Asha',201,'Laptop','Electronics','North America','USA',1,900),
+ (2,'2024-02-02',102,'Ravi',202,'Shirt','Clothing','North America','Canada',2,40),
+ (3,'2024-02-03',101,'Asha',202,'Shirt','Clothing','North America','USA',1,20);
+
+-- watermark table (CDC by date)
+CREATE TABLE watermark(last_date TEXT); INSERT INTO watermark VALUES('1900-01-01');
+""")
+
+def load_staging():
+    db.executescript("""
+    DROP TABLE IF EXISTS stg_sales;  -- transient staging: truncate every run
+    CREATE TABLE stg_sales AS SELECT * FROM orders
+      WHERE order_date &gt; (SELECT last_date FROM watermark);
+    UPDATE watermark SET last_date = (SELECT COALESCE(MAX(order_date), last_date) FROM stg_sales);
+    """)
+
+load_staging()
+assert q("SELECT COUNT(*) FROM stg_sales") == [(3,)]
+db.execute("INSERT INTO orders VALUES (4,'2024-02-04',103,'Meena',203,'Honey','Food','Asia','India',3,15)")
+load_staging()
+assert q("SELECT order_id FROM stg_sales") == [(4,)]          # only the new row
+
+# dimension with surrogate key: DISTINCT first (subquery), ROW_NUMBER after
+db.executescript("""
+CREATE TABLE dim_customers AS
+SELECT t.*, ROW_NUMBER() OVER (ORDER BY customer_id) AS dim_customer_key
+FROM (SELECT DISTINCT customer_id, customer_name FROM orders) t;
+CREATE TABLE dim_region AS
+SELECT t.*, ROW_NUMBER() OVER (ORDER BY country) AS dim_region_key
+FROM (SELECT DISTINCT region, country FROM orders) t;
+CREATE TABLE fact_sales AS
+SELECT f.order_id, f.quantity, f.total, dc.dim_customer_key, dr.dim_region_key
+FROM orders f
+LEFT JOIN dim_customers dc ON f.customer_id = dc.customer_id
+LEFT JOIN dim_region   dr ON f.country = dr.country;
+""")
+assert q("SELECT COUNT(*) FROM dim_customers") == [(3,)]       # 4 orders, 3 customers
+assert q("SELECT COUNT(*) FROM fact_sales") == [(4,)]          # fact keeps grain, no fan-out
+assert q("SELECT COUNT(*) FROM fact_sales WHERE dim_customer_key IS NULL OR dim_region_key IS NULL") == [(0,)]
+
+# SCD type 1: upsert
+db.executescript("""
+CREATE TABLE dim_products(product_id INT PRIMARY KEY, product_name TEXT, category TEXT);
+INSERT INTO dim_products SELECT DISTINCT product_id, product_name, category FROM orders;
+INSERT INTO dim_products VALUES (201,'Gaming Laptop','Electronics'),(230,'Earpods','Electronics')
+  ON CONFLICT(product_id) DO UPDATE SET product_name=excluded.product_name, category=excluded.category;
+""")
+assert q("SELECT product_name FROM dim_products WHERE product_id=201") == [("Gaming Laptop",)]
+assert q("SELECT COUNT(*) FROM dim_products") == [(4,)]
+
+# SCD type 2: expire old row, insert new version
+db.executescript("""
+CREATE TABLE dim_prod_scd2(product_id INT, category TEXT, start_date TEXT, end_date TEXT, is_current TEXT);
+INSERT INTO dim_prod_scd2 VALUES (3,'Clothing','2024-01-01','3000-12-31','Y');
+CREATE TABLE src(product_id INT, category TEXT); INSERT INTO src VALUES (3,'Hair care');
+UPDATE dim_prod_scd2 SET end_date='2024-01-02', is_current='N'
+ WHERE is_current='Y' AND product_id IN
+   (SELECT s.product_id FROM src s JOIN dim_prod_scd2 d USING(product_id)
+    WHERE d.is_current='Y' AND d.category &lt;&gt; s.category);
+INSERT INTO dim_prod_scd2
+ SELECT s.product_id, s.category, '2024-01-02', '3000-12-31', 'Y' FROM src s
+ WHERE NOT EXISTS (SELECT 1 FROM dim_prod_scd2 d WHERE d.product_id=s.product_id AND d.is_current='Y');
+""")
+assert q("SELECT category,is_current FROM dim_prod_scd2 ORDER BY start_date") == [("Clothing","N"),("Hair care","Y")]
+print("all checks passed")</code></pre></div>
+</section>
+
+<footer>
+<p>Made from the video's auto-generated English transcript. The Spark SQL follows what's built in the video but has been tidied up. Snippets marked "Not run" need Databricks or Spark. The "Ran" snippet was run with Python 3.14's built-in <code>sqlite3</code>, and all its <code>assert</code> checks pass. Boxes marked "Extra" are additions that are not in the video.</p>
+</footer>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+document.querySelectorAll(".code").forEach(function (box) {
+  var btn = box.querySelector(".copy");
+  var code = box.querySelector("pre code");
+  if (!btn || !code) return;
+  btn.addEventListener("click", function () {
+    var text = code.textContent;
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1400); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(code);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Press Ctrl+C";
+    };
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+});
+if (window.Prism) Prism.highlightAll();
+
+var qa = document.getElementById("qa");
+var toggle = document.getElementById("quizToggle");
+var hint = document.getElementById("quizHint");
+toggle.addEventListener("click", function () {
+  var on = !qa.classList.contains("quiz");
+  qa.classList.toggle("quiz", on);
+  qa.querySelectorAll(".item").forEach(function (i) { i.classList.remove("show"); });
+  toggle.textContent = on ? "Show all answers" : "Hide answers (quiz mode)";
+  toggle.setAttribute("aria-pressed", on ? "true" : "false");
+  hint.hidden = !on;
+});
+qa.addEventListener("click", function (e) {
+  var a = e.target.closest(".a");
+  if (a && qa.classList.contains("quiz")) a.parentElement.classList.toggle("show");
+});
+</script>
