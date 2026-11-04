@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Node.js Works</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c1f24; --muted:#636b76; --border:#e2e5ea; --accent:#3b6ef5; --code:#eef0f4; --note:#eaf0ff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14161a; --card:#1d2026; --text:#e8eaee; --muted:#9aa2ad; --border:#2c3038; --accent:#7c9dff; --code:#262a32; --note:#232a3d; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  a { color:var(--accent); }
+  .sub { color:var(--muted); margin-top:-8px; }
+  #toc { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 24px; margin:16px 0 24px; }
+  #toc ol { margin:6px 0 0; padding-left:20px; columns:2; column-gap:28px; }
+  @media (max-width:640px) { #toc ol { columns:1; } }
+  article { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:8px 24px 24px; overflow-wrap:anywhere; }
+  article h2 { margin-top:36px; padding-top:12px; border-top:1px solid var(--border); scroll-margin-top:12px; }
+  article h2:first-child { border-top:0; margin-top:12px; }
+  code { background:var(--code); padding:1px 5px; border-radius:4px; font-size:.9em; }
+  pre { background:var(--code); padding:14px; border-radius:8px; overflow-x:auto; }
+  pre code { background:none; padding:0; }
+  table { border-collapse:collapse; display:block; overflow-x:auto; }
+  th, td { border:1px solid var(--border); padding:6px 10px; text-align:left; }
+  blockquote { margin:16px 0; padding:10px 16px; background:var(--note); border-left:4px solid var(--accent); border-radius:6px; }
+  blockquote p { margin:6px 0; }
+  .mermaid { background:#fff; border-radius:8px; padding:12px; overflow-x:auto; margin:16px 0; text-align:center; }
+</style>
+</head>
+<body>
+<main>
+  <a href="index.html">← All notes</a>
+  <h1>How Node.js Works</h1>
+  <p class="sub">Notes from <a href="https://youtu.be/_eJ6KAb56Gw">"How NodeJS Works? - You don't Know NodeJS"</a> by Piyush Garg (42 min, Hindi)</p>
+  <nav id="toc"><strong>On this page</strong><ol></ol></nav>
+  <article id="out"></article>
+</main>
+
+<script type="text/markdown" id="md">
+**How to read these notes:** the diagrams are redrawn from the ones in the video. All the code was run on Node.js 24, so the outputs are real. Blue boxes marked **Correction** or **Extra** add accuracy or interview detail that the video skipped or simplified.
+
+## 1. The Big Picture
+
+Node.js is **not a programming language**. It's a **runtime environment** that lets JavaScript run outside the browser.
+
+It's built from two main parts:
+
+```mermaid
+flowchart TD
+    N["Node.js"] --> V["V8 Engine"]
+    N --> L["libuv Library"]
+    V --> V1["Executes your JavaScript"]
+    V --> V2["Written in C++, made by Google"]
+    L --> L1["Event Loop"]
+    L --> L2["Thread Pool"]
+    L1 --> A["Runs async code on a single thread"]
+    L2 --> B["Runs heavy tasks in the background"]
+```
+
+| Part | What it is | Its job |
+|---|---|---|
+| **V8** | JavaScript engine from Google, also used in Chrome | Actually runs your JS code |
+| **libuv** | C library | Gives Node the event loop and the thread pool |
+
+**Simple way to remember it:** V8 **runs** the code, and libuv handles the **waiting and heavy work**.
+
+## 2. What Happens When You Run `node index.js`
+
+```js
+console.log("Hey from Node.js");
+```
+
+```bash
+node index.js
+```
+
+Node creates a **process**. The process has one **main thread**, and your code runs on it. A **thread pool** is available beside it.
+
+```mermaid
+flowchart TB
+    CMD["node index.js"] --> P
+    subgraph P["Node Process"]
+        direction LR
+        subgraph M["Main Thread"]
+            direction TB
+            S1["1. Initialize project"] --> S2["2. Run top-level code"]
+            S2 --> S3["3. Require modules"]
+            S3 --> S4["4. Register event callbacks"]
+            S4 --> S5["5. Start event loop"]
+        end
+        subgraph T["Thread Pool (4 threads by default)"]
+            direction TB
+            T1["Thread 1"]
+            T2["Thread 2"]
+            T3["Thread 3"]
+            T4["Thread 4"]
+        end
+        S5 -- "offload heavy tasks" --> T
+    end
+```
+
+### Step by step
+
+**1. Initialize:** Node sets up the project.
+
+**2. Run top-level code:** top-level code is written directly in the file, **not inside a function or callback**.
+
+```js
+console.log("Top level");   // top-level
+let a = 24;                 // top-level
+
+function greet() {
+  console.log("Hello");     // NOT top-level, it's inside a function
+}
+```
+
+**3. Require modules:** load the libraries you import.
+
+```js
+const fs = require("fs");
+```
+
+**4. Register event callbacks:** callbacks are **saved for later, not run**. Examples are `server.on("request", ...)` and `server.on("close", ...)`.
+
+**5. Start the event loop.**
+
+> **Correction:** the video lists top-level code and `require` as separate steps. A `require()` call is itself top-level code, so both run together, line by line, in the order you wrote them.
+
+## 3. Thread Pool Basics
+
+A thread pool is a group of ready, waiting threads. Heavy tasks run there instead of on the main thread, so the main thread stays free.
+
+| Fact | Value |
+|---|---|
+| Default size | **4 threads** |
+| Meaning | **4 heavy tasks can run in parallel** |
+| Maximum | 128 in the video, **1024** in current libuv |
+| Change it with | `UV_THREADPOOL_SIZE` |
+
+**Tasks that use the pool:**
+
+| Type | Examples |
+|---|---|
+| File system | `fs.readFile`, `fs.writeFile` |
+| Cryptography | `crypto.pbkdf2`, hashing passwords |
+| Compression | `zlib.gzip` |
+
+> **Correction:** the video calls file reading "CPU intensive". It's really **I/O work**, meaning mostly waiting for the disk. It uses the pool because file APIs on many systems would otherwise block. Crypto and compression are the truly CPU-heavy ones.
+
+> **Extra:** network requests (HTTP, database sockets) do **not** use the thread pool. The operating system handles them directly, which is why one Node process can hold thousands of connections.
+
+## 4. The Event Loop
+
+The event loop runs on the **main thread**. It repeats a fixed cycle, and each stop handles one type of callback.
+
+```mermaid
+flowchart TD
+    START["Event Loop Starts"] --> A["1. Expired timer callbacks<br/>setTimeout, setInterval"]
+    A --> B["2. I/O polling<br/>finished file reads etc."]
+    B --> C["3. setImmediate callbacks"]
+    C --> D["4. Close callbacks<br/>server.close, socket.close"]
+    D --> E{"Anything pending?"}
+    E -- Yes --> A
+    E -- No --> F["Exit program"]
+```
+
+| Stop | What runs | Example |
+|---|---|---|
+| **1. Timers** | Timers whose time is up | `setTimeout`, `setInterval` |
+| **2. I/O polling** | Callbacks of finished I/O | `fs.readFile` callback |
+| **3. setImmediate** | `setImmediate` callbacks | `setImmediate(fn)` |
+| **4. Close** | Cleanup callbacks | Server or socket closing |
+
+After stop 4, the loop asks: **is anything still pending?** If yes, it goes around again. If no, the program exits.
+
+> **Extra:** the official docs list six phases. The two the video leaves out, **pending callbacks** and **idle/prepare**, are internal.
+>
+> `timers → pending callbacks → idle/prepare → poll → check → close`
+>
+> **poll** is the video's "I/O polling", and **check** is `setImmediate`.
+
+## 5. Event Loop in Code
+
+### Example 1: top-level code vs a timer
+
+```js
+const fs = require("fs");
+
+setTimeout(() => console.log("Hello from Timer 1"), 0);
+
+console.log("Hello from Top Level Code");
+```
+
+**Output:**
+
+```text
+Hello from Top Level Code
+Hello from Timer 1
+```
+
+**Why:** the timer has 0 delay, but its callback must wait for the event loop. The event loop only starts **after** all top-level code finishes.
+
+```mermaid
+sequenceDiagram
+    participant M as Main Thread
+    participant L as Event Loop
+    M->>M: Start the timer
+    M->>M: Log top-level message
+    M->>L: Top-level done, start loop
+    L->>L: Timer expired, so run its callback
+    L->>L: Nothing pending, exit
+```
+
+### Example 2: adding setImmediate
+
+```js
+setTimeout(() => console.log("Hello from Timer 1"), 0);
+setImmediate(() => console.log("Hello from Immediate Fn 1"));
+console.log("Hello from Top Level Code");
+```
+
+**Output:**
+
+```text
+Hello from Top Level Code
+Hello from Timer 1
+Hello from Immediate Fn 1
+```
+
+This matches the cycle: timers come before `setImmediate`.
+
+### Example 3: the surprise
+
+Remove the `console.log`:
+
+```js
+setTimeout(() => console.log("Timer 1"), 0);
+setImmediate(() => console.log("Immediate 1"));
+```
+
+Now `setImmediate` can run **first**. I ran each version 20 times:
+
+| Version | Timer first | Immediate first |
+|---|---|---|
+| Without `console.log` | 3 | **17** |
+| With `console.log` | **20** | 0 |
+
+**Why:** the official docs call this order **non-deterministic** when it's in the main module, because it depends on how fast the process runs.
+
+> **Extra, the simple reason:** Node turns a `0` delay into **1 ms**. If the loop reaches the timers stop in under 1 ms, the timer hasn't expired, so the loop moves on and `setImmediate` runs first. A `console.log` takes extra time, so the timer has usually expired by then.
+>
+> **Interview rule:** never rely on this order at the top level.
+
+### Example 4: reading a file
+
+```js
+const fs = require("fs");
+
+setTimeout(() => console.log("Hello from Timer 1"), 0);
+setImmediate(() => console.log("Hello from Immediate Fn 1"));
+
+fs.readFile("sample.txt", "utf-8", () => {
+  console.log("IO Polling Finish");
+});
+
+console.log("Hello from Top Level Code");
+```
+
+**Output:**
+
+```text
+Hello from Top Level Code
+Hello from Timer 1
+Hello from Immediate Fn 1
+IO Polling Finish
+```
+
+**Why:** reading a file takes time. On the first polling stop, it usually isn't finished, so the loop continues. Because the read is still pending, the loop goes around again and runs the callback on a later pass.
+
+### Example 5: timers inside a callback
+
+The final and most important example:
+
+```js
+const fs = require("fs");
+
+setTimeout(() => console.log("Hello from Timer 1"), 0);
+setImmediate(() => console.log("Hello from Immediate Fn 1"));
+
+fs.readFile("sample.txt", "utf-8", () => {
+  console.log("IO Polling Finish");
+
+  setTimeout(() => console.log("Hello from Timer 2"), 0);
+  setTimeout(() => console.log("Hello from Timer 3"), 5000);
+  setImmediate(() => console.log("Hello from Immediate Fn 2"));
+});
+
+console.log("Hello from Top Level Code");
+```
+
+**Output:**
+
+```text
+Hello from Top Level Code
+Hello from Timer 1
+Hello from Immediate Fn 1
+IO Polling Finish
+Hello from Immediate Fn 2
+Hello from Timer 2
+Hello from Timer 3      (5 seconds later)
+```
+
+**Key point:** the file callback runs at the polling stop, and the next stop is `setImmediate`. So **Immediate 2 beats Timer 2**, even though Timer 2 has 0 delay. Timer 2 must wait for the next pass.
+
+| Pass | Timers | I/O polling | setImmediate | Pending? |
+|---|---|---|---|---|
+| **Before loop** | Top-level code logs first | | | |
+| **Pass 1** | Timer 1 | File not ready, skip | Immediate 1 | Yes, the file |
+| **Pass 2** | None | "IO Polling Finish", new timers start | Immediate 2 | Yes, the timers |
+| **Pass 3** | Timer 2 | Nothing | Nothing | Yes, Timer 3 |
+| **Later** | Timer 3 after 5s | Nothing | Nothing | No, exit |
+
+> **Extra:** inside an I/O callback, `setImmediate` **always** runs before a `setTimeout(fn, 0)`. This order is guaranteed, unlike Example 3.
+
+## 6. Thread Pool in Code
+
+`crypto.pbkdf2` hashes a password, and it's slow on purpose, so it makes a good test. It runs in the thread pool.
+
+```js
+const crypto = require("crypto");
+const start = Date.now();
+
+crypto.pbkdf2("password1", "salt1", 100000, 1024, "sha512", () => {
+  console.log(`${Date.now() - start}ms Password 1 Done`);
+});
+```
+
+**The arguments:**
+
+| Argument | Value | Meaning |
+|---|---|---|
+| password | `"password1"` | Text to hash |
+| salt | `"salt1"` | Extra random text |
+| iterations | `100000` | How many rounds |
+| key length | `1024` | Output length in bytes |
+| digest | `"sha512"` | Hash algorithm |
+| callback | function | Runs when finished |
+
+The video repeats this call several times and compares the timings. These are my real results, in milliseconds. Your numbers will differ with your CPU.
+
+| Tasks | Pool size | Each task finished at (ms) | What happened |
+|---|---|---|---|
+| 4 | 4 | 594, 638, 721, 769 | All ran together |
+| 5 | 4 | 591, 596, 623, 665, **1119** | 5th waited for a free thread |
+| 6 | 4 | 553, 680, 693, 740, **1137, 1242** | 5th and 6th waited |
+| 6 | 10 | 616, 616, 642, 772, 792, 837 | All ran together |
+| 6 | 2 | 527, 528, **1133, 1134, 1710, 1735** | Finished in pairs |
+| 6 | 1 | 515, 1022, 1531, 2038, 2547, 3681 | One at a time |
+
+```mermaid
+flowchart LR
+    Q["Tasks 5 and 6<br/>waiting in queue"] --> P
+    subgraph P["Thread Pool, size 4"]
+        direction TB
+        A["Thread 1: Task 1"]
+        B["Thread 2: Task 2"]
+        C["Thread 3: Task 3"]
+        D["Thread 4: Task 4"]
+    end
+    P --> R["Thread free?<br/>Next task starts"]
+```
+
+**Rule:** if there are more tasks than threads, the extra tasks **wait in a queue**.
+
+## 7. Changing the Thread Pool Size
+
+Set it at the very top of the file, before the pool is used:
+
+```js
+process.env.UV_THREADPOOL_SIZE = 10;
+
+const crypto = require("crypto");
+// ...
+```
+
+Or set it when starting the program:
+
+```bash
+UV_THREADPOOL_SIZE=10 node index.js
+```
+
+> **Extra:** more threads doesn't always mean faster. Once you have more threads than CPU cores, they compete for the same cores. The setup above also ran fine on Windows 11 with Node 24.
+
+## 8. Node.js vs Multi-threaded Servers
+
+```mermaid
+flowchart LR
+    subgraph NODE["Node.js: one event loop"]
+        direction TB
+        U1["Many users"] --> EL["Event Loop on single thread"]
+        EL -. "heavy task only" .-> TP["Thread Pool"]
+    end
+    subgraph MT["Thread per request"]
+        direction TB
+        R1["Request 1"] --> TH1["Thread 1"]
+        R2["Request 2"] --> TH2["Thread 2"]
+        R3["Request 3"] --> TH3["Thread 3"]
+        R4["Request 4"] --> W["All busy, so it waits"]
+    end
+```
+
+| | Node.js | Thread-per-request model |
+|---|---|---|
+| **Handling requests** | One event loop handles all of them | Each request gets a thread |
+| **Heavy tasks** | Offloaded to the thread pool | Run on the request's thread |
+| **When it's busy** | Keeps accepting requests while waiting on I/O | New requests wait for a free thread |
+| **Best for** | REST APIs, real-time apps, I/O-heavy work | CPU-heavy work |
+
+Node's approach is a **hybrid**: one thread by default, with extra threads only when needed.
+
+**When to use what:**
+
+- **REST API server:** Node.js is a great fit.
+- **CPU-heavy server:** use a multi-threaded language.
+- **Backend with both:** use microservices. Node handles the APIs and delegates heavy work to a service in another language.
+
+> **Correction:** the video uses PHP as its multi-threaded example. The classic PHP setup is really **one process per request**, not threads. The idea of "one worker per request" is still right, and Java's traditional servers are a better match for the thread model.
+
+> **Extra, the most important warning:** the main thread can be **blocked**. A long `for` loop or a Sync function such as `crypto.pbkdf2Sync` freezes every user, because they all share one thread. The thread pool only helps async APIs. For your own heavy JavaScript, use the `worker_threads` module.
+
+## 9. Promises
+
+The video's last point: when do promise callbacks run? It says **between the event loop's phases**, on the transitions.
+
+```mermaid
+flowchart LR
+    A["Timers"] --> M1["Promises"] --> B["I/O Polling"] --> M2["Promises"] --> C["setImmediate"] --> M3["Promises"] --> D["Close"]
+```
+
+> **Correction:** that was true before Node 11. Today, promise callbacks run **after every single callback**, not just between phases. `process.nextTick` goes even earlier than promises.
+
+```js
+setTimeout(() => {
+  console.log("timer 1");
+  Promise.resolve().then(() => console.log("promise inside timer 1"));
+  process.nextTick(() => console.log("nextTick inside timer 1"));
+}, 0);
+setTimeout(() => console.log("timer 2"), 0);
+
+Promise.resolve().then(() => console.log("promise"));
+process.nextTick(() => console.log("nextTick"));
+console.log("top level");
+```
+
+**Output:**
+
+```text
+top level
+nextTick
+promise
+timer 1
+nextTick inside timer 1
+promise inside timer 1
+timer 2
+```
+
+Notice that `promise inside timer 1` runs **before** `timer 2`, even though both timers are in the same phase.
+
+**Priority order:** top-level code → `process.nextTick` → promises → event loop callback → `process.nextTick` → promises → next callback.
+
+## 10. Corrections Summary
+
+| The video says | More accurately |
+|---|---|
+| `require` is a step after top-level code | It's part of top-level code |
+| File reading is CPU intensive | It's I/O that uses the thread pool |
+| Thread pool max is 128 | Current libuv allows 1024 |
+| Promises run between phases | They run after every callback, since Node 11 |
+| PHP is multi-threaded | Classic PHP uses one process per request |
+| Chapter title "Worker Threads" | It's about the thread pool. `worker_threads` is a separate module |
+
+## 11. Interview Questions
+
+**Q: Is Node.js single-threaded?**
+Your JavaScript runs on one main thread, but Node itself uses more threads, such as the libuv thread pool.
+
+**Q: What are V8 and libuv?**
+V8 runs JavaScript. libuv provides the event loop and thread pool.
+
+**Q: What is the event loop?**
+A cycle on the main thread that runs callbacks when their work is ready, which lets one thread handle many tasks.
+
+**Q: What are the phases of the event loop?**
+Timers, pending callbacks, idle/prepare, poll, check, and close.
+
+**Q: What is top-level code?**
+Code directly in the file, not inside a function or callback. It runs before the event loop starts.
+
+**Q: What is the default thread pool size, and how do you change it?**
+4, changed with `UV_THREADPOOL_SIZE`.
+
+**Q: What happens when there are more tasks than threads?**
+The extras wait in a queue until a thread is free.
+
+**Q: `setTimeout(fn, 0)` or `setImmediate` first?**
+At the top level, the order isn't guaranteed. Inside an I/O callback, `setImmediate` always runs first.
+
+**Q: `process.nextTick` vs promises?**
+`process.nextTick` runs first, then promises, and both run before the next event loop callback.
+
+**Q: Do network requests use the thread pool?**
+No. The operating system handles them. `fs`, `crypto`, `zlib`, and `dns.lookup` use the pool.
+
+**Q: What blocks the event loop?**
+Long loops, Sync functions, and heavy calculations on the main thread.
+
+**Q: Thread pool vs `worker_threads`?**
+The pool is managed by libuv for Node's built-in async tasks. `worker_threads` lets you run your own JavaScript on another thread.
+
+**Q: When should you not use Node.js?**
+For CPU-heavy work, unless you move that work to workers or another service.
+
+**Q: Is Node.js a language?**
+No, it's a runtime environment for JavaScript.
+
+## 12. Quick Revision
+
+- **Node = V8 + libuv**
+- `node index.js` creates a process with one main thread
+- **Startup order:** initialize → top-level code and requires → register callbacks → start event loop
+- **Event loop order:** timers → I/O polling → `setImmediate` → close → pending check
+- **Thread pool:** 4 threads by default, used for `fs`, `crypto`, and `zlib`
+- **Extra tasks** wait in a queue
+- **Inside I/O callbacks,** `setImmediate` beats `setTimeout(fn, 0)`
+- **Microtasks** run after every callback: `nextTick`, then promises
+- **Never block the main thread**
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  const out = document.getElementById('out');
+  out.innerHTML = marked.parse(document.getElementById('md').textContent);
+  out.querySelectorAll('code.language-mermaid').forEach(c => {
+    const d = document.createElement('div'); d.className = 'mermaid'; d.textContent = c.textContent;
+    c.parentElement.replaceWith(d);
+  });
+  const toc = document.querySelector('#toc ol');
+  out.querySelectorAll('h2').forEach((h, i) => {
+    h.id = 's' + (i + 1);
+    const li = document.createElement('li'), a = document.createElement('a');
+    a.href = '#' + h.id; a.textContent = h.textContent.replace(/^\d+\.\s*/, '');
+    li.append(a); toc.append(li);
+  });
+  mermaid.initialize({ startOnLoad:false, theme:'default' });
+  mermaid.run({ nodes: out.querySelectorAll('.mermaid') });
+</script>
+</body>
+</html>
