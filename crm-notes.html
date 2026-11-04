@@ -29,7 +29,7 @@
 <main>
   <a href="index.html">← All notes</a>
   <h1>CRM Project Notes</h1>
-  <nav role="tablist"><button data-i="0">User Workflow</button><button data-i="1">ER Diagram</button><button data-i="2">Proposed ER Diagram</button><button data-i="3">System Design &amp; MongoDB</button></nav>
+  <nav role="tablist"><button data-i="0">User Workflow</button><button data-i="1">ER Diagram</button><button data-i="2">Proposed ER Diagram</button><button data-i="3">System Design &amp; MongoDB</button><button data-i="4">Authentication</button></nav>
   <article id="out"></article>
 </main>
 <script type="text/markdown" id="md0">
@@ -1119,6 +1119,504 @@ classDiagram
 ### 12. `Report` (`Report.js`)
 * **Role:** An analytics container for bookings.
 * **How it works:** Points to a booking using a string-based `bookingId`. Uses Mongoose's dynamic `Mixed` schema data type within its `details` field to accept any custom reporting structures (sales commission shares, tax logs, amortization schedules) without needing predefined tables.
+
+</script><script type="text/markdown" id="md4">
+# Authentication & Security: Interview Notes
+
+How login works in this CRM, how JWT and access/refresh tokens work in general, and the questions interviewers ask about them. Sections marked **In this CRM** describe the actual code. Everything else is general knowledge you should be able to explain.
+
+---
+
+## 1. The 30-Second Answer
+
+> "Login is two-step. The user sends a username and password, which the server checks against a bcrypt hash. If that's correct, the server sends a 6-digit OTP by SMS, storing only its hash with a 5-minute expiry and a limit of 5 attempts. When the OTP is verified, the server signs a JWT containing the user ID, valid for 1 day. The React app stores it and an Axios interceptor attaches it to every request as a Bearer token. Middleware verifies the signature, and tenant guards check that the record belongs to the user's company."
+
+**Be honest about this:** the CRM uses a **single JWT**, not an access + refresh token pair. Section 5 explains the pair. Don't say you built refresh tokens here.
+
+---
+
+## 2. Basics: Authentication vs Authorization
+
+| | Authentication (AuthN) | Authorization (AuthZ) |
+|---|---|---|
+| **Question** | Who are you? | What are you allowed to do? |
+| **Happens** | First | After authentication |
+| **Example** | Password + OTP | Admin-only route, company ownership check |
+| **Failure code** | `401 Unauthorized` | `403 Forbidden` |
+
+**Memory trick:** 401 means "I don't know who you are." 403 means "I know who you are, and the answer is no."
+
+**Why HTTP needs any of this:** HTTP is stateless. Each request arrives knowing nothing about the previous one, so every request must carry proof of identity. That proof is a session ID or a token.
+
+---
+
+## 3. Sessions vs Tokens
+
+| | Session (stateful) | JWT (stateless) |
+|---|---|---|
+| **Where the data lives** | Server (Redis or DB) | Inside the token, held by the client |
+| **Client holds** | A random session ID in a cookie | The signed token |
+| **Each request** | Server looks up the session | Server verifies the signature, no lookup |
+| **Scaling** | Needs a shared session store | Any server with the key can verify |
+| **Instant logout** | Easy, delete the session | Hard, the token stays valid until `exp` |
+| **Size** | Small ID | Larger, sent on every request |
+| **Best for** | Traditional web apps, banking | APIs, mobile apps, multiple services |
+
+**Neither is always better.** The main trade-off: JWT gives you scaling without a lookup, and you pay for it by losing easy revocation. Many real systems combine them, with a short JWT plus a refresh token stored in the database.
+
+---
+
+## 4. How JWT Works
+
+JWT (JSON Web Token) is three Base64URL strings joined by dots:
+
+```text
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 . eyJ1c2VySWQiOiI2NWYx... . kX9f2Q...
+             HEADER                          PAYLOAD            SIGNATURE
+```
+
+**Header:** which algorithm signed it.
+
+```json
+{ "alg": "HS256", "typ": "JWT" }
+```
+
+**Payload:** the claims. This is the shape the CRM issues.
+
+```json
+{ "userId": "65f1a2b3c4d5e6f7a8b9c0d1", "iat": 1730700000, "exp": 1730786400 }
+```
+
+**Signature:** proves that nobody changed the header or payload.
+
+```text
+HMACSHA256( base64url(header) + "." + base64url(payload), SECRET )
+```
+
+### Signing and verifying
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: Login with valid credentials
+    S->>S: Build header and payload
+    S->>S: Sign with JWT_SECRET
+    S-->>C: Return token
+    C->>S: Request with Authorization Bearer token
+    S->>S: Recompute signature from header and payload
+    S->>S: Compare with signature in token
+    S->>S: Check exp has not passed
+    S-->>C: 200 with data, or 401 if any check fails
+```
+
+### Why tampering fails
+
+Suppose an attacker changes `userId` in the payload to another user's ID. The server recomputes the signature over the changed payload and gets a different result, because the attacker doesn't have the secret and couldn't produce a matching signature. The token is rejected.
+
+### The most common mistake
+
+**JWT is signed, not encrypted.** Anyone can Base64-decode the payload and read it (try jwt.io). So:
+
+- Never put passwords, OTPs, or personal data in it.
+- Signing gives you **integrity** (it wasn't changed), not **confidentiality** (it can't be read).
+- If the payload must be secret, that's JWE (JSON Web Encryption), which is a separate standard.
+
+### Standard claims
+
+| Claim | Meaning |
+|---|---|
+| `sub` | Subject, who the token is about |
+| `iat` | Issued at |
+| `exp` | Expires at, in Unix seconds |
+| `nbf` | Not valid before |
+| `iss` | Issuer, who created it |
+| `aud` | Audience, who it is meant for |
+| `jti` | Unique token ID, useful for revocation lists |
+
+### HS256 vs RS256
+
+| | HS256 (symmetric) | RS256 (asymmetric) |
+|---|---|---|
+| **Keys** | One shared secret signs and verifies | Private key signs, public key verifies |
+| **Risk** | Every verifier could also forge tokens | Verifiers can't forge tokens |
+| **Use when** | A single backend | Many services, or third parties verify |
+
+The CRM uses HS256 because it has a single backend. With microservices you'd use RS256, so that only the auth service holds the signing key.
+
+---
+
+## 5. Access Token vs Refresh Token
+
+The problem: a long-lived token is dangerous if stolen, and a short-lived one makes users log in constantly. The answer is two tokens with different jobs.
+
+| | Access token | Refresh token |
+|---|---|---|
+| **Purpose** | Call the API | Get a new access token |
+| **Lifetime** | Short, 5 to 15 minutes | Long, 7 to 30 days |
+| **Sent to** | Every API route | Only the refresh endpoint |
+| **Format** | Usually a JWT | Usually a random string |
+| **Stored on the server?** | No | Yes, as a hash |
+| **Can be revoked?** | No, it just expires | Yes, delete the row |
+| **Browser storage** | In memory | `HttpOnly` cookie |
+
+**Key idea:** the refresh token gives back the revocation that JWT gave up. The access token is fast and stateless, and each refresh is a checkpoint where the server hits the database and can say no. A stolen access token only works for minutes.
+
+### The full flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as API
+    participant D as Database
+    C->>A: Login
+    A->>D: Store hash of refresh token
+    A-->>C: Access token, plus refresh token in HttpOnly cookie
+    C->>A: API call with access token
+    A-->>C: 200 OK
+    Note over C,A: 15 minutes later, access token expires
+    C->>A: API call with expired token
+    A-->>C: 401 Token expired
+    C->>A: POST refresh with cookie
+    A->>D: Check hash, not revoked, not expired
+    A->>D: Replace with new hash (rotation)
+    A-->>C: New access token and new refresh token
+    C->>A: Retry original call
+    A-->>C: 200 OK
+```
+
+### Refresh token rotation
+
+Each refresh token works **once**. Using it returns a new one and invalidates the old one.
+
+**Reuse detection** is what makes this powerful. If an attacker steals a token and uses it, the real user's next refresh presents a token that was already used. The server sees that, concludes the token family is compromised, and revokes all of them. Both parties must log in again, and the attacker is locked out.
+
+### Sketch of the server code
+
+```js
+const issueTokens = async (userId, res) => {
+  const accessToken = jwt.sign({ userId }, ACCESS_SECRET, { expiresIn: "15m" });
+  const refreshToken = crypto.randomBytes(64).toString("hex");
+
+  await RefreshToken.create({
+    userId,
+    tokenHash: sha256(refreshToken),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    path: "/api/auth/refresh",
+  });
+  return accessToken;
+};
+```
+
+```js
+app.post("/api/auth/refresh", async (req, res) => {
+  const stored = await RefreshToken.findOne({ tokenHash: sha256(req.cookies.refreshToken) });
+  if (!stored || stored.expiresAt < new Date()) return res.sendStatus(401);
+
+  if (stored.usedAt) {
+    await RefreshToken.deleteMany({ userId: stored.userId }); // reuse: revoke everything
+    return res.sendStatus(401);
+  }
+
+  stored.usedAt = new Date();
+  await stored.save();
+  res.json({ accessToken: await issueTokens(stored.userId, res) });
+});
+```
+
+### Handling expiry in the frontend
+
+An Axios response interceptor catches the 401, calls refresh once, and retries the original request. **Watch out for this:** if five requests fail at the same moment, you'd fire five refreshes, and rotation would treat the extras as reuse. Share one in-flight refresh promise and queue the others behind it.
+
+---
+
+## 6. Where to Store Tokens in the Browser
+
+| Storage | XSS can steal it? | CSRF risk? | Notes |
+|---|---|---|---|
+| `localStorage` | **Yes** | No | Simple, survives refresh. This is what the CRM uses |
+| Memory (JS variable) | Harder | No | Lost on refresh, so it needs a refresh token |
+| `HttpOnly` cookie | **No** | **Yes**, needs `SameSite` | JS can't read it, browser sends it automatically |
+
+**Recommended setup:** access token in memory, refresh token in an `HttpOnly; Secure; SameSite=Strict` cookie.
+
+### Cookie flags
+
+| Flag | Effect |
+|---|---|
+| `HttpOnly` | JavaScript can't read it, which blocks theft through XSS |
+| `Secure` | Sent over HTTPS only |
+| `SameSite=Strict` | Never sent on cross-site requests, which blocks CSRF |
+| `SameSite=Lax` | Sent on top-level link navigation only |
+| `SameSite=None` | Always sent, requires `Secure` |
+| `Path` | Limits which URLs receive the cookie |
+
+### XSS vs CSRF
+
+- **XSS (Cross-Site Scripting):** the attacker's script runs **on your site**, so it can read `localStorage`. Defend with output escaping, CSP, and `HttpOnly` cookies.
+- **CSRF (Cross-Site Request Forgery):** another site makes the victim's browser send a request, and the browser **automatically attaches cookies**. Defend with `SameSite` and CSRF tokens.
+
+**Why the CRM isn't exposed to CSRF:** it sends the token in the `Authorization` header, which a browser never adds automatically, so a forged request has no credentials. The price is that `localStorage` is reachable by XSS. Token storage is always a trade-off between those two attacks.
+
+---
+
+## 7. Password Storage
+
+**Never store passwords in plain text, and never encrypt them.** Encryption can be reversed. Hashing can't.
+
+**Why not SHA-256?** It's built to be fast. A GPU can try billions of guesses per second. bcrypt is built to be slow.
+
+| Term | Meaning |
+|---|---|
+| **Hash** | One-way function. Same input, same output, can't be reversed |
+| **Salt** | Random value added per password, so identical passwords hash differently. Defeats rainbow tables |
+| **Cost factor** | Work grows as 2^cost. Raise it as hardware improves |
+| **Pepper** | Optional secret kept outside the database |
+
+A bcrypt hash stores everything needed to verify it, so there's no separate salt column:
+
+```text
+$2b$12$N9qo8uLOickgx2ZMRZoMye.IjdQ...
+ |   |  |                      |
+ alg cost  22-char salt        hash
+```
+
+**In this CRM:** `bcrypt.hash(password, 12)` on signup, and `bcrypt.compare()` on login. The policy requires 8+ characters with upper, lower, digit, and special characters.
+
+**Newer option:** Argon2id is the current recommendation for new systems, because it's memory-hard and resists GPUs better. bcrypt is still acceptable. bcrypt also only uses the first 72 bytes of a password.
+
+---
+
+## 8. In This CRM: Login with OTP
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as React App
+    participant B as Express API
+    participant D as MongoDB
+    participant T as Twilio
+    U->>F: Enter username and password
+    F->>B: POST /api/auth/generate-otp
+    B->>D: Find in User, then Employee
+    B->>B: bcrypt.compare
+    B->>D: Save OTP hash, purpose, expiry
+    B->>T: Send SMS
+    B-->>F: OTP sent
+    U->>F: Enter OTP
+    F->>B: POST /api/auth/verify-otp
+    B->>D: Check hash, purpose, expiry, attempts
+    B->>B: jwt.sign with userId, expires in 1 day
+    B-->>F: Token, user, redirectTo
+    F->>F: Store token in localStorage
+    F->>B: Later requests with Bearer token
+    B->>B: Verify token, load company
+    B-->>F: Data for that company only
+```
+
+### Security decisions worth mentioning
+
+| Decision | Code | What it prevents |
+|---|---|---|
+| Secure random OTP | `crypto.randomInt`, not `Math.random` | Predicting the next OTP |
+| OTP stored as a hash | `hashSecret()` with SHA-256 | A DB leak exposing live OTPs |
+| 5-minute expiry | `OTP_TTL_MS` | Old OTPs being reused |
+| Max 5 attempts | `MAX_OTP_ATTEMPTS`, then burned | Guessing the 6 digits |
+| OTP has a purpose | `otpPurpose`: `login` or `reset` | A reset OTP being used to log in |
+| Constant-time compare | `crypto.timingSafeEqual` | Timing attacks |
+| One generic login error | "Invalid username or password" | Finding out which accounts exist |
+| Dummy bcrypt compare | `DUMMY_PASSWORD_HASH` | Timing leaks for unknown users |
+| Rate limit | `authLimiter`: 20 per 15 minutes | Credential stuffing, brute force |
+| Algorithm pinned | `algorithms: ['HS256']` | `alg: none` and algorithm confusion |
+| Secret validated at startup | Must be 32+ characters | Weak signing keys |
+| Minimal payload | Only `userId` | Data leaks and stale roles in the token |
+
+**Why only `userId` in the token?** Role and company are read from the database, so a role change applies immediately instead of waiting for the token to expire.
+
+### Why a dummy bcrypt compare?
+
+Without it, an unknown username returns instantly, while a real username takes about 200ms for bcrypt. An attacker could measure that gap to discover valid usernames. Running bcrypt either way makes both paths take the same time.
+
+### Why SHA-256 for the OTP but bcrypt for the password?
+
+Passwords are permanent and reused across sites, so they need a slow hash. An OTP lasts 5 minutes and is limited to 5 tries, so the fast hash is an acceptable trade-off. Note that 6 digits is only 900,000 possibilities, so the hash mainly protects OTPs from casual exposure, and the short expiry does the real work.
+
+### Forgot password flow
+
+1. `POST /forgot-password-otp` returns the **same message whether or not the email exists**, which prevents email enumeration.
+2. `POST /verify-password-reset-otp` checks a `reset` purpose OTP and returns a random one-time `resetToken`, valid for 10 minutes. Only its hash is stored.
+3. `POST /reset-password` checks that token, hashes the new password, and clears the token.
+
+**Why the extra reset token?** It proves the OTP step happened. Without it, an attacker could call `/reset-password` directly.
+
+### WebSockets
+
+The HTTP middleware doesn't run on socket events, so `io.use()` verifies the JWT at the handshake and sets `socket.userId`. Identity comes from the token, never from the event payload. Otherwise anyone could claim to be any user.
+
+---
+
+## 9. In This CRM: Authorization and Multi-Tenancy
+
+Each company is an admin `User`, and its employees reference it through `CompanyId`. All data must stay inside its company.
+
+| Guard | What it does |
+|---|---|
+| `requireCompany` | Logged in, then sets `req.companyId` |
+| `requireAdmin` | Must be a company admin, otherwise 403 |
+| `guardProject`, `guardBuilding`, `guardFlat`, `guardBooking`, `guardReport` | Confirms the record belongs to `req.companyId` |
+
+**IDOR (Insecure Direct Object Reference)** is the bug these guards prevent. Without them, a logged-in user at Company A could change the ID in a URL and read Company B's booking. Being logged in doesn't mean you own that record.
+
+**Why return 404 instead of 403?** A 403 confirms the record exists. A 404 reveals nothing about what's in other tenants.
+
+**Role-Based Access Control (RBAC)** means permissions attach to roles and users get roles. Username prefixes such as `ADM`, `SAL`, and `LDM` choose which dashboard to open.
+
+> Hiding a button in React is **not** security. Anyone can call the API directly. Every check must also run on the server.
+
+---
+
+## 10. Common Attacks and Defenses
+
+| Attack | How it works | Defense | In this CRM |
+|---|---|---|---|
+| **Brute force** | Trying many passwords | Rate limits, lockout | `authLimiter` |
+| **Credential stuffing** | Reusing leaked passwords | Rate limits, 2FA | `authLimiter`, SMS OTP |
+| **User enumeration** | Different responses reveal accounts | Same message and timing | Dummy compare, generic errors |
+| **XSS** | Injected script runs on your page | Escaping, CSP, `HttpOnly` | `helmet` CSP |
+| **CSRF** | Browser auto-sends cookies | `SameSite`, CSRF tokens | Bearer header avoids it |
+| **Token theft** | Stolen JWT is reused | Short expiry, rotation | 1-day expiry |
+| **`alg: none`** | Forged token claims no signature | Pin the algorithm | `algorithms: ['HS256']` |
+| **Algorithm confusion** | RS256 public key used as an HS256 secret | Pin the algorithm | `algorithms: ['HS256']` |
+| **NoSQL injection** | `{"$ne": null}` matches any record | Reject operator keys | `sanitizeInput` middleware |
+| **IDOR** | Changing IDs in a URL | Ownership checks | `guard*` middleware |
+| **HTTP parameter pollution** | Duplicate query parameters | Normalize input | `hpp` |
+| **SMS pumping** | Abusing paid SMS endpoints | Strict limits | `telephonyLimiter` |
+| **Man in the middle** | Intercepted traffic | HTTPS, HSTS | `helmet` |
+
+**NoSQL injection example.** If login did `User.findOne({ username: req.body.username })` and an attacker sent `{"username": {"$ne": null}}`, the query would match the first user. `sanitizeInput` rejects any key starting with `$` or containing a dot.
+
+**CORS is not authentication.** It's a browser rule about which origins can read responses. `curl` and Postman ignore it completely.
+
+---
+
+## 11. Logout and Revoking JWTs
+
+A JWT can't be cancelled, because the server keeps no record of it. Your options:
+
+| Approach | How | Trade-off |
+|---|---|---|
+| Short expiry | Access token lives 15 minutes | A small window remains |
+| Refresh token deletion | Remove it from the DB on logout | Access token works until expiry |
+| Denylist | Store revoked `jti` in Redis until `exp` | Adds a lookup to each request |
+| Token version | Keep `tokenVersion` on the user, include it in the JWT, bump it to log out everywhere | Adds a DB read to each request |
+
+**Good use of token version:** "log out of all devices" and invalidating sessions after a password change.
+
+---
+
+## 12. OAuth 2.0, OpenID Connect and SSO
+
+- **OAuth 2.0** handles **authorization**. It lets an app act on your behalf without getting your password. Example: an app reading your Google Calendar.
+- **OpenID Connect (OIDC)** adds **authentication** on top of OAuth, using an ID token (a JWT) that says who the user is. This is "Sign in with Google."
+- **SSO (Single Sign-On):** one login for many apps, usually through OIDC or SAML.
+
+**Authorization Code flow with PKCE**, the standard for web and mobile apps:
+
+1. The app redirects the user to Google, with a hash of a random `code_verifier`.
+2. The user logs in at Google and approves access.
+3. Google redirects back with a short-lived **code**.
+4. The app exchanges the code plus the original `code_verifier` for tokens.
+
+PKCE means a stolen code is useless without the verifier. The `state` parameter protects the redirect against CSRF.
+
+**Other terms:** API keys identify an application rather than a user. TOTP (authenticator apps) is safer than SMS OTP, because SMS is exposed to SIM swapping. Passkeys (WebAuthn) replace passwords with public-key cryptography and resist phishing.
+
+---
+
+## 13. Interview Questions
+
+**Q: What is JWT, and how does it work?**
+A signed token with a header, payload, and signature. The server signs it at login and verifies the signature on each request, so it doesn't need to store sessions.
+
+**Q: Is the JWT payload secure?**
+It's protected from changes but readable by anyone. It's encoded, not encrypted, so no sensitive data goes inside.
+
+**Q: How is the signature verified?**
+The server recomputes it from the header and payload using the secret, then compares the result to the signature in the token.
+
+**Q: What happens if `JWT_SECRET` leaks?**
+An attacker can forge a valid token for any user. Rotate the secret immediately, which logs everyone out. That's why it belongs in environment variables, never in code.
+
+**Q: Why use both access and refresh tokens?**
+So a stolen access token expires in minutes, while the user stays logged in. The refresh token can be revoked because the server stores it.
+
+**Q: Why not just make the access token long-lived?**
+It can't be revoked, so a stolen one would work for the whole lifetime.
+
+**Q: What happens if a refresh token is stolen?**
+With rotation and reuse detection, the second use of the same token is detected and the whole family is revoked.
+
+**Q: Where should a refresh token be stored?**
+In an `HttpOnly`, `Secure`, `SameSite` cookie on the client, and as a hash on the server.
+
+**Q: Why hash refresh tokens in the database?**
+So a DB leak doesn't hand over live sessions, the same reason passwords are hashed.
+
+**Q: `localStorage` or cookies?**
+`localStorage` is exposed to XSS. Cookies with `HttpOnly` aren't, but need CSRF protection. Cookies are generally preferred for refresh tokens.
+
+**Q: How do you log a user out with JWT?**
+Delete the refresh token on the server and clear the client. For instant logout, use a denylist or token version.
+
+**Q: How do you handle a token expiring mid-session?**
+An Axios interceptor catches the 401, refreshes once, retries the request, and queues any other requests that failed meanwhile.
+
+**Q: How do JWTs work across microservices?**
+With RS256, the auth service signs with a private key and the others verify with the public key, usually fetched from a JWKS endpoint.
+
+**Q: Why bcrypt instead of SHA-256 for passwords?**
+bcrypt is deliberately slow and salted, which makes mass guessing impractical.
+
+**Q: What is a salt? Is it secret?**
+A random per-password value that defeats rainbow tables. It isn't secret, and it's stored with the hash.
+
+**Q: What's the difference between 401 and 403?**
+401 means not authenticated. 403 means authenticated but not allowed.
+
+**Q: What is the difference between encoding, encryption, and hashing?**
+Encoding changes the format and anyone can reverse it (Base64). Encryption is reversible with a key (AES). Hashing is one-way (bcrypt).
+
+**Q: OAuth vs JWT?**
+They aren't alternatives. OAuth is a protocol for delegated access, and JWT is a token format. OAuth can use JWTs.
+
+**Q: Authentication in a stateless API, how does the server know who's calling?**
+Each request carries the token, and middleware verifies it and attaches the user to `req`.
+
+**Q: How did you protect your OTP flow?**
+Secure random generation, hashed storage, a 5-minute expiry, 5 attempts, purpose tags, rate limiting, and constant-time comparison.
+
+**Q: How did you stop one company from seeing another's data?**
+Each request resolves the user's company, and guard middleware checks record ownership before the handler runs. It returns 404 so other tenants' IDs can't be probed.
+
+---
+
+## 14. Quick Revision Checklist
+
+- [ ] Draw JWT's three parts and explain what the signature proves
+- [ ] Explain "signed, not encrypted"
+- [ ] Draw the access + refresh token flow with rotation
+- [ ] Explain reuse detection
+- [ ] Compare `localStorage` and `HttpOnly` cookies, including XSS and CSRF
+- [ ] Explain bcrypt, salts, and cost factor
+- [ ] Walk through the CRM login from password to protected request
+- [ ] Explain IDOR and how the guards stop it
+- [ ] State clearly that the CRM uses a single JWT, and how you'd improve it
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
